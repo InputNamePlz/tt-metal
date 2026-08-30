@@ -95,6 +95,9 @@ class CodeGen:
                 if line == "" or line.startswith("#"):
                     # ignore all other directives
                     continue
+                if line in ("TT_PACK_BEGIN", "TT_PACK_END"):
+                    # portable packing markers (hostdevcommon/tt_packed.h); layout-only
+                    continue
                 return line
             else:
                 if line.startswith("#if"):
@@ -154,7 +157,7 @@ class CodeGen:
             if not line:
                 self.parse_error("<end of file>", "incomplete struct definition")
             line = re.sub(r"\balignas\([^)]*\)\s*", "", line)
-            if re.fullmatch(r"}(?: *__attribute__\(\(\w+\)\))*;", line):
+            if re.fullmatch(r"}(?: *(?:__attribute__\(\(\w+\)\)|TT_PACKED))*;", line):
                 level -= 1
                 continue
             # anonymous structs/unions are allowed

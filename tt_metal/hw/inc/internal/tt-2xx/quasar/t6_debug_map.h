@@ -6,6 +6,7 @@
 #define T6_DEBUG_MAP_H
 
 #include <stdint.h>
+#include "hostdevcommon/tt_packed.h"
 #include <assert.h>
 
 #ifdef __cplusplus
@@ -1036,7 +1037,8 @@ extern "C" {
 #define T6_DEBUG_REGS__ADDR_COUNTER_DEBUG__VALUE_reset 0x0
 
 // Regfile - t6_debug_regs
-typedef struct __attribute__((__packed__)) {
+TT_PACK_BEGIN
+typedef struct TT_PACKED {
     uint32_t PERF_CNT_INSTRN_THREAD0;
     uint32_t PERF_CNT_INSTRN_THREAD1;
     uint32_t PERF_CNT_INSTRN_THREAD2;
@@ -1153,11 +1155,14 @@ typedef struct __attribute__((__packed__)) {
     uint32_t TRISC_L1_END_ADDR[8];
     uint32_t ADDR_COUNTER_DEBUG[42];
 } t6_debug_regs_t;
+TT_PACK_END
 
 // Addrmap - t6_debug_map
-typedef struct __attribute__((__packed__)) {
+TT_PACK_BEGIN
+typedef struct TT_PACKED {
     t6_debug_regs_t debug_regs;
 } t6_debug_map_t;
+TT_PACK_END
 
 static_assert(sizeof(t6_debug_map_t) == 0x3b4, "Packing error");
 

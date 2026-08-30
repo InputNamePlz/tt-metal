@@ -27,6 +27,8 @@
 #include <atomic>
 #include <cstdint>
 
+#include "hostdevcommon/tt_packed.h"
+
 #include "hostdevcommon/profiler_common.h"
 #include "hostdevcommon/dprint_common.h"
 #include "hostdev/debug_ring_buffer_common.h"
@@ -155,11 +157,12 @@ enum dispatch_enable_flags : uint8_t {
     DISPATCH_ENABLE_FLAG_PRELOAD = 1 << 7,
 };
 
+TT_PACK_BEGIN
 struct kernel_config_msg_t {
     // Ring buffer of kernel configuration data
     volatile uint32_t kernel_config_base[ProgrammableCoreType::COUNT];
     volatile uint16_t sem_offset[ProgrammableCoreType::COUNT];
-    volatile uint8_t pad_sem_offset[(ProgrammableCoreType::COUNT % 2) * 2];  // CODEGEN:skip
+    TT_PAD_BYTES(pad_sem_offset, (ProgrammableCoreType::COUNT % 2) * 2);  // CODEGEN:skip
     volatile uint16_t local_cb_offset;
     volatile uint16_t remote_cb_offset;
     rta_offset_t rta_offset[MaxProcessorsPerCoreType];
@@ -172,7 +175,7 @@ struct kernel_config_msg_t {
     volatile uint16_t cross_node_dfb_offset;
     volatile uint32_t kernel_text_offset[MaxProcessorsPerCoreType];
     volatile uint32_t kernel_text_size[MaxProcessorsPerCoreType];
-    volatile uint8_t pad4[(MaxProcessorsPerCoreType % 2) * 12]; // CODEGEN:skip
+    TT_PAD_BYTES(pad4, (MaxProcessorsPerCoreType % 2) * 12); // CODEGEN:skip
     volatile uint64_t local_cb_mask;
 
     volatile uint8_t brisc_noc_id;
@@ -197,7 +200,8 @@ struct kernel_config_msg_t {
     volatile uint8_t kernel_thread_id[MaxProcessorsForThreadingVariables];
 
     volatile uint8_t preload;  // Must be at end, so it's only written when all other data is written.
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 // Baby riscs don't natively support unaligned accesses, so ensure data alignment to prevent slow compiler workarounds.
 static_assert(offsetof(kernel_config_msg_t, kernel_config_base) % sizeof(uint32_t) == 0);
@@ -211,6 +215,7 @@ static_assert(offsetof(kernel_config_msg_t, kernel_text_size) % sizeof(uint32_t)
 static_assert(offsetof(kernel_config_msg_t, local_cb_mask) % sizeof(uint64_t) == 0);
 static_assert(offsetof(kernel_config_msg_t, host_assigned_id) % sizeof(uint32_t) == 0);
 
+TT_PACK_BEGIN
 struct go_msg_t {
     union {
         uint32_t all;
@@ -221,11 +226,14 @@ struct go_msg_t {
             uint8_t signal;  // INIT, GO, DONE, RESET_RD_PTR
         };
     };
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
+TT_PACK_BEGIN
 struct launch_msg_t {  // must be cacheline aligned
     kernel_config_msg_t kernel_config;
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 // save space for the structure, device side will cast to the correct structure
 struct subordinate_sync_msg_t {
@@ -305,7 +313,7 @@ enum debug_transaction_type_t { TransactionRead = 0, TransactionWrite = 1, Trans
 
 struct debug_pause_msg_t {
     volatile uint8_t flags[MaxProcessorsPerCoreType];
-    uint8_t pad[(4 - (MaxProcessorsPerCoreType % 4)) % 4];  // CODEGEN:skip
+    TT_PAD_BYTES(pad, (4 - (MaxProcessorsPerCoreType % 4)) % 4);  // CODEGEN:skip
 };
 // Needs to be 32b-divisible, since the host clears pause flags from host using read_core()/write_core().
 static_assert(sizeof(debug_pause_msg_t) % sizeof(uint32_t) == 0);
