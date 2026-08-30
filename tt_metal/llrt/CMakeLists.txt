@@ -30,7 +30,7 @@ target_link_libraries(
         Metalium::Metal::Hardware
 )
 target_include_directories(llrt PUBLIC .)
-target_compile_options(llrt PRIVATE -Wno-int-to-pointer-cast)
+target_compile_options(llrt PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-int-to-pointer-cast>)
 
 include(GNUInstallDirs)
 
