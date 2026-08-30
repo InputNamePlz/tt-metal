@@ -4,10 +4,22 @@
 
 #include "device_manager.hpp"
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+
+#include <thread>
+#else
 #include <numa.h>
 #include <pthread.h>
-#include <tracy/Tracy.hpp>
 #include <unistd.h>  // Warning Linux Only, needed for _SC_NPROCESSORS_ONLN
+#endif
+#include <tracy/Tracy.hpp>
 
 #include <tt_stl/assert.hpp>
 #include <tt-logger/tt-logger.hpp>
@@ -39,6 +51,20 @@ using namespace tt::tt_metal;
 namespace tt {
 
 namespace device_cpu_allocator {
+
+#ifdef _WIN32
+namespace {
+// libnuma is Linux-only. Reporting "NUMA unavailable" routes every caller into the existing
+// single-node fallback paths below, so Windows behaves exactly like a non-NUMA Linux host.
+inline int numa_available() { return -1; }
+inline int numa_num_configured_cpus() { return 0; }
+inline int numa_node_of_cpu(int /*cpu*/) { return -1; }
+// Only _SC_NPROCESSORS_ONLN is queried in this file.
+constexpr int _SC_NPROCESSORS_ONLN = 0;
+inline long sysconf(int /*name*/) { return static_cast<long>(std::thread::hardware_concurrency()); }
+}  // namespace
+#endif
+
 std::unordered_map<int, std::vector<uint32_t>> get_cpu_cores_per_numa_node(std::unordered_set<uint32_t>& free_cores) {
     std::unordered_map<int, std::vector<uint32_t>> cpu_cores_per_numa_node = {};
     if (numa_available() != -1) {
@@ -112,6 +138,23 @@ std::pair<int, int> get_cpu_cores_for_dispatch_threads(
 }
 
 void bind_current_thread_to_free_cores(const std::unordered_set<uint32_t>& free_cores) {
+#ifdef _WIN32
+    // Thread affinity is a performance optimization only; correctness never depends on it.
+    // SetThreadAffinityMask covers the first processor group (64 logical CPUs); cores beyond
+    // that are simply left out of the mask rather than pulling in processor-group machinery.
+    DWORD_PTR mask = 0;
+    for (const auto& free_core : free_cores) {
+        if (free_core < 64) {
+            mask |= DWORD_PTR(1) << free_core;
+        }
+    }
+    if (mask != 0 && SetThreadAffinityMask(GetCurrentThread(), mask) == 0) {
+        log_warning(
+            tt::LogMetal,
+            "Unable to bind main thread to free CPU cores. May see performance degradation. Error Code: {}",
+            GetLastError());
+    }
+#else
     cpu_set_t cpuset;
     pthread_t current_thread = pthread_self();
     CPU_ZERO(&cpuset);
@@ -126,6 +169,7 @@ void bind_current_thread_to_free_cores(const std::unordered_set<uint32_t>& free_
             "Unable to bind main thread to free CPU cores. May see performance degradation. Error Code: {}",
             rc);
     }
+#endif
 }
 
 std::unordered_map<uint32_t, uint32_t> get_device_id_to_core_map(

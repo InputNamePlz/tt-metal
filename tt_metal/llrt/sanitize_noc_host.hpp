@@ -70,6 +70,13 @@ static std::string noc_address(tt::tt_metal::CoreCoord core, uint64_t a, uint32_
 }
 
 // NOLINTBEGIN(cppcoreguidelines-no-malloc)
+#ifdef _WIN32
+static void print_stack_trace() {
+    // backtrace()/backtrace_symbols() are glibc-only. This is a best-effort debug aid printed
+    // right before a fatal NOC sanitization error, so skipping it costs diagnostics only.
+    fprintf(stderr, "Stack trace unavailable on this platform.\n");
+}
+#else
 static void print_stack_trace() {
     void* array[15];
 
@@ -84,6 +91,7 @@ static void print_stack_trace() {
 
     free(strings);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
 }
+#endif
 // NOLINTEND(cppcoreguidelines-no-malloc)
 
 static void watcher_sanitize_host_noc(

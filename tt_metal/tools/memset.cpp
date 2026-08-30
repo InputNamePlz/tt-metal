@@ -5,7 +5,11 @@
 #include <cstdint>
 #include "impl/context/metal_context.hpp"
 #include <tt_stl/span.hpp>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+#include <chrono>
+#include <thread>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -40,7 +44,7 @@ int main(int argc, char* argv[]) {
 
     if (std::getenv("RUNNING_FROM_PYTHON") == nullptr) {
         log_warning(tt::LogDevice, "It is recommended to run this script from 'memset.py'");
-        sleep(2);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     // Since memset.py would always correctly launch
