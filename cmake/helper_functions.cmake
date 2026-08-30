@@ -3,6 +3,12 @@
 # REUSE_FROM sources that have DISABLE_PRECOMPILE_HEADERS set on them.
 function(tt_reuse_precompile_headers target pch_source)
     if(NOT CMAKE_DISABLE_PRECOMPILE_HEADERS)
+        # The Visual Studio generator derives filesystem paths from the REUSE_FROM
+        # name, so an ALIAS (with "::" in it) must be resolved to the real target.
+        get_target_property(_tt_pch_aliased ${pch_source} ALIASED_TARGET)
+        if(_tt_pch_aliased)
+            set(pch_source ${_tt_pch_aliased})
+        endif()
         target_precompile_headers(${target} REUSE_FROM ${pch_source})
     endif()
 endfunction()
@@ -57,18 +63,20 @@ function(CREATE_PGM_EXAMPLES_EXE TESTLIST SUBDIR)
         get_filename_component(TEST_TARGET ${TEST_SRC} NAME_WE)
 
         add_executable(${TEST_TARGET} ${TEST_SRC})
-        target_link_libraries(
-            ${TEST_TARGET}
-            PUBLIC
-                tt_metal
-                m
-                pthread
-        )
+        target_link_libraries(${TEST_TARGET} PUBLIC tt_metal)
+        if(NOT WIN32)
+            target_link_libraries(
+                ${TEST_TARGET}
+                PUBLIC
+                    m
+                    pthread
+            )
+        endif()
 
         target_include_directories(${TEST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
         if(TARGET TT::CommonPCH)
-            target_precompile_headers(${TEST_TARGET} REUSE_FROM TT::CommonPCH)
+            tt_reuse_precompile_headers(${TEST_TARGET} TT::CommonPCH)
         endif()
 
         set_target_properties(

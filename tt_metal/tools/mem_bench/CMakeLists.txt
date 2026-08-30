@@ -10,7 +10,7 @@ target_link_libraries(
     PRIVATE
         Metalium::Metal
         Metalium::Metal::Hardware
-        numa
+        "$<$<NOT:$<PLATFORM_ID:Windows>>:numa>"
         benchmark::benchmark
 )
 target_include_directories(
