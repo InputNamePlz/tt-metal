@@ -21,6 +21,7 @@
 
 // Include fabric_common.h for RoutingFieldsConstants and routing_encoding namespace
 #include "hostdevcommon/fabric_common.h"
+#include "hostdevcommon/tt_packed.h"
 
 // These functions have different behavior on host or device.
 // This causes problems trying to detect unused parameters.
@@ -368,6 +369,7 @@ union NocCommandFields {
 // NOLINTEND(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
 static_assert(sizeof(NocCommandFields) == 40, "CommandFields size is not 40 bytes");
 
+TT_PACK_BEGIN
 struct UDMWriteControlHeader {
     uint8_t src_chip_id;
     uint16_t src_mesh_id;
@@ -377,8 +379,10 @@ struct UDMWriteControlHeader {
     uint8_t transaction_id;
     uint8_t posted;
     uint8_t initial_direction;
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
+TT_PACK_BEGIN
 struct UDMReadControlHeader {
     uint8_t src_chip_id;
     uint16_t src_mesh_id;
@@ -389,15 +393,18 @@ struct UDMReadControlHeader {
     uint8_t risc_id;
     uint8_t transaction_id;
     uint8_t initial_direction;
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 static_assert(sizeof(UDMWriteControlHeader) == 9, "UDMWriteControlHeader size is not 9 bytes");
 static_assert(sizeof(UDMReadControlHeader) == 16, "UDMReadControlHeader size is not 16 bytes");
 
+TT_PACK_BEGIN
 union UDMControlFields {
     UDMWriteControlHeader write;
     UDMReadControlHeader read;
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 static_assert(sizeof(UDMControlFields) == 16, "UDMControlFields size is not 16 bytes");
 
@@ -999,6 +1006,7 @@ struct get_max_num_hops<PacketHeader> {
 };
 
 // Primary template for 1D routing fields with route buffer (ExtensionWords >= 1)
+TT_PACK_BEGIN
 template <uint32_t ExtensionWords = 1>
 struct LowLatencyRoutingFieldsT {
     // Type alias to reference centralized constants
@@ -1044,9 +1052,11 @@ struct LowLatencyRoutingFieldsT {
         return result;
     }
 
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 // Partial specialization for 16-hop mode
+TT_PACK_BEGIN
 template <>
 struct LowLatencyRoutingFieldsT<0> {
     // Type alias to reference centralized constants
@@ -1069,7 +1079,8 @@ struct LowLatencyRoutingFieldsT<0> {
         result.value = buffer[0];
         return result;
     }
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 // Temporary template function used to restrict sparse multicast to 1D LowLatency Packet headers with ExtensionWords = 0
 // Sparse multicast has not yet been implemented for ExtensionWords > 0

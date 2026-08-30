@@ -377,7 +377,9 @@ std::ostream& operator<<(std::ostream& os, const std::pair<T1, T2>& pair) {
 }
 
 inline std::ostream& operator<<(std::ostream& os, const std::filesystem::path& path) {
-    os << path.c_str();
+    // .string() rather than .c_str(): on Windows path::value_type is wchar_t, which a narrow
+    // ostream cannot take. Identical output where value_type is char.
+    os << path.string();
     return os;
 }
 
