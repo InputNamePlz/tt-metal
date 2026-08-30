@@ -27,11 +27,20 @@ list(APPEND IMPL_SRC ${GENERATED_HEADERS})
 # resolve to the Microsoft Store app-execution alias, so pin a real interpreter.
 if(CMAKE_HOST_WIN32)
     find_program(
-        TT_CODEGEN_PYTHON
+        TT_CODEGEN_PYTHON_EXECUTABLE
         NAMES
             python
             python3
         REQUIRED
+    )
+    # PYTHONUTF8: the codegen scripts read UTF-8 sources; don't let a non-UTF-8
+    # ANSI codepage (e.g. cp949) break them.
+    set(TT_CODEGEN_PYTHON
+        ${CMAKE_COMMAND}
+        -E
+        env
+        PYTHONUTF8=1
+        ${TT_CODEGEN_PYTHON_EXECUTABLE}
     )
 else()
     set(TT_CODEGEN_PYTHON python3)
