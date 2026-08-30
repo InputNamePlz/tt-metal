@@ -34,5 +34,6 @@ target_link_libraries(
         TT::Metalium::HostDevCommon
         yaml-cpp::yaml-cpp
         Boost::asio
+        Boost::move # mesh_coord.cpp includes boost/move/utility_core.hpp directly
         tt-logger::tt-logger
 )

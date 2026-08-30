@@ -57,6 +57,16 @@ function(ensureboosttarget boostTarget)
     if(NOT TARGET Boost::${boostTarget})
         add_library(Boost::${boostTarget} INTERFACE IMPORTED GLOBAL)
         target_link_libraries(Boost::${boostTarget} INTERFACE Boost::headers)
+        # When building boost from the modular source tree, Boost::headers does not
+        # carry the per-library include dirs; attach this library's own headers so
+        # the target works without a system-wide boost installation.
+        if(DEFINED Boost_SOURCE_DIR AND EXISTS "${Boost_SOURCE_DIR}/libs/${boostTarget}/include")
+            target_include_directories(
+                Boost::${boostTarget}
+                INTERFACE
+                    "${Boost_SOURCE_DIR}/libs/${boostTarget}/include"
+            )
+        endif()
         message(STATUS "Defined Boost::${boostTarget} as an INTERFACE target.")
     endif()
 endfunction()
@@ -77,6 +87,11 @@ CPMAddPackage(
 )
 
 ensureboosttarget(algorithm)
+ensureboosttarget(move)
+if(TARGET Boost::config)
+    # boost/move headers include boost/config.hpp
+    target_link_libraries(Boost::move INTERFACE Boost::config)
+endif()
 ensureboosttarget(asio)
 ensureboosttarget(lockfree)
 ensureboosttarget(core)
