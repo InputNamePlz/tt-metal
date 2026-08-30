@@ -6,6 +6,7 @@
 #define TENSIX_TYPES_H_INCLUDED
 
 #include <cstdint>
+#include "hostdevcommon/tt_packed.h"
 
 #ifndef TENSIX_FIRMWARE
 #include <fmt/core.h>
@@ -57,7 +58,7 @@ typedef struct {
     std::uint32_t reserved_3 : 32;
 } packer_config_t;  // 16B
 
-typedef struct {
+struct fifo_ctl_t {
     std::uint32_t rd_ptr;
     std::uint32_t wr_ptr;
     std::uint32_t rsvd0;
@@ -67,7 +68,7 @@ typedef struct {
         return fmt::format("Fifo Control: rd_ptr(0x{:08x}) wr_ptr(0x{:08x})", rd_ptr, wr_ptr);
     }
 #endif
-} fifo_ctl_t;
+};
 
 typedef struct {
     std::uint32_t val[4];
@@ -282,16 +283,16 @@ constexpr inline bool is_2x_format(DataFormat format) {
 }
 
 typedef struct {
-    unsigned l1_addr_16B : 20 __attribute__((packed));
-    unsigned format : 8 __attribute__((packed));
-    unsigned /* Padding to 32b */ : 4 __attribute__((packed));
-    unsigned lmt_addr_16B : 20 __attribute__((packed));
-    unsigned x_dim : 8 __attribute__((packed));
-    unsigned /* Padding to 32b */ : 4 __attribute__((packed));
-    unsigned y_dim : 8 __attribute__((packed));
-    unsigned z_dim : 8 __attribute__((packed));
-    unsigned /* Padding to 32b */ : 16 __attribute__((packed));
-    unsigned /* Padding to 32b */ : 32 __attribute__((packed));
+    unsigned l1_addr_16B : 20 TT_PACKED;
+    unsigned format : 8 TT_PACKED;
+    unsigned /* Padding to 32b */ : 4 TT_PACKED;
+    unsigned lmt_addr_16B : 20 TT_PACKED;
+    unsigned x_dim : 8 TT_PACKED;
+    unsigned /* Padding to 32b */ : 4 TT_PACKED;
+    unsigned y_dim : 8 TT_PACKED;
+    unsigned z_dim : 8 TT_PACKED;
+    unsigned /* Padding to 32b */ : 16 TT_PACKED;
+    unsigned /* Padding to 32b */ : 32 TT_PACKED;
 } buffer_descriptor_t;
 
 static_assert(sizeof(buffer_descriptor_t) == 16, "buffer_desc must be 128b!");
