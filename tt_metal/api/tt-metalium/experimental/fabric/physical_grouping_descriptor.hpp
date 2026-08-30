@@ -5,6 +5,7 @@
 #pragma once
 
 #include <algorithm>
+#include <numeric>
 #include <cstdint>
 #include <map>
 #include <numeric>

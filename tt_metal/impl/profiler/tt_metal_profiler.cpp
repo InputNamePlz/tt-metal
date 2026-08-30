@@ -137,7 +137,7 @@ void syncDeviceHost(distributed::MeshDevice* mesh_device, IDevice* device, CoreC
     const std::unique_ptr<ProfilerStateManager>& profiler_state_manager =
         MetalContext::instance(context_id).profiler_state_manager();
 
-    profiler_state_manager->device_host_time_pair.emplace(device_id, (std::vector<std::pair<uint64_t, uint64_t>>){});
+    profiler_state_manager->device_host_time_pair.emplace(device_id, std::vector<std::pair<uint64_t, uint64_t>>{});
     profiler_state_manager->smallest_host_time.emplace(device_id, 0);
 
     constexpr uint16_t sampleCount = 249;
@@ -576,11 +576,11 @@ void syncAllDevices(ChipId host_connected_device) {
                              (senderBase - freqScale * receiverBase);
             deviceDeviceSyncInfo.try_emplace(sender.first);
             deviceDeviceSyncInfo.at(sender.first)
-                .insert_or_assign(receiver.first, (std::pair<double, int64_t>){freqScale, shift});
+                .insert_or_assign(receiver.first, std::pair<double, int64_t>{freqScale, shift});
 
             deviceDeviceSyncInfo.try_emplace(receiver.first);
             deviceDeviceSyncInfo.at(receiver.first)
-                .insert_or_assign(sender.first, (std::pair<double, int64_t>){1.0 / freqScale, -1 * shift});
+                .insert_or_assign(sender.first, std::pair<double, int64_t>{1.0 / freqScale, -1 * shift});
         }
     }
 
@@ -595,7 +595,7 @@ void syncAllDevices(ChipId host_connected_device) {
 
     // Propagate sync info with DFS through sync tree
     profiler_state_manager->sync_set_devices.clear();
-    setSyncInfo(host_connected_device, (std::pair<double, int64_t>){1.0, 0}, root_sync_info, deviceDeviceSyncInfo);
+    setSyncInfo(host_connected_device, std::pair<double, int64_t>{1.0, 0}, root_sync_info, deviceDeviceSyncInfo);
 }
 
 std::optional<ChipId> getUnvisitedDevice(const std::map<ChipId, bool>& visited_map) {
@@ -676,9 +676,9 @@ void ProfilerSync(ProfilerSyncState state) {
 
                         profiler_state_manager->device_device_time_pair.emplace(
                             sender_device_id,
-                            (std::unordered_map<ChipId, std::vector<std::pair<uint64_t, uint64_t>>>){});
+                            std::unordered_map<ChipId, std::vector<std::pair<uint64_t, uint64_t>>>{});
                         profiler_state_manager->device_device_time_pair.at(sender_device_id)
-                            .emplace(receiver_device_id, (std::vector<std::pair<uint64_t, uint64_t>>){});
+                            .emplace(receiver_device_id, std::vector<std::pair<uint64_t, uint64_t>>{});
                     }
                 }
             }

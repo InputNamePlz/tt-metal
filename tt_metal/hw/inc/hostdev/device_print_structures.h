@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
+#include "hostdevcommon/tt_packed.h"
+
 namespace device_print_detail::structures {
 
 struct DevicePrintStringInfo {
@@ -63,24 +65,33 @@ static_assert(sizeof(DevicePrintHeader) == sizeof(uint32_t));
 
 namespace device_print_dispatch {
 
-struct NocLocationInputInfo {
-    uint16_t x : 6;
-    uint16_t y : 6;
+// All three bitfields share one uint64_t storage unit: same bit layout GCC's packed
+// mixed-type allocation produced, and portable to MSVC (which never merges units across
+// differing declared types). The static_asserts below pin the 12-byte layout.
+TT_PACK_BEGIN
+struct TT_PACKED_ALIGNED(4) NocLocationInputInfo {
+    uint64_t x : 6;
+    uint64_t y : 6;
     uint64_t rw_ptr_addr : 52;
     uint16_t buf_offset;
     uint16_t buf_size;
-} __attribute__((packed, aligned(4)));
+};
+TT_PACK_END
 
 static_assert(sizeof(NocLocationInputInfo) == 12, "NocLocationInputInfo must be 12 bytes");
 static_assert(sizeof(NocLocationInputInfo) % 4 == 0, "NocLocationInputInfo must be 4-byte aligned");
 
-struct DramStreamMessageHeader {
-    uint16_t x : 6;
-    uint16_t y : 6;
-    uint16_t align : 6;
-    uint16_t buffer_wrapped : 1;
-    uint16_t length : 13;
-} __attribute__((packed, aligned(4)));
+// One uint32_t storage unit for all five bitfields (32 bits exactly); same layout as GCC's
+// packed uint16_t spanning, portable to MSVC.
+TT_PACK_BEGIN
+struct TT_PACKED_ALIGNED(4) DramStreamMessageHeader {
+    uint32_t x : 6;
+    uint32_t y : 6;
+    uint32_t align : 6;
+    uint32_t buffer_wrapped : 1;
+    uint32_t length : 13;
+};
+TT_PACK_END
 
 static_assert(sizeof(DramStreamMessageHeader) == 4, "DramStreamMessageHeader must be 4 bytes");
 

@@ -38,7 +38,9 @@ constexpr uint32_t DEVICE_MEMORY_REGION_VERSION = 3;
 // Shared memory region layout for per-device memory statistics
 // This structure is mapped into shared memory at /dev/shm/tt_device_*_memory
 // SHM files persist across runs (like UMD locks) - manual cleanup: rm /dev/shm/tt_device_*
-struct DeviceMemoryRegion {
+// alignas rather than a trailing GCC aligned attribute (same layout; MSVC needs the
+// alignment up front).
+struct alignas(64) DeviceMemoryRegion {
     // Header information
     uint32_t version;                       // Structure version (for compatibility)
     uint32_t num_active_processes;          // Number of processes currently tracked (in per-PID array)
@@ -83,7 +85,7 @@ struct DeviceMemoryRegion {
         std::atomic<uint64_t> last_update_timestamp;  // Last update from this process
         char process_name[64];                        // Optional: process name for debugging
     } processes[MAX_PROCESSES];
-} __attribute__((aligned(64)));
+};
 
 // Buffer types (matching tt_metal::BufferType)
 enum class ShmBufferType : uint8_t {

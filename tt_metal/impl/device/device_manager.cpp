@@ -13,6 +13,7 @@
 #endif
 #include <windows.h>
 
+#include <numeric>  // std::accumulate; nlohmann-json uses it without including <numeric>
 #include <thread>
 #else
 #include <numa.h>

@@ -31,7 +31,7 @@ public:
     virtual ~DevicePrintParser() = default;
 
     struct TileSliceDynamic {
-        TileSliceHostDev<0> header;
+        TileSliceHostDevHeader header;  // 16B prefix; MSVC cannot embed the zero-length-array type
         std::vector<uint8_t> data;
     };
 

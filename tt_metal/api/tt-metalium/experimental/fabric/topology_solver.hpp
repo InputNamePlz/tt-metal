@@ -546,6 +546,12 @@ private:
 /**
  * @brief Mode for connection count validation
  */
+// <windows.h> defines STRICT as an object-like macro (type-strictness opt-in, consumed only
+// inside the Windows headers themselves), which would mangle the STRICT enumerator below in
+// any TU that included it first.
+#ifdef STRICT
+#undef STRICT
+#endif
 enum class ConnectionValidationMode {
     /// Strict mode: require exact channel counts, fail if not met
     STRICT,

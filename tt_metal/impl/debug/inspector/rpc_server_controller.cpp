@@ -86,7 +86,7 @@ void RpcServerController::run_server() {
 
         // Start the RPC server.
         capnp::TwoPartyServer server(::kj::Own<RpcServer>(&rpc_server_implementation, ::kj::NullDisposer::instance));
-        uint port = listener->getPort();
+        unsigned int port = listener->getPort();
 
         // Signal back to RpcServerController::start that the server is ready to accept connections
         {
