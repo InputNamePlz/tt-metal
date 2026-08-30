@@ -41,12 +41,14 @@
 #define TT_PAD_BYTES(name, n) volatile unsigned char name[n]
 #else
 namespace tt::detail {
-template <int N>
+// Tag makes each zero-size instantiation a distinct type: identically-typed empty members may
+// not overlap, so distinct types are required for [[msvc::no_unique_address]] to erase them all.
+template <int N, int Tag>
 struct PadBytes {
     volatile unsigned char bytes[N];
 };
-template <>
-struct PadBytes<0> {};
+template <int Tag>
+struct PadBytes<0, Tag> {};
 }  // namespace tt::detail
-#define TT_PAD_BYTES(name, n) [[msvc::no_unique_address]] ::tt::detail::PadBytes<(n)> name
+#define TT_PAD_BYTES(name, n) [[msvc::no_unique_address]] ::tt::detail::PadBytes<(n), __COUNTER__> name
 #endif
