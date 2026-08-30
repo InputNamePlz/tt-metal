@@ -47,7 +47,27 @@ AddVersionHeaderTarget()
 # Flags already provided by CMake defaults and therefore omitted here:
 #   Debug:          -O0 -g
 #   RelWithDebInfo: -O2 -g -DNDEBUG  (we keep -O3 below to preserve existing behaviour)
-add_compile_options(
+if(MSVC)
+    add_compile_options(
+        # MSVC baseline: standards conformance and a preprocessor able to handle
+        # variadic macros the way the codebase expects.
+        /permissive-
+        /Zc:preprocessor
+        /Zc:__cplusplus
+        /EHsc
+        /bigobj
+        /utf-8
+        # Preserve the non-standard DEBUG macro behaviour (see GCC/Clang branch below).
+        "$<$<AND:$<CONFIG:Debug,RelWithDebInfo>,$<COMPILE_LANGUAGE:CXX>>:/DDEBUG>"
+    )
+    add_compile_definitions(
+        WIN32_LEAN_AND_MEAN
+        NOMINMAX
+        _CRT_SECURE_NO_WARNINGS
+        _USE_MATH_DEFINES
+    )
+else()
+    add_compile_options(
     # Richer debug info: include macro definitions and use GNU pubnames for faster GDB lookup
     "$<$<CONFIG:Debug,RelWithDebInfo>:-g3>"
     "$<$<CONFIG:Debug,RelWithDebInfo>:-ggnu-pubnames>"
@@ -61,7 +81,8 @@ add_compile_options(
     "$<$<AND:$<CONFIG:Debug,RelWithDebInfo>,$<COMPILE_LANGUAGE:CXX>>:-DDEBUG>"
     # RelWithDebInfo: restore -O3 to match previous behaviour (CMake default is -O2)
     "$<$<CONFIG:RelWithDebInfo>:-O3>"
-)
+    )
+endif()
 
 # Defining build types is the purview of the top-level project
 if(PROJECT_IS_TOP_LEVEL)
@@ -184,14 +205,16 @@ endif()
 #   in order to propagate to the rest of tt_metal, tt_eager, etc.
 ############################################################################################################################
 add_library(metal_common_libs INTERFACE)
-target_link_libraries(
-    metal_common_libs
-    INTERFACE
-        dl
-        pthread
-        hwloc
-        numa
-)
+if(NOT WIN32)
+    target_link_libraries(
+        metal_common_libs
+        INTERFACE
+            dl
+            pthread
+            hwloc
+            numa
+    )
+endif()
 
 # Enable all warnings and treat them as errors by default
 if(NOT DEFINED CMAKE_COMPILE_WARNING_AS_ERROR)
@@ -200,7 +223,16 @@ endif()
 
 set(TT_X86_MARCH "x86-64-v3" CACHE STRING "x86_64 architecture passed to -march")
 
-add_compile_options(
+if(MSVC)
+    add_compile_options(
+        # Rough equivalent of -march=x86-64-v3 (AVX2 implies the v3 feature set on MSVC)
+        "$<$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},AMD64>:/arch:AVX2>"
+        /W3
+        # The following list is not indicative of what we _desire_ only the status quo to build.
+        /wd4996 # 'deprecated-declarations'
+    )
+else()
+    add_compile_options(
     "$<$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},x86_64>:-march=${TT_X86_MARCH}>"
     -fPIC
     -pipe # use pipes instead of tmp files
@@ -225,7 +257,8 @@ add_compile_options(
     "$<$<CXX_COMPILER_ID:GNU>:-Wno-pessimizing-move>"
     "$<$<CXX_COMPILER_ID:GNU>:-Wno-dangling-reference>"
     "$<$<CXX_COMPILER_ID:GNU>:-Wno-overloaded-virtual>"
-)
+    )
+endif()
 
 # Planned to be temporary, remove later.
 if(TT_ENABLE_LIGHT_METAL_TRACE)
@@ -314,7 +347,9 @@ add_subdirectory(tt_stl)
 
 add_subdirectory(tools)
 add_subdirectory(tt_metal)
-add_subdirectory(ttnn)
+if(TT_METAL_BUILD_TTNN)
+    add_subdirectory(ttnn)
+endif()
 if(TT_METAL_BUILD_TESTS OR TTNN_BUILD_TESTS)
     add_subdirectory(${PROJECT_SOURCE_DIR}/tests)
 endif()
