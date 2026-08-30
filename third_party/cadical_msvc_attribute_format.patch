@@ -1,0 +1,17 @@
+--- a/src/cadical.hpp
++++ b/src/cadical.hpp
+@@ -1167,10 +1167,14 @@
+   //
+   // TODO: support for other compilers (beside 'gcc' and 'clang').
+ 
++#if defined(__GNUC__) || defined(__clang__)
+ #define CADICAL_ATTRIBUTE_FORMAT(FORMAT_POSITION, \
+                                  VARIADIC_ARGUMENT_POSITION) \
+   __attribute__ ((format (PRINTF_FORMAT, FORMAT_POSITION, \
+                           VARIADIC_ARGUMENT_POSITION)))
++#else
++#define CADICAL_ATTRIBUTE_FORMAT(FORMAT_POSITION, VARIADIC_ARGUMENT_POSITION)
++#endif
+ 
+   // Messages in a common style.
+   //
