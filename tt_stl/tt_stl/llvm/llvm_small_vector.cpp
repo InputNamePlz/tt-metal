@@ -27,6 +27,7 @@
 #include "memory_alloc.hpp"
 #include <cstdint>
 #include <stdexcept>
+#include <string>  // std::to_string (not transitively included by MSVC <stdexcept>)
 
 using namespace ttsl::detail::llvm;
 
