@@ -19,10 +19,23 @@
 #include <system_error>
 #include <vector>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+
+#include <atomic>
+#include <process.h>
+#else
 #include <fcntl.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#endif
 
 #include <tt-logger/tt-logger.hpp>
 
@@ -112,6 +125,190 @@ std::vector<std::string> build_gpp_argv(
     return args;
 }
 
+#ifdef _WIN32
+
+namespace {
+
+std::wstring to_wide(const std::string& s) {
+    if (s.empty()) {
+        return {};
+    }
+    int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), static_cast<int>(s.size()), nullptr, 0);
+    std::wstring out(static_cast<std::size_t>(len), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, s.c_str(), static_cast<int>(s.size()), out.data(), len);
+    return out;
+}
+
+// Append |arg| to |cmdline| quoted per the Microsoft CRT command-line parsing rules
+// (the inverse of the argv splitting done by parse_cmdline/CommandLineToArgvW), so the
+// child's argv matches |arg| byte-for-byte:
+//   - N backslashes before a '"' become 2N backslashes + escaped quote,
+//   - N backslashes at the end of a quoted arg become 2N backslashes,
+//   - backslashes anywhere else are literal.
+void append_quoted_arg(std::string& cmdline, const std::string& arg) {
+    if (!arg.empty() && arg.find_first_of(" \t\n\v\"") == std::string::npos) {
+        cmdline += arg;  // No quoting needed; keep the command line readable in logs.
+        return;
+    }
+    cmdline += '"';
+    std::size_t backslashes = 0;
+    for (char c : arg) {
+        if (c == '\\') {
+            ++backslashes;
+            continue;
+        }
+        if (c == '"') {
+            cmdline.append(backslashes * 2 + 1, '\\');
+        } else {
+            cmdline.append(backslashes, '\\');
+        }
+        backslashes = 0;
+        cmdline += c;
+    }
+    cmdline.append(backslashes * 2, '\\');  // Trailing backslashes must not escape the closing quote.
+    cmdline += '"';
+}
+
+// Quote |arg| for a GCC @response-file: gcc splits response files on whitespace and honors
+// double quotes with backslash escapes, so wrapping every arg in quotes and escaping '\' and '"'
+// round-trips arbitrary content (including the -DFULL_KERNEL_NAME="<name>" defines).
+void append_response_file_arg(std::string& out, const std::string& arg) {
+    out += '"';
+    for (char c : arg) {
+        if (c == '\\' || c == '"') {
+            out += '\\';
+        }
+        out += c;
+    }
+    out += "\"\n";
+}
+
+}  // namespace
+
+bool exec_command(const std::vector<std::string>& args, const std::string& working_dir, const std::string& log_file) {
+    if (args.empty()) {
+        return false;
+    }
+
+    // CreateProcessW caps the command line at 32767 chars. g++ (the only program spawned through
+    // here) accepts @file response files, so overflow the tail of the argv into one when the
+    // assembled line approaches the ceiling. Kernel compiles with large define sets get here.
+    std::string cmdline;
+    append_quoted_arg(cmdline, args[0]);
+    std::string tail;
+    for (std::size_t i = 1; i < args.size(); ++i) {
+        tail += ' ';
+        append_quoted_arg(tail, args[i]);
+    }
+
+    constexpr std::size_t kMaxCmdline = 30000;  // Headroom below the 32767-char hard limit.
+    std::string response_path;
+    if (cmdline.size() + tail.size() > kMaxCmdline) {
+        static std::atomic<std::uint64_t> response_counter{0};
+        std::string contents;
+        for (std::size_t i = 1; i < args.size(); ++i) {
+            append_response_file_arg(contents, args[i]);
+        }
+        // Unique per process and per call: concurrent kernel compiles share log/out dirs.
+        std::string base = !log_file.empty() ? log_file : (std::filesystem::temp_directory_path() / "tt_jit").string();
+        response_path =
+            fmt::format("{}.{}_{}.rsp", base, ::_getpid(), response_counter.fetch_add(1, std::memory_order_relaxed));
+        std::ofstream rsp(response_path, std::ios::binary);
+        rsp << contents;
+        rsp.close();
+        if (rsp.fail()) {
+            log_error(tt::LogBuildKernels, "Failed to write response file '{}'", response_path);
+            return false;
+        }
+        cmdline += " @";
+        cmdline += response_path;
+    } else {
+        cmdline += tail;
+    }
+
+    HANDLE log_handle = INVALID_HANDLE_VALUE;
+    if (!log_file.empty()) {
+        SECURITY_ATTRIBUTES sa{};
+        sa.nLength = sizeof(sa);
+        sa.bInheritHandle = TRUE;  // The child writes stdout/stderr through this handle.
+        log_handle = CreateFileW(
+            to_wide(log_file).c_str(),
+            FILE_APPEND_DATA,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            &sa,
+            OPEN_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL,
+            nullptr);
+        if (log_handle == INVALID_HANDLE_VALUE) {
+            log_error(
+                tt::LogBuildKernels, "Failed to open log file '{}': error {}", log_file, static_cast<unsigned>(GetLastError()));
+            return false;
+        }
+    }
+
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    if (log_handle != INVALID_HANDLE_VALUE) {
+        si.dwFlags |= STARTF_USESTDHANDLES;
+        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+        si.hStdOutput = log_handle;
+        si.hStdError = log_handle;
+    }
+
+    // CreateProcessW may scribble on the command-line buffer, so it must be mutable.
+    std::wstring wcmdline = to_wide(cmdline);
+    std::wstring wcwd = to_wide(working_dir);
+    PROCESS_INFORMATION pi{};
+    // lpApplicationName stays null so the exe name resolves through PATH (with an implied
+    // .exe extension), matching posix_spawnp's PATH search on Linux.
+    BOOL ok = CreateProcessW(
+        nullptr,
+        wcmdline.data(),
+        nullptr,
+        nullptr,
+        /*bInheritHandles=*/log_handle != INVALID_HANDLE_VALUE,
+        0,
+        nullptr,
+        working_dir.empty() ? nullptr : wcwd.c_str(),
+        &si,
+        &pi);
+
+    if (log_handle != INVALID_HANDLE_VALUE) {
+        CloseHandle(log_handle);
+    }
+
+    bool success = false;
+    if (!ok) {
+        log_error(
+            tt::LogBuildKernels,
+            "CreateProcessW failed for '{}': error {}",
+            args[0],
+            static_cast<unsigned>(GetLastError()));
+    } else {
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        DWORD exit_code = 1;
+        if (GetExitCodeProcess(pi.hProcess, &exit_code)) {
+            success = (exit_code == 0);
+        } else {
+            log_error(
+                tt::LogBuildKernels,
+                "GetExitCodeProcess failed for '{}': error {}",
+                args[0],
+                static_cast<unsigned>(GetLastError()));
+        }
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
+
+    if (!response_path.empty()) {
+        std::error_code ec;
+        std::filesystem::remove(response_path, ec);  // Best-effort cleanup; the compile already ran.
+    }
+    return success;
+}
+
+#else  // !_WIN32
+
 bool exec_command(const std::vector<std::string>& args, const std::string& working_dir, const std::string& log_file) {
     if (args.empty()) {
         return false;
@@ -166,6 +363,38 @@ bool exec_command(const std::vector<std::string>& args, const std::string& worki
     }
 
     return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+
+#endif  // _WIN32
+
+bool grep_lines_to_file(
+    const std::string& dir, const std::string& suffix, const std::string& needle, const std::string& out_file) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    std::ofstream out(out_file, std::ios::app);
+    if (!out.is_open()) {
+        return false;
+    }
+    bool matched = false;
+    for (const auto& entry : fs::directory_iterator(dir, ec)) {
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        std::string name = entry.path().filename().string();
+        if (name.size() < suffix.size() || name.compare(name.size() - suffix.size(), suffix.size(), suffix) != 0) {
+            continue;
+        }
+        std::ifstream in(entry.path());
+        std::string line;
+        while (std::getline(in, line)) {
+            if (line.find(needle) != std::string::npos) {
+                // Match multi-file grep output: each hit prefixed with its file path.
+                out << entry.path().string() << ':' << line << '\n';
+                matched = true;
+            }
+        }
+    }
+    return matched && !out.fail();
 }
 
 std::vector<std::uint8_t> read_file_bytes(const std::string& path) {
@@ -278,12 +507,17 @@ std::string FileRenamer::generate_temp_path(const std::filesystem::path& target_
     // Formatted in one call rather than through an intermediate tag string: this runs
     // once per source file during JIT setup, and the extra allocation measured more
     // expensive than the getpid() syscall it accompanies.
+#ifdef _WIN32
+    const auto pid = ::_getpid();
+#else
+    const auto pid = ::getpid();
+#endif
     std::filesystem::path path(target_path);
     if (path.has_extension()) {
-        path.replace_extension(fmt::format("{}_{}{}", unique_id_, ::getpid(), path.extension().string()));
+        path.replace_extension(fmt::format("{}_{}{}", unique_id_, pid, path.extension().string()));
         return path.string();
     }
-    return fmt::format("{}.{}_{}", target_path.string(), unique_id_, ::getpid());
+    return fmt::format("{}.{}_{}", target_path.string(), unique_id_, pid);
 }
 
 FileRenamer::FileRenamer(const std::string& target_path) :

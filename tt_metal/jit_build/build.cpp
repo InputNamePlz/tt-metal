@@ -26,6 +26,10 @@
 #include <string_view>
 #include <vector>
 
+#ifdef _WIN32
+#include <process.h>  // _getpid
+#endif
+
 #include <enchantum/enchantum.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -384,6 +388,26 @@ void JitBuildEnv::init(
         // Do not hash compiler version when generating compiler logs
         // so that we may compare them between different compilers
         // without undue difficulty.
+#ifdef _WIN32
+    } else {
+        // No popen() on Windows: capture `g++ --version` through the shared shell-free spawn
+        // wrapper into a temp file and hash its first line. gpp_ may carry a launcher prefix
+        // (e.g. ccache), so tokenize it the same way build_gpp_argv does.
+        auto ver_path = fs::temp_directory_path() / fmt::format("tt_gpp_version_{}.log", ::_getpid());
+        std::error_code ec;
+        fs::remove(ver_path, ec);  // The log is opened in append mode; start clean.
+        auto args = tt::jit_build::utils::tokenize_flags(this->gpp_);
+        args.push_back("--version");
+        if (tt::jit_build::utils::exec_command(args, "", ver_path.string())) {
+            std::ifstream ver_file(ver_path);
+            std::string line;
+            if (std::getline(ver_file, line)) {
+                hasher.update(std::string_view{line});
+            }
+        }
+        fs::remove(ver_path, ec);
+    }
+#else
     } else if (FILE* pipe = popen(fmt::format("exec {} --version", this->gpp_).c_str(), "r")) {
         // Read the sfpi compiler version directly from the compiler
         // we're using.  Compiler changes invalidate the cache.
@@ -398,6 +422,7 @@ void JitBuildEnv::init(
         }
         pclose(pipe);
     }
+#endif
 
     build_key_ = hasher.digest();
 
@@ -740,7 +765,11 @@ bool JitBuildState::need_link(const string& out_dir) const {
 }
 
 void JitBuildState::link(const string& out_dir, const JitBuildSettings* settings, const string& link_objs) const {
-    string cmd{"cd " + out_dir + " && " + env_.gpp_};
+    // The link line proper, without the "cd <out_dir> && " shell prefix: on Linux it is run
+    // through the shell with that prefix, on Windows it is tokenized and spawned shell-free
+    // with out_dir as the child's cwd. Neither path quotes spaces in paths, identically.
+    string link_cmd{env_.gpp_};
+    string& cmd = link_cmd;
     string lflags = this->lflags_;
     if (env_.get_rtoptions().get_build_map_enabled()) {
         lflags += "-Wl,-Map=" + out_dir + this->target_name_ + ".map ";
@@ -769,14 +798,22 @@ void JitBuildState::link(const string& out_dir, const JitBuildSettings* settings
     std::string elf_name = out_dir + this->target_name_ + ".elf";
     jit_build::utils::FileRenamer elf_file(elf_name);
     cmd += "-o " + elf_file.path();
+    const string shell_cmd = "cd " + out_dir + " && " + link_cmd;
     if (env_.get_rtoptions().get_log_kernels_compilation_commands()) {
-        log_info(tt::LogBuildKernels, "    g++ link cmd: {}", cmd);
+        log_info(tt::LogBuildKernels, "    g++ link cmd: {}", shell_cmd);
     }
     jit_build::utils::FileRenamer log_file(elf_name + ".log");
     fs::remove(log_file.path());
+#ifdef _WIN32
+    // No shell: split the line on whitespace (exactly as faithful as the unquoted shell path)
+    // and spawn g++ directly with out_dir as its cwd.
+    bool result = tt::jit_build::utils::exec_command(
+        tt::jit_build::utils::tokenize_flags(link_cmd), out_dir, log_file.path());
+#else
     bool result =
-        tt::jit_build::utils::run_command(cmd, log_file.path(), env_.get_rtoptions().get_dump_build_commands());
-    report_result(this->target_name_, "link", cmd, log_file.path(), result);
+        tt::jit_build::utils::run_command(shell_cmd, log_file.path(), env_.get_rtoptions().get_dump_build_commands());
+#endif
+    report_result(this->target_name_, "link", shell_cmd, log_file.path(), result);
     jit_build::utils::FileRenamer dephash_file(elf_name + ".dephash");
     std::ofstream hash_file(dephash_file.path());
     jit_build::write_dependency_hashes({{elf_name, std::move(link_deps)}}, out_dir, elf_name, hash_file);
@@ -828,9 +865,16 @@ void JitBuildState::extract_zone_src_locations(const std::string& out_dir) const
             tt::jit_build::utils::create_file(tt::tt_metal::NEW_PROFILER_ZONE_SRC_LOCATIONS_LOG);
         }
 
+#ifdef _WIN32
+        // No shell grep: scan the compile logs in-process. The zone-location parser only keys
+        // on the "#pragma message:" payload, so the grep-style "<path>:" prefix is cosmetic.
+        tt::jit_build::utils::grep_lines_to_file(
+            out_dir, ".o.log", "KERNEL_PROFILER", tt::tt_metal::NEW_PROFILER_ZONE_SRC_LOCATIONS_LOG);
+#else
         auto cmd = fmt::format("grep KERNEL_PROFILER {}*.o.log", out_dir);
         tt::jit_build::utils::run_command(
             cmd, tt::tt_metal::NEW_PROFILER_ZONE_SRC_LOCATIONS_LOG, env_.get_rtoptions().get_dump_build_commands());
+#endif
     }
 }
 
