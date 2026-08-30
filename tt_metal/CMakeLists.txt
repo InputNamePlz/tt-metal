@@ -87,7 +87,10 @@ check_function_exists(
     HAVE_BACKTRACE
 )
 
-if(NOT HAVE_BACKTRACE)
+if(WIN32)
+    # No backtrace()/libexecinfo on Windows; stack traces use CaptureStackBackTrace.
+    set(EXECINFO_LIB "")
+elseif(NOT HAVE_BACKTRACE)
     find_library(EXECINFO_LIB execinfo)
 else()
     set(EXECINFO_LIB "")
@@ -131,7 +134,7 @@ target_include_directories(
     PRIVATE
         api/tt-metalium # FIXME: Re-home the tests and remove this
 )
-target_compile_options(tt_metal PUBLIC -Wno-int-to-pointer-cast)
+target_compile_options(tt_metal PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-int-to-pointer-cast>)
 
 if(TT_METAL_USE_EMULE)
     target_compile_definitions(tt_metal PRIVATE TT_METAL_USE_EMULE=1)
