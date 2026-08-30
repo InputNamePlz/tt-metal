@@ -788,8 +788,13 @@ void MetalContext::on_dispatch_timeout_detected() {
             int result = std::system(command.c_str());
 
             if (result != 0) {
+#ifdef _WIN32
+                // system() on Windows returns the command's exit code directly.
+                log_warning(tt::LogMetal, "Timeout command '{}' returned non-zero exit code: {}", command, result);
+#else
                 log_warning(
                     tt::LogMetal, "Timeout command '{}' returned non-zero exit code: {}", command, WEXITSTATUS(result));
+#endif
             }
         }
     }

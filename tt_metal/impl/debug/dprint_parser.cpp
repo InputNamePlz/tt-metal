@@ -967,7 +967,7 @@ DevicePrintParser::ArgumentValue DevicePrintParserImpl<PointerSize>::read_argume
         case 't':  // TileSlice, but `pad` field carried info about MAX_BYTES
         {
             TileSliceDynamic tile_slice;
-            tile_slice.header = read_value_from_payload<TileSliceHostDev<0>>(payload_bytes, offset);
+            tile_slice.header = read_value_from_payload<TileSliceHostDevHeader>(payload_bytes, offset);
             tile_slice.data.resize(tile_slice.header.pad);
             for (size_t i = 0; i < tile_slice.header.pad; ++i) {
                 tile_slice.data[i] = read_value_from_payload<uint8_t>(payload_bytes, offset);

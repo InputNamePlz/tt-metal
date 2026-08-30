@@ -4,6 +4,10 @@
 
 #include "tt_metal/impl/allocator/algorithms/free_list_opt.hpp"
 
+#ifdef _WIN32
+using ssize_t = std::ptrdiff_t;  // POSIX type used by the file-scope helpers below
+#endif
+
 #include <tt_stl/assert.hpp>
 #include <algorithm>
 #include <array>

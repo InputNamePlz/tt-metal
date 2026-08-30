@@ -18,6 +18,8 @@
 
 #include <process.h>
 #define getpid _getpid
+// Sentinel kept so shared logging/teardown code compiles; Windows mappings never produce it.
+#define MAP_FAILED (reinterpret_cast<void*>(-1))
 #else
 #include <sys/mman.h>
 #include <sys/stat.h>

@@ -47,7 +47,12 @@ namespace ttsl {
  * This helps reduce power consumption and improve performance of other
  * threads sharing the same core during busy-wait loops.
  */
-__attribute__((always_inline)) inline void pause() {
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((always_inline)) inline
+#else
+__forceinline
+#endif
+void pause() {
 #if defined(__x86_64__) || defined(_M_X64)
     _mm_pause();
 #elif defined(__aarch64__) || defined(_M_ARM64)
@@ -83,7 +88,13 @@ __attribute__((always_inline)) inline void pause() {
  * @param predicate A callable that returns true when the wait should end
  */
 template <uint32_t N_SPINS = 100, uint32_t MAX_WAIT_US = 16, typename... Ts>
-__attribute__((flatten)) inline void nice_spin_until(auto predicate, const Ts&... args) {
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((flatten)) inline
+#else
+// flatten is a GCC/Clang inlining hint with no MSVC equivalent; plain inline is fine.
+inline
+#endif
+void nice_spin_until(auto predicate, const Ts&... args) {
     uint32_t counter = 0;
     uint32_t sleep_us = 1;
     while (!predicate(args...)) {
