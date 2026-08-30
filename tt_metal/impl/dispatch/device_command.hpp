@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "hostdevcommon/tt_compiler.h"
 #include <tt_stl/aligned_allocator.hpp>
 #include <algorithm>
 #include <bit>
@@ -175,7 +176,7 @@ public:
     void update_cmd_sequence(uint32_t cmd_offsetB, const void* new_data, uint32_t data_sizeB);
 
     void add_data(const void* data, uint32_t data_size_to_copyB, uint32_t cmd_write_offset_incrementB)
-        __attribute((nonnull(2)));
+        TT_ATTR_NONNULL(2);
 
     void align_write_offset();
 
@@ -301,7 +302,7 @@ private:
 
     void deepcopy(const DeviceCommand& other);
 
-    void memcpy(void* __restrict dst, const void* __restrict src, size_t n) __attribute__((nonnull(2, 3)));
+    void memcpy(void* __restrict dst, const void* __restrict src, size_t n) TT_ATTR_NONNULL(2, 3);
 
     template <typename Command>
     void zero(Command* cmd) {

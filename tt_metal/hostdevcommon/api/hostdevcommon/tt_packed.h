@@ -15,10 +15,20 @@
 // #pragma pack(push, 1) / pack(pop) instead.
 #if defined(__GNUC__) || defined(__clang__)
 #define TT_PACKED __attribute__((packed))
+#define TT_PACKED_ALIGNED(n) __attribute__((packed, aligned(n)))
+// For a struct whose natural GCC alignment is already n this is a no-op on GCC/Clang; inside
+// an MSVC TT_PACK region it restores the alignment (and trailing-padding size rounding) that
+// pack(1) would otherwise strip. Use it to keep byte-identical sizes without adding `packed`
+// (which would change GCC member-access codegen on the device).
+#define TT_ALIGNED(n) __attribute__((aligned(n)))
 #define TT_PACK_BEGIN
 #define TT_PACK_END
 #else
 #define TT_PACKED
+// Inside a TT_PACK_BEGIN/END region, alignas(n) reproduces GCC's packed+aligned(n): members
+// are byte-packed by the pragma while the struct's alignment (and size rounding) is n.
+#define TT_PACKED_ALIGNED(n) alignas(n)
+#define TT_ALIGNED(n) alignas(n)
 #define TT_PACK_BEGIN __pragma(pack(push, 1))
 #define TT_PACK_END __pragma(pack(pop))
 #endif

@@ -41,15 +41,18 @@ static_assert(
     "increased and the version must be incremented as this struct will no longer be backwards "
     "compatible");
 
-struct __attribute__((packed, aligned(4))) PrefetchCoreTelemetry {
+TT_PACK_BEGIN
+struct TT_PACKED_ALIGNED(4) PrefetchCoreTelemetry {
     uint32_t version = DISPATCH_TELEMETRY_VERSION;
     uint32_t signature = PREFETCH_CORE_TELEMETRY_SIGNATURE;
     uint32_t upstream_blocked_count = 0;
     uint32_t upstream_unblocked_count = 0;
     uint32_t command_count = 0;
 };
+TT_PACK_END
 
-struct __attribute__((packed, aligned(8))) DispatchCoreTelemetry {
+TT_PACK_BEGIN
+struct TT_PACKED_ALIGNED(8) DispatchCoreTelemetry {
     uint32_t version = DISPATCH_TELEMETRY_VERSION;
     uint32_t signature = DISPATCH_CORE_TELEMETRY_SIGNATURE;
 
@@ -92,12 +95,14 @@ struct __attribute__((packed, aligned(8))) DispatchCoreTelemetry {
     // dispatch_s writes
     uint32_t workers_per_sub_device[RESERVED_SUB_DEVICE_SPACE] = {0};
 };
+TT_PACK_END
 
 // Used to determine the size of the L1 buffer that dispatch_mem_map allocates
 // Note: If new telemetry types are added, update this calculation
 constexpr size_t DISPATCH_TELEMETRY_SIZE = std::max(sizeof(DispatchCoreTelemetry), sizeof(PrefetchCoreTelemetry));
 
-struct __attribute__((packed, aligned(4))) DispatchTelemetryControl {
+TT_PACK_BEGIN
+struct TT_PACKED_ALIGNED(4) DispatchTelemetryControl {
     uint32_t sub_device_worker_counts_update = 0;
     uint32_t worker_stream_reset_update = 0;
     uint32_t compute_terminate = 0;
@@ -111,6 +116,7 @@ struct __attribute__((packed, aligned(4))) DispatchTelemetryControl {
     // Records value of the stream semaphore when launching a new workload.
     uint32_t launched_work_start_stream_sem[RESERVED_SUB_DEVICE_SPACE] = {0};
 };
+TT_PACK_END
 
 constexpr uint32_t INVALID_SMC_DISPATCH_CORE_COORDS = UINT32_MAX;
 // Packed virtual dispatch-core coordinates. These are consumed by host telemetry readers and are not NOC coords.

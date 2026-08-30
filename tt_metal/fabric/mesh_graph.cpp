@@ -232,7 +232,9 @@ std::unordered_map<ChipId, RouterEdge> MeshGraph::get_valid_connections(
 
 void MeshGraph::initialize_from_mgd(
     const MeshGraphDescriptor& mgd, std::optional<FabricConfig> fabric_config, bool is_ubb_galaxy) {
-    static const std::unordered_map<const proto::Architecture, tt::ARCH> proto_arch_to_arch = {
+    // Key must not be const-qualified: std::hash<const T> has no specialization (MSVC rejects;
+    // libstdc++ happened to accept). Identical behavior.
+    static const std::unordered_map<proto::Architecture, tt::ARCH> proto_arch_to_arch = {
         {proto::Architecture::WORMHOLE_B0, tt::ARCH::WORMHOLE_B0},
         {proto::Architecture::BLACKHOLE, tt::ARCH::BLACKHOLE},
     };

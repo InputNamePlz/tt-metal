@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 #include <tt_stl/assert.hpp>
 #include <tt_stl/aligned_allocator.hpp>
 #include <umd/device/driver_atomics.hpp>
@@ -149,11 +150,14 @@ void memcpy_to_device(void* __restrict dst, const void* __restrict src, size_t n
     }
 }
 #else
-// Fallback implementation for non-x86 architectures
+// Fallback implementation for non-x86 architectures (and MSVC, which does not define
+// __x86_64__; wiring MSVC onto the streaming-store path above is a future optimization).
 // Uses standard memcpy since SIMD optimizations aren't available
 template <bool debug_sync = false>
-__attribute((nonnull(1, 2))) static inline void memcpy_to_device(
-    void* __restrict dst, const void* __restrict src, size_t n) {
+#if defined(__GNUC__) || defined(__clang__)
+__attribute((nonnull(1, 2)))
+#endif
+static inline void memcpy_to_device(void* __restrict dst, const void* __restrict src, size_t n) {
     memcpy(dst, src, n);
     if constexpr (debug_sync) {
         tt_driver_atomics::sfence();

@@ -21,6 +21,10 @@
 
 namespace tt::tt_metal {
 
+#ifdef _WIN32
+using ssize_t = std::ptrdiff_t;  // POSIX type; the Windows CRT does not provide it
+#endif
+
 BankManager::AllocatorDependencies::AllocatorDependencies() = default;
 
 BankManager::AllocatorDependencies::AllocatorDependencies(

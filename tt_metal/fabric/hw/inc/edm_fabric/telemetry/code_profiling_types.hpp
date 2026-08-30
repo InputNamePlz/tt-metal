@@ -6,6 +6,8 @@
 
 #include <cstdint>
 #include <bit>
+
+#include "hostdevcommon/tt_compiler.h"
 /**
  * @brief Enumeration of code profiling timer types as bitfield
  * Each timer type is a unique bit position, allowing multiple timers to be enabled simultaneously
@@ -44,5 +46,5 @@ constexpr uint32_t get_num_code_profiling_timer_types() {
  */
 constexpr uint32_t get_max_code_profiling_timer_types() {
     // get the bit offset of LAST
-    return __builtin_ctz(static_cast<uint32_t>(CodeProfilingTimerType::LAST));
+    return tt::compiler::count_trailing_zeros32(static_cast<uint32_t>(CodeProfilingTimerType::LAST));
 }
