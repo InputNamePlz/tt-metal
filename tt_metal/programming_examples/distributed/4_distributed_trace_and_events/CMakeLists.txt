@@ -5,7 +5,7 @@ target_link_libraries(
     distributed_trace_and_events
     PUBLIC
         tt_metal
-        pthread
+        "$<$<NOT:$<PLATFORM_ID:Windows>>:pthread>"
 )
 
 if(TARGET TT::CommonPCH)
