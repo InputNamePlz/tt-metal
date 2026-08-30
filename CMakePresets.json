@@ -109,6 +109,7 @@
           "BUILD_PROGRAMMING_EXAMPLES": {"value": "ON"},
           "TT_METAL_BUILD_TTNN": {"value": "OFF"},
           "TT_SKIP_HW_TOOLCHAIN": {"value": "ON"},
+          "TT_UMD_BUILD_SIMULATION": {"value": "OFF"},
           "TT_UNITY_BUILDS": {"value": "OFF"},
           "CMAKE_COMPILE_WARNING_AS_ERROR": {"value": "OFF"}
         }
