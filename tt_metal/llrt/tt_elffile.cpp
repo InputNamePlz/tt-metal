@@ -4,6 +4,23 @@
 
 #include "tt_elffile.hpp"
 
+#ifdef _WIN32
+// No system <elf.h> on Windows; use the bundled subset. File I/O goes through
+// CreateFileMapping/MapViewOfFile instead of mmap.
+#include "tt_elf_compat.h"
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+// windows.h macro-renames LoadImage to LoadImageA/W; this file has its own LoadImage virtual.
+#undef LoadImage
+
+#include <cerrno>
+#include <fstream>
+#else
 #include <elf.h>
 #include <cerrno>
 #include <fcntl.h>
@@ -11,6 +28,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#endif
 #include <algorithm>
 #include <cstring>
 #include <iterator>
@@ -45,7 +63,8 @@ std::string format(std::string m, Args&&...) {
 #endif
 
 // Having the same endianness as RISCV makes things easier.
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+// (MSVC does not define __BYTE_ORDER__; every Windows target is little endian.)
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error "Host must be little endian"
 #endif
 
@@ -147,7 +166,10 @@ private:
     [[nodiscard]] auto GetPhdrs() const -> std::span<const Phdr> { return phdrs_; }
     [[nodiscard]] auto GetShdrs() const -> std::span<Shdr> { return shdrs_; }
     [[nodiscard]] auto GetShdr(unsigned ix) const -> const Shdr& { return shdrs_[ix]; }
-    using Impl::GetContents;
+    // A forwarding wrapper instead of `using Impl::GetContents;`: MSVC (wrongly) rejects a
+    // using-declaration naming a private member of the enclosing class, though a direct call
+    // from this nested class is fine. Identical semantics either way.
+    [[nodiscard]] auto GetContents() const -> std::span<std::byte>& { return Impl::GetContents(); }
     [[nodiscard]] auto GetContents(const Phdr& phdr) const -> std::span<std::byte> {
         return GetContents().subspan(phdr.p_offset, phdr.p_filesz);
     }
@@ -268,7 +290,11 @@ private:
 ElfFile::~ElfFile() {
     ReleaseImpl();
     if (!contents_.empty()) {
+#ifdef _WIN32
+        UnmapViewOfFile(contents_.data());
+#else
         munmap(contents_.data(), contents_.size());
+#endif
     }
 }
 
@@ -290,6 +316,32 @@ void ElfFile::ReadImage(const std::string& path) {
 }
 
 ElfFile::Impl* ElfFile::Impl::Make(ElfFile& owner, const std::string& path) {
+#ifdef _WIN32
+    // Copy-on-write mapping: same semantics as mmap(PROT_READ|PROT_WRITE, MAP_PRIVATE) --
+    // the image is mutated in place (weakening, XIP translation) without touching the file.
+    void* buffer = nullptr;
+    std::uint64_t file_size = 0;
+    HANDLE file = CreateFileA(
+        path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (file != INVALID_HANDLE_VALUE) {
+        LARGE_INTEGER size{};
+        if (GetFileSizeEx(file, &size) && size.QuadPart > 0) {
+            HANDLE mapping = CreateFileMappingW(file, nullptr, PAGE_WRITECOPY, 0, 0, nullptr);
+            if (mapping != nullptr) {
+                buffer = MapViewOfFile(mapping, FILE_MAP_COPY, 0, 0, 0);
+                file_size = static_cast<std::uint64_t>(size.QuadPart);
+                // The view keeps its own reference; the mapping and file handles can go.
+                CloseHandle(mapping);
+            }
+        }
+        CloseHandle(file);
+    }
+    if (buffer == nullptr) {
+        TT_THROW("{}: cannot map elf file into memory: error {}", path, GetLastError());
+    }
+
+    owner.contents_ = std::span(reinterpret_cast<std::byte*>(buffer), file_size);
+#else
     int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
     struct stat st{};
     void* buffer = MAP_FAILED;
@@ -305,6 +357,7 @@ ElfFile::Impl* ElfFile::Impl::Make(ElfFile& owner, const std::string& path) {
     }
 
     owner.contents_ = std::span(reinterpret_cast<std::byte*>(buffer), st.st_size);
+#endif
 
     // Sniff the header
     const unsigned char* ident = reinterpret_cast<const unsigned char*>(buffer);
@@ -329,6 +382,15 @@ ElfFile::Impl* ElfFile::Impl::Make(ElfFile& owner, const std::string& path) {
 }
 
 void ElfFile::WriteImage(std::string const& path) {
+#ifdef _WIN32
+    // Binary-mode stream: the CRT's default text mode would mangle 0x0a bytes.
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    out.write(reinterpret_cast<const char*>(contents_.data()), contents_.size());
+    out.close();
+    if (out.fail()) {
+        TT_THROW("{}: cannot write elf file: {}", path, strerror(errno));
+    }
+#else
     // open is an os-defined varadic function, it the API to use.
     int file_descriptor = open(
         path.c_str(),
@@ -342,6 +404,7 @@ void ElfFile::WriteImage(std::string const& path) {
     if (failed) {
         TT_THROW("{}: cannot map elf file into memory: {}", path, strerror(errno));
     }
+#endif
 }
 
 void ElfFile::WeakenDataSymbols(std::span<std::string_view const> strong) { pimpl_->WeakenDataSymbols(strong); }
@@ -629,7 +692,8 @@ public:
         std::copy(
             syms_out_[GLOBAL].begin(),
             syms_out_[GLOBAL].end(),
-            std::next(syms_in_.begin(), ssize_t(syms_out_[LOCAL].size())));
+            // ptrdiff_t rather than ssize_t: same width everywhere we build, and MSVC has no ssize_t.
+            std::next(syms_in_.begin(), std::ptrdiff_t(syms_out_[LOCAL].size())));
     }
 };
 
