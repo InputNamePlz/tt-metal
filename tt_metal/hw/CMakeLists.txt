@@ -42,8 +42,24 @@ set(IRAM_OPTIONS
 set(SFPI_BASE "${PROJECT_SOURCE_DIR}/runtime")
 file(MAKE_DIRECTORY ${SFPI_BASE})
 
-# sfpi-info.sh generates a cmake script, which we include just below.
-execute_process(
+if(TT_SKIP_HW_TOOLCHAIN)
+    # Configure-only aid: no SFPI toolchain is acquired and no device hw libs or linker
+    # scripts are generated.  hw_toolchain becomes a no-op target.
+    message(STATUS "TT_SKIP_HW_TOOLCHAIN is set: skipping SFPI toolchain and device hw lib generation")
+elseif(TT_SFPI_ROOT)
+    # Use a pre-existing toolchain verbatim; skip sfpi-info.sh, download, and validation.
+    set(GPP_CMD "${TT_SFPI_ROOT}/compiler/bin/riscv-tt-elf-g++${CMAKE_EXECUTABLE_SUFFIX}")
+    if(NOT EXISTS "${GPP_CMD}")
+        # Allow suffix-less binaries even on Windows (e.g. MSYS-built toolchains)
+        set(GPP_CMD "${TT_SFPI_ROOT}/compiler/bin/riscv-tt-elf-g++")
+    endif()
+    if(NOT EXISTS "${GPP_CMD}")
+        message(FATAL_ERROR "TT_SFPI_ROOT is set but '${TT_SFPI_ROOT}/compiler/bin/riscv-tt-elf-g++' does not exist.")
+    endif()
+    message(STATUS "Using SFPI compiler from TT_SFPI_ROOT: ${GPP_CMD}")
+else()
+    # sfpi-info.sh generates a cmake script, which we include just below.
+    execute_process(
     COMMAND
         ${CMAKE_CURRENT_SOURCE_DIR}/../sfpi-info.sh CMAKE txz
     OUTPUT_FILE ${SFPI_BASE}/sfpi-version.cmake
@@ -169,7 +185,17 @@ if(NOT TT_USE_SYSTEM_SFPI)
         )
     endif()
 endif()
+endif() # TT_SKIP_HW_TOOLCHAIN / TT_SFPI_ROOT / default acquisition
 
+# The host compiler preprocesses linker scripts (-E -P -x c).  MSVC's cl has no such
+# GNU-style preprocessing interface, so use the SFPI cross-g++ for it there.
+if(MSVC)
+    set(LD_PP_COMMAND "${GPP_CMD}")
+else()
+    set(LD_PP_COMMAND "${CMAKE_CXX_COMPILER}")
+endif()
+
+if(NOT TT_SKIP_HW_TOOLCHAIN)
 # old-style
 foreach(ARCH IN LISTS ARCHS)
     set(HW_INCLUDE "${PROJECT_SOURCE_DIR}/tt_metal/hw/inc/internal/tt-1xx/${ARCH}")
@@ -195,7 +221,7 @@ foreach(ARCH IN LISTS ARCHS)
                     OUTPUT
                         ${PROJECT_SOURCE_DIR}/${HW_OUTPUT_DIR}/${HW_OUTPUT_FILE}
                     COMMAND
-                        ${CMAKE_CXX_COMPILER} ${IRAM_FLAG} -I${HW_INCLUDE} -E -P -x c -o
+                        ${LD_PP_COMMAND} ${IRAM_FLAG} -I${HW_INCLUDE} -E -P -x c -o
                         ${PROJECT_SOURCE_DIR}/${HW_OUTPUT_DIR}/${HW_OUTPUT_FILE}
                         ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/erisc-b0-${SCRIPT_TYPE}.ld
                     DEPENDS
@@ -227,7 +253,7 @@ foreach(ARCH IN LISTS ARCHS)
                 COMMAND
                     ${CMAKE_COMMAND} -E make_directory ${HW_OUTPUT_DIR}
                 COMMAND
-                    ${CMAKE_CXX_COMPILER} -DTYPE_${TYPE_DEFINE} -DCOMPILE_FOR_${PROC_DEFINE} -DARCH_${ARCH_DEFINE}
+                    ${LD_PP_COMMAND} -DTYPE_${TYPE_DEFINE} -DCOMPILE_FOR_${PROC_DEFINE} -DARCH_${ARCH_DEFINE}
                     -I${HW_INCLUDE} -E -P -x c -o ${PROJECT_SOURCE_DIR}/${HW_OUTPUT_DIR}/${HW_OUTPUT_FILE}
                     ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/main.ld
                 DEPENDS
@@ -281,7 +307,7 @@ foreach(ARCH_CPU IN LISTS TLS_ARCH_CPUS)
                     COMMAND
                         ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/${HW_OUTPUT_DIR}
                     COMMAND
-                        ${CMAKE_CXX_COMPILER} -DTYPE_${TYPE_DEFINE} -DCOMPILE_FOR_${PROC_DEFINE} -DARCH_${ARCH_DEFINE}
+                        ${LD_PP_COMMAND} -DTYPE_${TYPE_DEFINE} -DCOMPILE_FOR_${PROC_DEFINE} -DARCH_${ARCH_DEFINE}
                         -I${HW_INCLUDE} -E -P -x c -o ${PROJECT_SOURCE_DIR}/${HW_OUTPUT_DIR}/${HW_OUTPUT_FILE}
                         ${CMAKE_CURRENT_SOURCE_DIR}/toolchain/script_tng.ld
                     DEPENDS
@@ -483,6 +509,7 @@ foreach(ARCH_CPU IN LISTS TLS_ARCH_CPUS)
         endforeach()
     endforeach()
 endforeach()
+endif() # NOT TT_SKIP_HW_TOOLCHAIN
 
 # custom target that depends on all the output files
 add_custom_target(
@@ -522,8 +549,18 @@ target_sources(
         FILE_SET toolchain
         TYPE HEADERS
         BASE_DIRS ${PROJECT_SOURCE_DIR}
-        FILES ${LD_FILES} ${OBJ_FILES}
 )
+if(NOT TT_SKIP_HW_TOOLCHAIN)
+    # With TT_SKIP_HW_TOOLCHAIN there are no generated files; FILES requires at least one entry.
+    target_sources(
+        hw
+        PUBLIC
+            FILE_SET toolchain
+            TYPE HEADERS
+            BASE_DIRS ${PROJECT_SOURCE_DIR}
+            FILES ${LD_FILES} ${OBJ_FILES}
+    )
+endif()
 
 target_link_libraries(hw INTERFACE TT::Metalium::HostDevCommon)
 
