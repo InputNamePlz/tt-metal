@@ -13,6 +13,24 @@
 include(CheckCXXCompilerFlag)
 include(CheckLinkerFlag)
 
+# Everything below (mold/LLD selection, -Wl,* flags, GCC/Clang LTO tuning) is specific to
+# ELF toolchains.  MSVC uses link.exe with its own defaults; bail out early.
+if(MSVC)
+    set(TT_LTO_ENABLED OFF)
+    if(TT_ENABLE_LTO)
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT lto_supported OUTPUT lto_check_output)
+        if(lto_supported)
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
+            set(TT_LTO_ENABLED ON)
+        else()
+            message(WARNING "LTO/IPO is not supported: ${lto_check_output}")
+        endif()
+    endif()
+    return()
+endif()
+
 #===============================================================================
 # FUNCTIONS
 #===============================================================================

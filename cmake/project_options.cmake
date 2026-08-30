@@ -19,6 +19,7 @@ option(TTNN_BUILD_TESTS "Enables build of ttnn tests" OFF)
 option(ENABLE_CCACHE "Build with compiler cache" FALSE)
 option(TT_UNITY_BUILDS "Build with Unity builds" ON)
 option(BUILD_TT_TRAIN "Enables build of tt-train" OFF)
+option(TT_METAL_BUILD_TTNN "Enables build of the ttnn library" ON)
 option(ENABLE_TTNN_SHARED_SUBLIBS "Use shared libraries for ttnn to speed up incremental builds" OFF)
 option(TT_ENABLE_LIGHT_METAL_TRACE "Enable Light Metal Trace" ON)
 option(TT_ENABLE_LTO "Build Releases with Link-Time-Optimization (LTO)" OFF)
@@ -26,6 +27,11 @@ option(ENABLE_DISTRIBUTED "Enable multihost distributed compute support (OpenMPI
 option(TT_UMD_BUILD_SIMULATION "Force UMD to include its simulation harnessing" ON)
 option(TT_INSTALL "Define installation rules" ON)
 option(TT_USE_SYSTEM_SFPI "Use system path for SFPI. SFPI is used to compile firmware." OFF)
+set(TT_SFPI_ROOT ""
+    CACHE PATH
+    "Use an existing SFPI toolchain at this path (expects <root>/compiler/bin/riscv-tt-elf-g++), skipping download and validation."
+)
+option(TT_SKIP_HW_TOOLCHAIN "Skip the SFPI toolchain and device hw lib/linker-script generation (configure-only aid)" OFF)
 option(TT_METAL_USE_EMULE "Build with tt-emule software emulation (no hardware required)" OFF)
 set(TT_EMULE_PATH "" CACHE PATH "Local path to tt-emule source (overrides CPM fetch from GitHub)")
 
