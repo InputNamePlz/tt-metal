@@ -44,7 +44,9 @@
 #include <umd/device/types/cluster_descriptor_types.hpp>
 #include <umd/device/types/cluster_types.hpp>
 #include <umd/device/types/xy_pair.hpp>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 static constexpr uint32_t HOST_MEM_CHANNELS = 4;
 static constexpr uint32_t HOST_MEM_CHANNELS_MASK = HOST_MEM_CHANNELS - 1;

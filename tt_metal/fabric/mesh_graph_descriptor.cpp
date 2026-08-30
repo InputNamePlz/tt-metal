@@ -27,7 +27,9 @@
 
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 using namespace tt::tt_metal::distributed;
 

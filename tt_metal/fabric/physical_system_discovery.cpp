@@ -16,7 +16,9 @@
 
 #include <tt-logger/tt-logger.hpp>
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <climits>
 #include <cstdlib>
 #include <fstream>

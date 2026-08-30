@@ -24,7 +24,9 @@
 #include <filesystem>
 #include <string>
 #include <climits>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 namespace tt::tt_metal {
 class PhysicalSystemDescriptor;
@@ -130,10 +132,16 @@ void serialize_intermesh_port_assignment_to_file(
 namespace tt::tt_metal {
 
 // Get the local hostname
+#ifdef _WIN32
+// Out of line so this widely-included header does not have to pull in <windows.h>
+// (GetComputerNameA). Defined in fabric_host_utils.cpp.
+std::string get_host_name();
+#else
 inline std::string get_host_name() {
     char hostname[HOST_NAME_MAX + 1];
     gethostname(hostname, sizeof(hostname));
     return std::string(hostname);
 }
+#endif
 
 }  // namespace tt::tt_metal

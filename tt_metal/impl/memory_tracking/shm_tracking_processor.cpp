@@ -8,7 +8,12 @@
 #include <tt-metalium/buffer.hpp>
 #include <tt-metalium/mesh_device.hpp>
 #include <tt-logger/tt-logger.hpp>
+#ifdef _WIN32
+#include <process.h>
+#define getpid _getpid
+#else
 #include <unistd.h>
+#endif
 
 namespace tt::tt_metal {
 
