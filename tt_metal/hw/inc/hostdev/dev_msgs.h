@@ -196,8 +196,17 @@ struct kernel_config_msg_t {
     // Per-processor kernel thread info (Quasar: num threads for kernel on this processor; thread_id in that kernel;
     // values fit in 8 bits) The array sizes are rounded up to a multiple of 8 bytes for alignment (i.e. a multiple of
     // 16 bytes for the pair).
+#if defined(_MSC_VER) && !defined(__clang__) && !defined(__GNUC__)
+    // MSVC has no zero-length arrays (MaxProcessorsForThreadingVariables is 0 on tt-1xx).
+    // Host code only touches these through the generated HAL accessors, which address by
+    // offsetof, so a layout-identical stand-in member suffices. The codegen parser reads the
+    // #else branch, keeping the generated interface unchanged.
+    [[msvc::no_unique_address]] ::tt::detail::PadBytes<MaxProcessorsForThreadingVariables, __COUNTER__> num_sw_threads;
+    [[msvc::no_unique_address]] ::tt::detail::PadBytes<MaxProcessorsForThreadingVariables, __COUNTER__> kernel_thread_id;
+#else
     volatile uint8_t num_sw_threads[MaxProcessorsForThreadingVariables];
     volatile uint8_t kernel_thread_id[MaxProcessorsForThreadingVariables];
+#endif
 
     volatile uint8_t preload;  // Must be at end, so it's only written when all other data is written.
 } TT_PACKED;
