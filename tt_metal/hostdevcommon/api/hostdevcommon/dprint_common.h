@@ -36,7 +36,13 @@ constexpr uint32_t DEBUG_PRINT_SERVER_DISABLED_MAGIC = 0xf8f8f8f8;
 constexpr uint32_t DEVICE_PRINT_RESET_BUFFER_MAGIC = 0xF0E1D2C3;
 constexpr uint32_t DEVICE_PRINT_WRITE_STALL_FLAG = 1u << 31;
 
+#if defined(__GNUC__) || defined(__clang__)
 #define ATTR_PACK __attribute__((packed))
+#else
+// MSVC: no packed attribute. The structs below carry only <=4-byte-aligned members laid out
+// with no implicit padding, so the unpacked MSVC layout matches the packed GCC layout.
+#define ATTR_PACK
+#endif
 
 struct SliceRange {
     // A slice object encoding semantics of np.slice(h0:h1:hs, w0:w1:ws)

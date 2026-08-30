@@ -6,8 +6,15 @@
 
 #include <fmt/format.h>
 
+#ifdef _WIN32
+// Declared here (winnt.h) rather than dragging <windows.h> into this pervasive header.
+// Exported by kernel32, which MSVC links by default.
+extern "C" unsigned short __stdcall RtlCaptureStackBackTrace(
+    unsigned long FramesToSkip, unsigned long FramesToCapture, void** BackTrace, unsigned long* BackTraceHash);
+#else
 #include <cxxabi.h>
 #include <execinfo.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdexcept>
@@ -32,6 +39,29 @@ namespace detail {
  * @param[in] skip Skip the number of layers at the top of the stack
  */
 // NOLINTBEGIN(cppcoreguidelines-no-malloc)
+#ifdef _WIN32
+inline std::vector<std::string> backtrace(int size = 64, int skip = 1) {
+    // Best effort: raw frame addresses only. Symbolizing them the glibc way would need a
+    // DbgHelp link dependency for what is a diagnostics-only path; addresses can still be
+    // resolved offline against the PDB. RtlCaptureStackBackTrace caps skip+capture below 63
+    // on some Windows versions, so clamp.
+    std::vector<std::string> bt;
+    if (size > 62) {
+        size = 62;
+    }
+    if (skip >= size) {
+        return bt;
+    }
+    std::vector<void*> frames(static_cast<size_t>(size));
+    unsigned short captured = RtlCaptureStackBackTrace(
+        static_cast<unsigned long>(skip), static_cast<unsigned long>(size - skip), frames.data(), nullptr);
+    bt.reserve(captured);
+    for (unsigned short i = 0; i < captured; ++i) {
+        bt.push_back(fmt::format("{}", frames[i]));
+    }
+    return bt;
+}
+#else
 inline std::vector<std::string> backtrace(int size = 64, int skip = 1) {
     std::vector<std::string> bt;
     bt.reserve(size - skip);
@@ -51,6 +81,7 @@ inline std::vector<std::string> backtrace(int size = 64, int skip = 1) {
 
     return bt;
 }
+#endif
 // NOLINTEND(cppcoreguidelines-no-malloc)
 
 /**
@@ -71,6 +102,10 @@ inline std::string backtrace_to_string(int size = 64, int skip = 2, const std::s
 namespace detail {
 // NOLINTBEGIN(cppcoreguidelines-no-malloc)
 static std::string demangle(const char* str) {
+#ifdef _WIN32
+    // Windows backtrace entries are raw addresses; there is nothing to demangle.
+    return str;
+#else
     size_t size = 0;
     int status = 0;
     std::string rt(256, '\0');
@@ -83,6 +118,7 @@ static std::string demangle(const char* str) {
         }
     }
     return str;
+#endif
 }
 // NOLINTEND(cppcoreguidelines-no-malloc)
 
@@ -171,12 +207,19 @@ inline void tt_assert(
 #define TT_THROW(...) tt::assert::detail::tt_throw(__FILE__, __LINE__, "TT_THROW", "tt::exception", ##__VA_ARGS__)
 #endif
 
+// MSVC spells the unreachable hint __assume(false); GCC/Clang keep __builtin_unreachable().
+#if defined(_MSC_VER) && !defined(__clang__)
+#define TT_FATAL_UNREACHABLE_HINT() __assume(false)
+#else
+#define TT_FATAL_UNREACHABLE_HINT() __builtin_unreachable()
+#endif
+
 #ifndef TT_FATAL
 #define TT_FATAL(condition, message, ...)                                                             \
     do {                                                                                              \
         if (not(condition)) [[unlikely]] {                                                            \
             tt::assert::detail::tt_throw(__FILE__, __LINE__, "TT_FATAL", #condition, message, ##__VA_ARGS__); \
-            __builtin_unreachable();                                                                  \
+            TT_FATAL_UNREACHABLE_HINT();                                                              \
         }                                                                                             \
     } while (0)  // NOLINT(cppcoreguidelines-macro-usage)
 #endif
