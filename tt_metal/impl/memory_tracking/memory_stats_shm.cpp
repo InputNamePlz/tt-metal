@@ -7,10 +7,23 @@
 #include <tt-logger/tt-logger.hpp>
 #include <tt_stl/assert.hpp>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+
+#include <process.h>
+#define getpid _getpid
+#else
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#endif
 #include <cstring>
 #include <chrono>
 #include <fstream>
@@ -33,7 +46,11 @@ SharedMemoryStatsProvider::SharedMemoryStatsProvider(
     uint64_t asic_id, int device_id, bool tracking_disabled, bool verbose) :
     asic_id_(asic_id),
     device_id_(device_id),
+#ifdef _WIN32
+    shm_mapping_(nullptr),
+#else
     shm_fd_(-1),
+#endif
     region_(nullptr),
     // Per-PID tracking is enabled by default and disabled by TT_METAL_SHM_TRACKING_DISABLED=1.
     // The flag is captured once at construction (passed in by Device::initialize from its
@@ -42,6 +59,28 @@ SharedMemoryStatsProvider::SharedMemoryStatsProvider(
     per_pid_tracking_enabled_(!tracking_disabled),
     verbose_enabled_(verbose),
     is_creator_(false) {
+#ifdef _WIN32
+    // Named pagefile-backed mapping: the Windows analogue of POSIX shm_open+ftruncate+mmap.
+    // Session-local namespace; zero-initialized on creation (like a freshly ftruncated shm);
+    // the object disappears when the last handle closes, so no unlink is needed.
+    std::string shm_name = "Local\\tt_device_" + std::to_string(asic_id) + "_memory";
+    HANDLE mapping = CreateFileMappingA(
+        INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, sizeof(DeviceMemoryRegion), shm_name.c_str());
+    if (mapping == nullptr) {
+        log_warning(tt::LogMetal, "Failed to create shared memory {}: error {}", shm_name, GetLastError());
+        return;
+    }
+    is_creator_ = (GetLastError() != ERROR_ALREADY_EXISTS);
+
+    region_ = static_cast<DeviceMemoryRegion*>(
+        MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(DeviceMemoryRegion)));
+    if (region_ == nullptr) {
+        log_warning(tt::LogMetal, "Failed to map shared memory {}: error {}", shm_name, GetLastError());
+        CloseHandle(mapping);
+        return;
+    }
+    shm_mapping_ = mapping;
+#else
     // Format: /tt_device_<chip_unique_id>_memory
     // chip_unique_id from UMD is globally unique and never changes
     std::string shm_name = "/tt_device_" + std::to_string(asic_id) + "_memory";
@@ -80,6 +119,7 @@ SharedMemoryStatsProvider::SharedMemoryStatsProvider(
         region_ = nullptr;
         return;
     }
+#endif
 
     // Initialize if we're the creator
     if (is_creator_) {
@@ -103,10 +143,17 @@ SharedMemoryStatsProvider::SharedMemoryStatsProvider(
                 region_->version,
                 DEVICE_MEMORY_REGION_VERSION,
                 existing_refcount);
+#ifdef _WIN32
+            UnmapViewOfFile(region_);
+            region_ = nullptr;
+            CloseHandle(static_cast<HANDLE>(shm_mapping_));
+            shm_mapping_ = nullptr;
+#else
             munmap(region_, sizeof(DeviceMemoryRegion));
             region_ = nullptr;
             close(shm_fd_);
             shm_fd_ = -1;
+#endif
             return;
         }
     }
@@ -232,14 +279,25 @@ SharedMemoryStatsProvider::~SharedMemoryStatsProvider() {
                 prev_refcount - 1);
         }
 
+#ifdef _WIN32
+        UnmapViewOfFile(region_);
+#else
         munmap(region_, sizeof(DeviceMemoryRegion));
+#endif
         region_ = nullptr;
     }
 
+#ifdef _WIN32
+    if (shm_mapping_ != nullptr) {
+        CloseHandle(static_cast<HANDLE>(shm_mapping_));
+        shm_mapping_ = nullptr;
+    }
+#else
     if (shm_fd_ != -1) {
         close(shm_fd_);
         shm_fd_ = -1;
     }
+#endif
 }
 
 void SharedMemoryStatsProvider::initialize_region() {

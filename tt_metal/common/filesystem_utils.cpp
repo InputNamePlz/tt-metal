@@ -15,8 +15,10 @@
 #include <thread>
 
 #include <tt-logger/tt-logger.hpp>
+#ifndef _WIN32
 #include <fcntl.h>
 #include <unistd.h>
+#endif
 
 namespace tt::filesystem {
 
@@ -76,6 +78,9 @@ void sync_filesystem(const std::filesystem::path& path) {
     if (::close(fd) != 0) {
         log_debug(tt::LogMetal, "close failed after syncfs for {}: {}", path_str, ::strerror(errno));
     }
+#elif defined(_WIN32)
+    // No whole-filesystem sync primitive on Windows; write-through is handled per handle.
+    (void)path;
 #else
     ::sync();
 #endif

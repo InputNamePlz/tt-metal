@@ -9,9 +9,19 @@
 #include <utility>
 #include <vector>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <sched.h>         // Needed for setting process priorities
 #include <sys/resource.h>  // Needed for setting process priorities
 #include <numa.h>
+#endif
 #include <tt-metalium/device.hpp>
 #include <tt_stl/tt_pause.hpp>
 #include "impl/context/metal_context.hpp"
@@ -22,6 +32,17 @@
 namespace tt::tt_metal {
 
 namespace thread_binding {
+
+#ifdef _WIN32
+namespace {
+// libnuma is Linux-only. Reporting "NUMA unavailable" routes every caller into the existing
+// non-NUMA fallback paths below, so Windows behaves exactly like a non-NUMA Linux host.
+inline int numa_available() { return -1; }
+inline int numa_num_configured_cpus() { return 0; }
+inline int numa_node_of_cpu(int /*cpu*/) { return -1; }
+inline int numa_max_node() { return -1; }
+}  // namespace
+#endif
 
 std::unordered_map<int, std::vector<uint32_t>> get_cpu_cores_per_numa_node() {
     std::unordered_map<int, std::vector<uint32_t>> cpu_cores_per_numa_node = {};
@@ -82,6 +103,19 @@ uint32_t get_cpu_core_for_physical_device(ContextId context_id, uint32_t physica
 }
 
 void set_worker_affinity(std::thread& worker, uint32_t cpu_core) {
+#ifdef _WIN32
+    // Thread affinity is a performance optimization only; correctness never depends on it.
+    // SetThreadAffinityMask covers the first processor group (64 logical CPUs) -- beyond that
+    // we skip binding rather than pull in the processor-group machinery.
+    if (cpu_core < 64) {
+        if (SetThreadAffinityMask(worker.native_handle(), DWORD_PTR(1) << cpu_core) == 0) {
+            log_warning(
+                tt::LogMetal,
+                "Unable to bind worker thread to CPU Core. May see performance degradation. Error Code: {}",
+                GetLastError());
+        }
+    }
+#else
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpu_core, &cpuset);
@@ -92,9 +126,22 @@ void set_worker_affinity(std::thread& worker, uint32_t cpu_core) {
             "Unable to bind worker thread to CPU Core. May see performance degradation. Error Code: {}",
             rc);
     }
+#endif
 }
 
 void set_process_priority(int requested_priority) {
+#ifdef _WIN32
+    // Map the nice-style request onto Windows priority classes: negative (higher priority on
+    // Linux) -> ABOVE_NORMAL, zero -> NORMAL, positive -> BELOW_NORMAL. Best effort, like the
+    // setpriority path; failure only costs performance.
+    DWORD priority_class = requested_priority < 0   ? ABOVE_NORMAL_PRIORITY_CLASS
+                           : requested_priority > 0 ? BELOW_NORMAL_PRIORITY_CLASS
+                                                    : NORMAL_PRIORITY_CLASS;
+    if (SetPriorityClass(GetCurrentProcess(), priority_class) == 0) {
+        log_warning(
+            tt::LogMetal, "Unable to set process priority to {}, error code: {}", requested_priority, GetLastError());
+    }
+#else
     // Get priority for calling process
     int process_priority = getpriority(PRIO_PROCESS, 0);
     log_debug(tt::LogMetal, "Initial Process Priority: {}", process_priority);
@@ -106,6 +153,7 @@ void set_process_priority(int requested_priority) {
     if (rc) {
         log_warning(tt::LogMetal, "Unable to set process priority to {}, error code: {}", requested_priority, rc);
     }
+#endif
 }
 
 }  // namespace thread_binding

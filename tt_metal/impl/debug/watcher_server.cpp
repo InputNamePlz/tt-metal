@@ -4,7 +4,9 @@
 
 #include "watcher_server.hpp"
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <algorithm>
 #include <atomic>
 #include <chrono>

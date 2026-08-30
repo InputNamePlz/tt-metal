@@ -2,7 +2,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>  // SetThreadDescription
+#else
 #include <pthread.h>
+#endif
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -1353,7 +1363,11 @@ void DPrintServer::Impl::reset_for_new_run() {
 
 void DPrintServer::Impl::poll_print_data() {
     // Give the print server thread a reasonable name.
+#ifdef _WIN32
+    SetThreadDescription(GetCurrentThread(), L"TT_DPRINT_SERVER");
+#else
     pthread_setname_np(pthread_self(), "TT_DPRINT_SERVER");
+#endif
 
     // Main print loop, go through all chips/cores/riscs on the device and poll for any print data
     // written.

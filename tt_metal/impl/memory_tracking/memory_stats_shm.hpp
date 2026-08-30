@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 #include <sys/types.h>
+#ifdef _WIN32
+using pid_t = int;  // Not provided by the Windows CRT; Windows process IDs fit in int.
+#endif
 
 namespace tt::tt_metal {
 
@@ -188,7 +191,11 @@ public:
 private:
     uint64_t asic_id_;               // UMD chip_unique_id (for SHM naming)
     int device_id_;                  // Logical Metal device ID (for internal tracking)
+#ifdef _WIN32
+    void* shm_mapping_;              // HANDLE to the named pagefile-backed file mapping
+#else
     int shm_fd_;                     // Shared memory file descriptor
+#endif
     DeviceMemoryRegion* region_;     // Mapped shared memory region
     bool per_pid_tracking_enabled_;  // Enable detailed per-PID tracking
     bool verbose_enabled_;           // Cached TT_METAL_SHM_VERBOSE flag (process-wide)

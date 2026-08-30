@@ -3,7 +3,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#ifndef _WIN32
 #include <pthread.h>
+#endif
 #include <algorithm>
 #include <filesystem>
 #include <enchantum/enchantum.hpp>
@@ -83,7 +85,10 @@ MetalEnvImpl::MetalEnvImpl(MetalEnvDescriptor descriptor) : descriptor_(std::mov
     // Initialize distributed context
     distributed_context_ = distributed::multihost::DistributedContext::get_current_world();
 
+#ifndef _WIN32
+    // Windows has no fork(), so the pre-fork use-count check has nothing to guard against.
     std::call_once(s_atfork_registered_, []() { pthread_atfork(prefork_check_all, nullptr, nullptr); });
+#endif
 
     std::lock_guard<std::mutex> lock(s_registry_mutex_);
     s_registry_.insert(this);

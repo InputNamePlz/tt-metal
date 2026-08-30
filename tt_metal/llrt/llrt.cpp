@@ -6,7 +6,10 @@
 #include <fmt/base.h>
 #include <fmt/ranges.h>
 #include <tt-logger/tt-logger.hpp>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+#include <thread>
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
@@ -428,7 +431,7 @@ void wait_until_cores_done(
         if (loop_count % 1000 == 0) {
             log_debug(
                 tt::LogMetal, "Device {}: Not done phys cores: {}", device_id, fmt::join(not_done_phys_cores, " "));
-            usleep(100000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 #endif
 

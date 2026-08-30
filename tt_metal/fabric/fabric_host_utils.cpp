@@ -509,3 +509,28 @@ void serialize_intermesh_port_assignment_to_file(
 }
 
 }  // namespace tt::tt_fabric
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+
+namespace tt::tt_metal {
+
+// Windows counterpart of the inline gethostname() version in fabric_host_utils.hpp; out of
+// line so the header does not have to include <windows.h>.
+std::string get_host_name() {
+    char hostname[MAX_COMPUTERNAME_LENGTH + 1] = {};
+    DWORD size = sizeof(hostname);
+    if (!GetComputerNameA(hostname, &size)) {
+        return {};
+    }
+    return std::string(hostname, size);
+}
+
+}  // namespace tt::tt_metal
+#endif
