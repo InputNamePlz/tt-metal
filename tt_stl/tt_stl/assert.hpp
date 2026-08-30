@@ -8,8 +8,9 @@
 
 #ifdef _WIN32
 // Declared here (winnt.h) rather than dragging <windows.h> into this pervasive header.
-// Exported by kernel32, which MSVC links by default.
-extern "C" unsigned short __stdcall RtlCaptureStackBackTrace(
+// Exported by kernel32, which MSVC links by default. dllimport matches winnt.h's NTSYSAPI
+// declaration so TUs that also include <windows.h> (in either order) see one linkage.
+extern "C" __declspec(dllimport) unsigned short __stdcall RtlCaptureStackBackTrace(
     unsigned long FramesToSkip, unsigned long FramesToCapture, void** BackTrace, unsigned long* BackTraceHash);
 #else
 #include <cxxabi.h>

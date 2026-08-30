@@ -16,7 +16,13 @@
 // hack for test_basic_fabric_apis.cpp
 // https://github.com/tenstorrent/tt-metal/issues/20000
 // TODO: delete this once tt_fabric_api.h fully support low latency feature
+#if defined(__GNUC__) || defined(__clang__)
 extern "C" bool isFabricUnitTest() __attribute__((weak));
+#else
+// No weak symbols in MSVC link model; tests that want to override this hook on Windows need a
+// different seam (the lean Windows build compiles no such tests).
+extern "C" bool isFabricUnitTest();
+#endif
 bool isFabricUnitTest() { return false; }
 
 namespace tt::tt_fabric {

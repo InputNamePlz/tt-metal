@@ -31,6 +31,13 @@
 // NOLINTBEGIN(misc-unused-parameters)
 namespace tt::tt_fabric {
 
+// The whole header-declaration region sits in one packing scope. On GCC/Clang the TT_PACK_*
+// macros are empty, so host and device layouts are exactly what they always were; on MSVC the
+// pragma-pack(1) region reproduces those layouts, including the Itanium-ABI reuse of base-class
+// tail padding (MSVC never reuses it for an unpacked base). The size static_asserts throughout
+// pin the layouts on every compiler.
+TT_PACK_BEGIN
+
 // Helper for dependent static_assert that always evaluates to false
 template <class>
 inline constexpr bool always_false_v = false;
@@ -254,7 +261,7 @@ struct NocUnicastScatterCommandHeader {
 };
 // Currently limited to 2 chunks followed by a semaphore increment
 #define NOC_SCATTER_WRITE_ATOMIC_INC_FUSED_WRITE_CHUNKS 2
-struct NocUnicastScatterAtomicIncFusedCommandHeader {
+struct TT_ALIGNED(8) NocUnicastScatterAtomicIncFusedCommandHeader {
     uint64_t noc_address[NOC_SCATTER_WRITE_ATOMIC_INC_FUSED_WRITE_CHUNKS];
     uint64_t semaphore_noc_address;
     uint16_t chunk_size[NOC_SCATTER_WRITE_ATOMIC_INC_FUSED_WRITE_CHUNKS - 1];  // last chunk size is implicit
@@ -285,11 +292,11 @@ struct NocUnicastScatterAtomicIncFusedCommandHeader {
         }
     }
 };
-struct NocUnicastInlineWriteCommandHeader {
+struct TT_ALIGNED(8) NocUnicastInlineWriteCommandHeader {
     uint64_t noc_address;
     uint32_t value;
 };
-struct NocUnicastAtomicIncCommandHeader {
+struct TT_ALIGNED(8) NocUnicastAtomicIncCommandHeader {
     NocUnicastAtomicIncCommandHeader(uint64_t noc_address, uint32_t val, bool flush = true) :
         noc_address(noc_address), val(val), flush(flush) {}
 
@@ -297,7 +304,7 @@ struct NocUnicastAtomicIncCommandHeader {
     uint32_t val;
     bool flush;
 };
-struct NocUnicastAtomicIncFusedCommandHeader {
+struct TT_ALIGNED(8) NocUnicastAtomicIncFusedCommandHeader {
     NocUnicastAtomicIncFusedCommandHeader(
         uint64_t noc_address, uint64_t semaphore_noc_address, uint32_t val, bool flush = true) :
         noc_address(noc_address), semaphore_noc_address(semaphore_noc_address), val(val), flush(flush) {}
@@ -1248,7 +1255,8 @@ struct LowLatencyMeshRoutingFields {
 // TODO: https://github.com/tenstorrent/tt-metal/issues/32237
 // Primary template for 2D routing headers with variable route buffer size
 template <int RouteBufferSize = 35>
-struct HybridMeshPacketHeaderT : PacketHeaderBase<HybridMeshPacketHeaderT<RouteBufferSize>> {
+struct TT_PACKED_ALIGNED(16) HybridMeshPacketHeaderT
+    : PacketHeaderBase<HybridMeshPacketHeaderT<RouteBufferSize>> {
     // Block route buffers >67 bytes until memory map is updated
     static_assert(
         RouteBufferSize <= 67,
@@ -1298,7 +1306,7 @@ struct HybridMeshPacketHeaderT : PacketHeaderBase<HybridMeshPacketHeaderT<RouteB
 #endif
     }
 
-} __attribute__((packed, aligned(16)));
+};
 
 // Validate expected sizes for max-capacity tiers only (one per header size)
 // Base size = 61B (command_fields:40 + payload_size:2 + noc_send_type:1 + src_ch_id:1 +
@@ -1323,14 +1331,14 @@ using HybridMeshPacketHeader = HybridMeshPacketHeaderT<FABRIC_2D_PKT_HDR_ROUTE_B
 using HybridMeshPacketHeader = HybridMeshPacketHeaderT<35>;
 #endif
 
-struct UDMHybridMeshPacketHeader : public HybridMeshPacketHeader {
+struct TT_PACKED_ALIGNED(16) UDMHybridMeshPacketHeader : public HybridMeshPacketHeader {
     UDMControlFields udm_control;
 
     // Override to return correct size for UDMHybridMeshPacketHeader
     size_t get_payload_size_including_header() volatile const {
         return get_payload_size_excluding_header() + sizeof(UDMHybridMeshPacketHeader);
     }
-} __attribute__((packed, aligned(16)));
+};
 static_assert(
     sizeof(UDMHybridMeshPacketHeader) == sizeof(HybridMeshPacketHeader) + sizeof(UDMControlFields),
     "UDMHybridMeshPacketHeader size must equal base + UDMControlFields");
@@ -1408,6 +1416,8 @@ static_assert(false, "non supported ROUTING_MODE: " TOSTRING(ROUTING_MODE));
 #endif  // UDM_MODE
 
 #endif  // ROUTING_MODE
+
+TT_PACK_END
 
 }  // namespace tt::tt_fabric
 

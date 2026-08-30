@@ -12,6 +12,14 @@
 
 #include <cstdint>
 
+#include "hostdevcommon/tt_packed.h"
+
+// Every command struct in this file is byte-packed; the whole declaration region sits in one
+// packing scope so the MSVC #pragma pack expansion matches the GCC/Clang packed-attribute
+// layout. The static_asserts at the bottom of the file pin the resulting sizes on every
+// compiler.
+TT_PACK_BEGIN
+
 constexpr uint32_t CQ_DISPATCH_CMD_SIZE = 16;  // for L1 alignment
 
 // Prefetcher CMD ID enums
@@ -82,14 +90,14 @@ struct CQGenericDebugCmd {
     uint16_t key;       // prefetcher/dispatcher all write to watcher
     uint32_t size;      // size of payload
     uint32_t stride;    // stride to next Cmd (may be within the payload)
-} __attribute__((packed));
+} TT_PACKED;
 
 //////////////////////////////////////////////////////////////////////////////
 
 // Prefetcher CMD structures
 struct CQPrefetchBaseCmd {
     enum CQPrefetchCmdId cmd_id;
-} __attribute__((packed));
+} TT_PACKED;
 
 // Flushes an extra page at the end (so it can only be used after CQ_PREFETCH_CMD_RELAY_INLINE_NOFLUSH)
 struct CQPrefetchRelayLinearCmd {
@@ -98,7 +106,7 @@ struct CQPrefetchRelayLinearCmd {
     uint32_t noc_xy_addr;
     uint64_t addr;
     uint64_t length;
-} __attribute__((packed));
+} TT_PACKED;
 
 // Flushes an extra page at the end (so it can only be used after CQ_PREFETCH_CMD_RELAY_INLINE_NOFLUSH). Must be only
 // command in fetchq entry.
@@ -108,7 +116,7 @@ struct CQPrefetchRelayLinearHCmd {
     uint32_t noc_xy_addr;
     uint64_t addr;
     uint64_t length;
-} __attribute__((packed));
+} TT_PACKED;
 
 constexpr uint32_t CQ_PREFETCH_RELAY_PAGED_START_PAGE_MASK = 0xff;
 constexpr uint32_t CQ_PREFETCH_RELAY_PAGED_IS_DRAM_SHIFT = 15;
@@ -120,21 +128,21 @@ struct CQPrefetchRelayPagedCmd {
     uint32_t base_addr;
     uint32_t page_size;
     uint32_t pages;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchRelayPagedPackedCmd {
     uint8_t pad1;
     uint16_t count;
     uint32_t total_length;  // aggregate length of all sub-read-cmds
     uint32_t stride;        // stride to start of next cmd
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchRelayPagedPackedSubCmd {
     uint16_t start_page;  // 0..nbanks-1
     uint16_t log_page_size;
     uint32_t base_addr;
     uint32_t length;  // multiple of DRAM alignment, <= half scratch_db_size
-} __attribute__((packed));
+} TT_PACKED;
 
 // Current implementation limit is based on size of the l1_cache which stores the sub_cmds
 constexpr uint32_t CQ_PREFETCH_CMD_RELAY_PAGED_PACKED_MAX_SUB_CMDS = 35;
@@ -144,7 +152,7 @@ struct CQPrefetchRelayInlineCmd {
     uint16_t pad;
     uint32_t length;
     uint32_t stride;  // explicit stride saves a few insns on device
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchExecBufCmd {
     uint8_t pad1;
@@ -152,7 +160,7 @@ struct CQPrefetchExecBufCmd {
     uint32_t base_addr;
     uint32_t log_page_size;
     uint32_t pages;
-} __attribute__((packed));
+} TT_PACKED;
 
 // Reset the write pointer to the start of the ring buffer. If this isn't set,
 // the ringbuffer will never wrap around.
@@ -165,13 +173,13 @@ struct CQPrefetchPagedToRingbufferCmd {
     uint32_t wp_offset_update;  // set final increment ringbuffer write pointer
     uint32_t base_addr;  // Base address of the interleaved buffer to read from.
     uint32_t length;     // multiple of DRAM alignment
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchSetRingbufferOffsetCmd {
     uint8_t update_wp;  // if set, the ringbuffer write pointer will be updated to the offset
     uint16_t pad1;
     uint32_t offset;
-} __attribute__((packed));
+} TT_PACKED;
 
 // Current implementation limit is based on size of the l1_cache which stores the sub_cmds
 constexpr uint32_t CQ_PREFETCH_CMD_RELAY_RINGBUFFER_MAX_SUB_CMDS = 52;
@@ -179,12 +187,12 @@ struct CQPrefetchRelayRingbufferCmd {
     uint8_t pad1;
     uint16_t count;
     uint32_t stride;  // Size of the full command, including subcmds
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchRelayRingbufferSubCmd {
     uint32_t start;  // The ringbuffer offset will be added to this.
     uint32_t length;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchRelayLinearPackedCmd {
     uint8_t pad;
@@ -192,12 +200,12 @@ struct CQPrefetchRelayLinearPackedCmd {
     uint32_t noc_xy_addr;
     uint32_t total_length;  // aggregate length of all sub-read-cmds
     uint32_t stride;        // stride to start of next cmd
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQPrefetchRelayLinearPackedSubCmd {
     uint64_t addr;    // linear address
     uint32_t length;  // read length
-} __attribute__((packed));
+} TT_PACKED;
 
 // Current implementation limit is based on size of the l1_cache which stores the sub_cmds
 // 12 bytes per sub_cmd, same as paged_packed
@@ -216,7 +224,7 @@ struct CQPrefetchCmd {
         CQPrefetchSetRingbufferOffsetCmd set_ringbuffer_offset;
         CQPrefetchRelayRingbufferCmd relay_ringbuffer;
         CQPrefetchRelayLinearPackedCmd relay_linear_packed;
-    } __attribute__((packed));
+    } TT_PACKED;
 };
 
 // 32 byte commands.
@@ -226,7 +234,7 @@ struct CQPrefetchCmdLarge {
         CQPrefetchRelayLinearHCmd relay_linear_h;
         CQPrefetchRelayLinearCmd relay_linear;
         uint8_t padding[32 - sizeof(CQPrefetchBaseCmd)];
-    } __attribute__((packed));
+    } TT_PACKED;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -234,7 +242,7 @@ struct CQPrefetchCmdLarge {
 // Dispatcher CMD structures
 struct CQDispatchBaseCmd {
     enum CQDispatchCmdId cmd_id;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchWriteCmd {
     uint8_t num_mcast_dests;  // 0 = unicast, 1+ = multicast
@@ -243,14 +251,14 @@ struct CQDispatchWriteCmd {
     uint32_t noc_xy_addr;
     uint64_t addr;
     uint64_t length;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchWriteHostCmd {
     uint8_t is_event;  // one flag, false=read buffer
     uint16_t pad1;
     uint32_t pad2;
     uint64_t length;
-} __attribute__((packed));
+} TT_PACKED;
 
 constexpr uint16_t CQ_DISPATCH_CMD_PAGED_WRITE_MAX_PAGE_INDEX = 0xFFFF;
 
@@ -260,7 +268,7 @@ struct CQDispatchWritePagedCmd {
     uint32_t base_addr;
     uint32_t page_size;
     uint32_t pages;
-} __attribute__((packed));
+} TT_PACKED;
 
 constexpr uint32_t CQ_DISPATCH_CMD_PACKED_WRITE_FLAG_NONE = 0x00;
 constexpr uint32_t CQ_DISPATCH_CMD_PACKED_WRITE_FLAG_MCAST = 0x01;
@@ -284,16 +292,16 @@ struct CQDispatchWritePackedCmd {
     uint16_t write_offset_index;
     uint16_t size;  // size of each packet, stride is padded to L1 alignment and less than dispatch_cb_page_size
     uint32_t addr;  // common memory address across all packed SubCmds
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchWritePackedUnicastSubCmd {
     uint32_t noc_xy_addr;  // unique XY address for each SubCmd
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchWritePackedMulticastSubCmd {
     uint32_t noc_xy_addr;  // unique XY address for each SubCmd
     uint32_t num_mcast_dests;
-} __attribute__((packed));
+} TT_PACKED;
 
 constexpr uint32_t CQ_DISPATCH_CMD_PACKED_WRITE_LARGE_FLAG_NONE = 0x00;
 constexpr uint32_t CQ_DISPATCH_CMD_PACKED_WRITE_LARGE_FLAG_UNLINK = 0x01;
@@ -305,9 +313,14 @@ struct CQDispatchWritePackedLargeSubCmd {
                              // This avoids the need to handle the special case where 65536 bytes overflows to 0
     uint8_t num_mcast_dests;
     uint8_t flags;
-} __attribute__((packed));
+} TT_PACKED;
 
-constexpr __attribute__((always_inline)) uint32_t
+#if defined(__GNUC__) || defined(__clang__)
+#define CQ_CMD_FORCE_INLINE __attribute__((always_inline))
+#else
+#define CQ_CMD_FORCE_INLINE __forceinline
+#endif
+constexpr CQ_CMD_FORCE_INLINE uint32_t
 get_packed_write_max_multicast_sub_cmds(uint32_t packed_write_max_unicast_sub_cmds) {
     uint32_t packed_write_max_multicast_sub_cmds = packed_write_max_unicast_sub_cmds *
                                                    sizeof(CQDispatchWritePackedUnicastSubCmd) /
@@ -332,7 +345,7 @@ struct CQDispatchWritePackedLargeCmd {
     uint16_t count;  // number of sub-cmds
     uint16_t alignment;
     uint16_t write_offset_index;
-} __attribute__((packed));
+} TT_PACKED;
 
 // Unicast variant of packed large write with uint32_t length
 constexpr uint32_t CQ_DISPATCH_CMD_PACKED_WRITE_LARGE_UNICAST_MAX_SUB_CMDS = 35;
@@ -342,14 +355,14 @@ struct CQDispatchWritePackedLargeUnicastSubCmd {
     uint32_t noc_xy_addr;
     uint32_t addr;  // if 0xffffffff, data is discarded (not sent)
     uint32_t length;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchWritePackedLargeUnicastCmd {
     uint8_t type;
     uint16_t count;  // number of sub-cmds
     uint16_t alignment;
     uint16_t write_offset_index;
-} __attribute__((packed));
+} TT_PACKED;
 
 constexpr uint32_t CQ_DISPATCH_CMD_WAIT_FLAG_NONE = 0x00;
 // Issue a write barrier
@@ -370,13 +383,13 @@ struct CQDispatchWaitCmd {
     uint16_t stream;  // stream to read/write
     uint32_t addr;   // address to read
     uint32_t count;  // wait while address is < count
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchDelayCmd {
     uint8_t pad1;
     uint16_t pad2;
     uint32_t delay;
-} __attribute__((packed));
+} TT_PACKED;
 
 // The maximum value allowed for offset_count in CQDispatchSetWriteOffsetCmd.
 constexpr uint32_t CQ_DISPATCH_MAX_WRITE_OFFSETS = 4;
@@ -384,13 +397,13 @@ constexpr uint32_t CQ_DISPATCH_MAX_WRITE_OFFSETS = 4;
 struct CQDispatchSetWriteOffsetCmd {
     uint8_t offset_count;  // Number of uint32_t offsets this command sets. Offsets are stored after the CQDispatchCmd.
     uint16_t program_host_id;  // Program Host ID for upcoming commands. Used for profiling.
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchSetUnicastOnlyCoresCmd {
     uint8_t pad1;
     uint16_t pad2;
     uint32_t num_unicast_only_cores;
-} __attribute__((packed));
+} TT_PACKED;
 
 constexpr uint8_t CQ_DISPATCH_CMD_GO_NO_MULTICAST_OFFSET = 0xff;
 
@@ -402,39 +415,39 @@ struct CQDispatchGoSignalMcastCmd {
     uint32_t go_signal;
     uint32_t wait_count;
     uint32_t wait_stream;  // Index of the stream to wait on
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchNotifySubordinateGoSignalCmd {
     // sends a counter update to dispatch_s when it sees this cmd
     uint8_t wait;  // if true, issue a write barrier before sending signal to dispatch_s
     uint16_t index_bitmask;
     uint32_t pad3;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchRtProfilerFlushCmd {
     uint8_t pad1;
     uint16_t pad2;
     uint32_t wait_count;   // worker completion count to wait on
     uint32_t wait_stream;  // stream index to wait on
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchSetNumWorkerSemsCmd {
     uint8_t pad1;
     uint16_t pad2;
     uint32_t num_worker_sems;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchSetGoSignalNocDataCmd {
     uint8_t pad1;
     uint16_t pad2;
     uint32_t num_words;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchSetSubDeviceWorkerCountsCmd {
     uint8_t pad1;
     uint16_t pad2;
     uint32_t num_sub_devices;
-} __attribute__((packed));
+} TT_PACKED;
 
 struct CQDispatchCmd {
     CQDispatchBaseCmd base;
@@ -456,7 +469,7 @@ struct CQDispatchCmd {
         CQDispatchSetGoSignalNocDataCmd set_go_signal_noc_data;
         CQDispatchSetSubDeviceWorkerCountsCmd set_sub_device_worker_counts;
         CQDispatchRtProfilerFlushCmd rt_profiler_flush;
-    } __attribute__((packed));
+    } TT_PACKED;
 };
 
 // 32 byte commands.
@@ -465,7 +478,7 @@ struct CQDispatchCmdLarge {
     union {
         CQDispatchWriteCmd write_linear;
         uint8_t padding[32 - sizeof(CQDispatchBaseCmd)];
-    } __attribute__((packed));
+    } TT_PACKED;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -479,3 +492,4 @@ static_assert(sizeof(CQPrefetchCmd) == CQ_DISPATCH_CMD_SIZE);
 static_assert(sizeof(CQPrefetchCmdLarge) == 2 * CQ_DISPATCH_CMD_SIZE);
 static_assert(sizeof(CQDispatchCmd) == CQ_DISPATCH_CMD_SIZE);
 static_assert(sizeof(CQDispatchCmdLarge) == 2 * CQ_DISPATCH_CMD_SIZE);
+TT_PACK_END

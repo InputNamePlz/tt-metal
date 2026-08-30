@@ -3952,7 +3952,9 @@ std::string ControlPlane::get_galaxy_cabling_descriptor_path(tt::tt_fabric::Fabr
          {FabricType::TORUS_Y, Y_TORUS_PATH},
          {FabricType::TORUS_XY, XY_TORUS_PATH}}};
 
-    const auto* it = std::find_if(
+    // `auto` rather than `auto*`: std::array's const_iterator is a raw pointer on libstdc++ but a
+    // class type on MSVC.
+    const auto it = std::find_if(
         cabling_map.begin(), cabling_map.end(), [fabric_type](const auto& pair) { return pair.first == fabric_type; });
     TT_FATAL(it != cabling_map.end(), "Unknown torus configuration: {}", enchantum::to_string(fabric_config));
 
