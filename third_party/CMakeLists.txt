@@ -6,22 +6,28 @@ set(CMAKE_CXX_CLANG_TIDY "")
 set(CMAKE_VERIFY_INTERFACE_HEADER_SETS FALSE)
 set(DEFAULT_COMPONENT_NAME ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
 
-add_compile_options(-w)
-
-############################################################################################################################
-# NUMA
-############################################################################################################################
-find_library(NUMA_LIBRARY NAMES numa)
-if(NOT NUMA_LIBRARY)
-    message(FATAL_ERROR "NUMA library not found. Please install it in your system.")
+if(MSVC)
+    add_compile_options(/w)
+else()
+    add_compile_options(-w)
 endif()
 
-############################################################################################################################
-# hwloc
-############################################################################################################################
-find_library(HWLOC_LIBRARY NAMES hwloc)
-if(NOT HWLOC_LIBRARY)
-    message(FATAL_ERROR "hwloc library not found. Please install it in your system.")
+if(NOT WIN32)
+    ############################################################################################################################
+    # NUMA
+    ############################################################################################################################
+    find_library(NUMA_LIBRARY NAMES numa)
+    if(NOT NUMA_LIBRARY)
+        message(FATAL_ERROR "NUMA library not found. Please install it in your system.")
+    endif()
+
+    ############################################################################################################################
+    # hwloc
+    ############################################################################################################################
+    find_library(HWLOC_LIBRARY NAMES hwloc)
+    if(NOT HWLOC_LIBRARY)
+        message(FATAL_ERROR "hwloc library not found. Please install it in your system.")
+    endif()
 endif()
 
 ############################################################################################################################
@@ -123,8 +129,11 @@ set_target_properties(
 
 # Setting link and compile flags to avoid symbol conflicts with other protobuf libraries when tt-metal package is used.
 # Ensures that tt-metal package only uses its own protobuf library and not the one from the system.
-target_link_options(libprotobuf PRIVATE -Wl,-Bsymbolic)
-target_compile_options(libprotobuf PRIVATE -fno-semantic-interposition)
+# (ELF-only concern: MSVC/COFF has no symbol interposition.)
+if(NOT MSVC)
+    target_link_options(libprotobuf PRIVATE -Wl,-Bsymbolic)
+    target_compile_options(libprotobuf PRIVATE -fno-semantic-interposition)
+endif()
 
 ############################################################################################################################
 # yaml-cpp
@@ -228,25 +237,27 @@ CPMAddPackage(
 # target already in scope, nanobind skips its own find_package(Python) call and fails when
 # nanobind-config.cmake asserts that Python::Module also exists. Find both components explicitly
 # here so nanobind sees a complete target set.
-find_package(
-    Python
-    REQUIRED
-    COMPONENTS
-        Interpreter
-        Development.Module
-    OPTIONAL_COMPONENTS
-        Development.SABIModule
-)
+if(WITH_PYTHON_BINDINGS)
+    find_package(
+        Python
+        REQUIRED
+        COMPONENTS
+            Interpreter
+            Development.Module
+        OPTIONAL_COMPONENTS
+            Development.SABIModule
+    )
 
-CPMAddPackage(
-    NAME nanobind
-    GITHUB_REPOSITORY wjakob/nanobind
-    GIT_TAG
-        86e5626728fc282637a6c338597120913dded1bb # 2.14.0
-    OPTIONS
-        "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
-        "NB_USE_SUBMODULE_DEPS ON"
-)
+    CPMAddPackage(
+        NAME nanobind
+        GITHUB_REPOSITORY wjakob/nanobind
+        GIT_TAG
+            86e5626728fc282637a6c338597120913dded1bb # 2.14.0
+        OPTIONS
+            "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
+            "NB_USE_SUBMODULE_DEPS ON"
+    )
+endif()
 
 ############################################################################################################################
 # nlohmann/json : https://github.com/nlohmann/json
@@ -355,12 +366,16 @@ CPMAddPackage(
         "TF_BUILD_EXAMPLES OFF"
 )
 if(Taskflow_ADDED AND NOT TARGET Taskflow::Taskflow)
-    target_compile_options(
-        Taskflow
-        INTERFACE
-            -isystem
-            ${Taskflow_SOURCE_DIR}
-    )
+    if(MSVC)
+        target_include_directories(Taskflow SYSTEM INTERFACE "$<BUILD_INTERFACE:${Taskflow_SOURCE_DIR}>")
+    else()
+        target_compile_options(
+            Taskflow
+            INTERFACE
+                -isystem
+                ${Taskflow_SOURCE_DIR}
+        )
+    endif()
     add_library(Taskflow::Taskflow ALIAS Taskflow)
 endif()
 
