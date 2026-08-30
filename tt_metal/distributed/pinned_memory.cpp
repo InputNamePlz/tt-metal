@@ -11,7 +11,17 @@
 #include <memory>
 #include <cstdint>
 #include <utility>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 #include <tt-metalium/device.hpp>
 #include <tt-metalium/mesh_device.hpp>
@@ -110,10 +120,18 @@ void PinnedMemoryImpl::initialize_from_devices(
 
     // Determine system page size and align the host buffer down to page boundary
     size_t page_size = 4096;
+#ifdef _WIN32
+    SYSTEM_INFO si{};
+    GetSystemInfo(&si);
+    if (si.dwPageSize > 0) {
+        page_size = si.dwPageSize;
+    }
+#else
     long sys_page = sysconf(_SC_PAGESIZE);
     if (sys_page > 0) {
         page_size = static_cast<size_t>(sys_page);
     }
+#endif
 
     uintptr_t host_addr = reinterpret_cast<uintptr_t>(host_buffer);
     uintptr_t aligned_base_addr = host_addr & ~(static_cast<uintptr_t>(page_size) - 1);

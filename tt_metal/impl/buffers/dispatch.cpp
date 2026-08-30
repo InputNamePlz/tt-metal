@@ -633,7 +633,9 @@ void populate_sharded_buffer_write_dispatch_cmds(
 
     uint8_t* dst = command_sequence.reserve_space<uint8_t*, true>(data_size_bytes);
     // TODO: Expose getter for cmd_write_offsetB?
-    ptrdiff_t dst_offset = reinterpret_cast<ptrdiff_t>(dst - (uint8_t*)command_sequence.data());
+    // static_cast: pointer subtraction already yields ptrdiff_t, and MSVC rejects an
+    // integral-to-integral reinterpret_cast.
+    ptrdiff_t dst_offset = static_cast<ptrdiff_t>(dst - (uint8_t*)command_sequence.data());
     TT_ASSERT(dst_offset >= 0, "Offset into command sequence is negative");
     if (dispatch_params.write_large_pages()) {
         const auto cur_host_page = *dispatch_params.core_page_mapping_it;

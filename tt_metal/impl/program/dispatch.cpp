@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "hostdevcommon/tt_compiler.h"
 #include <tt_stl/fmt.hpp>
 #include "tt_metal/impl/program/dispatch.hpp"
 
@@ -318,7 +319,7 @@ uint32_t finalize_cbs(
         uint64_t local_cb_mask = kernel_config.local_cb_mask();
         uint32_t current_local_end_index =
             local_cb_mask == 0 ? 0
-                               : ProgramImpl::cb_mask_width_ - static_cast<uint32_t>(__builtin_clzll(local_cb_mask));
+                               : ProgramImpl::cb_mask_width_ - static_cast<uint32_t>(tt::compiler::count_leading_zeros64(local_cb_mask));
         max_local_end_index = std::max(max_local_end_index, current_local_end_index);
         min_remote_start_index = std::min(min_remote_start_index, (uint32_t)kernel_config.min_remote_cb_start_index());
     }

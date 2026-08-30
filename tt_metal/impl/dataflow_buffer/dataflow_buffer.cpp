@@ -1734,7 +1734,7 @@ uint32_t ProgramImpl::assign_dfb_device_slot(const DataflowBufferImpl& dfb) cons
     }
 
     const uint64_t free_slots = ~used_slots;
-    const uint32_t slot = free_slots ? static_cast<uint32_t>(__builtin_ctzll(free_slots)) : max_slots;
+    const uint32_t slot = free_slots ? static_cast<uint32_t>(tt::compiler::count_trailing_zeros64(free_slots)) : max_slots;
     TT_FATAL(
         slot < max_slots,
         "Cannot create DFB {}: every one of the {} slots this arch supports per core is already taken by a dataflow "
