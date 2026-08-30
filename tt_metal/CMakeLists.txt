@@ -179,6 +179,16 @@ add_subdirectory(distributed)
 add_subdirectory(fabric)
 add_subdirectory(impl/experimental/udm)
 add_subdirectory(impl/experimental/noc_estimator)
+
+# CMAKE_OPTIMIZE_DEPENDENCIES prunes build edges from static libraries to the
+# object libraries they consume; with the Visual Studio generator a cold
+# `--target tt_metal` build then fails with LNK1181 because these object
+# libraries were never built. Restore the edges explicitly.
+add_dependencies(
+    tt_metal
+    tt_metal_noc_estimator
+    metalium-logging
+)
 if(TT_METAL_BUILD_TESTS)
     add_subdirectory(test)
 endif()

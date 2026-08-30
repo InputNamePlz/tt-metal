@@ -48,23 +48,25 @@ AddVersionHeaderTarget()
 #   Debug:          -O0 -g
 #   RelWithDebInfo: -O2 -g -DNDEBUG  (we keep -O3 below to preserve existing behaviour)
 if(MSVC)
+    # Everything is scoped to C/CXX so cl-style flags do not leak into other
+    # tools (e.g. ml64 for ASM_MASM sources in third-party deps like BLAKE3).
     add_compile_options(
         # MSVC baseline: standards conformance and a preprocessor able to handle
         # variadic macros the way the codebase expects.
-        /permissive-
-        /Zc:preprocessor
-        /Zc:__cplusplus
-        /EHsc
-        /bigobj
-        /utf-8
+        "$<$<COMPILE_LANGUAGE:C,CXX>:/permissive->"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:/Zc:preprocessor>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:/Zc:__cplusplus>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:/EHsc>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:/bigobj>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:/utf-8>"
         # Preserve the non-standard DEBUG macro behaviour (see GCC/Clang branch below).
         "$<$<AND:$<CONFIG:Debug,RelWithDebInfo>,$<COMPILE_LANGUAGE:CXX>>:/DDEBUG>"
     )
     add_compile_definitions(
-        WIN32_LEAN_AND_MEAN
-        NOMINMAX
-        _CRT_SECURE_NO_WARNINGS
-        _USE_MATH_DEFINES
+        "$<$<COMPILE_LANGUAGE:C,CXX>:WIN32_LEAN_AND_MEAN>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:NOMINMAX>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:_CRT_SECURE_NO_WARNINGS>"
+        "$<$<COMPILE_LANGUAGE:C,CXX>:_USE_MATH_DEFINES>"
     )
 else()
     add_compile_options(
