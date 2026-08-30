@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "hostdevcommon/tt_packed.h"
+
 constexpr uint16_t PERF_COUNTER_PROFILER_ID = 9090;
 
 enum PerfCounterGroup : uint8_t { FPU, PACK, UNPACK, L1_0, L1_1, INSTRN, L1_2, L1_3, L1_4 };
@@ -212,11 +214,11 @@ union PerfCounter {
         uint32_t ref_cnt;
         uint32_t counter_type : 8;
         uint32_t unused : 24;
-    } __attribute__((packed));
+    } TT_PACKED;
     struct {
         uint64_t raw_data_1;
         uint64_t raw_data_2;
-    } __attribute__((packed));
+    } TT_PACKED;
 
     PerfCounter() = delete;
     PerfCounter(uint32_t counter_value, uint32_t ref_cnt, PerfCounterType counter_type) :

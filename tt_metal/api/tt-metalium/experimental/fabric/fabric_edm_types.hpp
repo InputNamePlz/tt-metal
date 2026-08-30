@@ -63,6 +63,12 @@ enum SendStatus : uint8_t {
     // Indicates no data was sent because the eth_tx_cmd_q was busy
     NOT_SENT,
 
+// <windows.h> (wingdi.h) defines ERROR as an object-like macro, which would mangle the
+// enumerator below in any TU that included it first.
+#ifdef ERROR
+#undef ERROR
+#endif
+
     ERROR,
 };
 

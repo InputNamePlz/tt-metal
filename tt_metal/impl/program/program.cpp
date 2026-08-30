@@ -1077,7 +1077,7 @@ void detail::ProgramImpl::update_kernel_groups(uint32_t programmable_core_type_i
                             uint64_t used_cbs = local_val->second.to_ullong();
                             local_cb_mask |= used_cbs;
                             uint32_t calculated_index =
-                                cb_mask_width_ - static_cast<uint32_t>(__builtin_clzll(used_cbs));
+                                cb_mask_width_ - static_cast<uint32_t>(tt::compiler::count_leading_zeros64(used_cbs));
                             max_local_cb_end_index = std::max(max_local_cb_end_index, calculated_index);
                             if (!logged_noncontiguous) {
                                 // Zeroes out the contiguous run of set bits starting at zero. Anything remaining is
@@ -1086,7 +1086,7 @@ void detail::ProgramImpl::update_kernel_groups(uint32_t programmable_core_type_i
                                 if (non_contiguous_cbs) {
                                     // ~used_cbs is always nonzero, because otherwise all CBs are in use and therefore
                                     // contiguous.
-                                    uint32_t first_unused_index = static_cast<uint32_t>(__builtin_ctzll(~used_cbs));
+                                    uint32_t first_unused_index = static_cast<uint32_t>(tt::compiler::count_trailing_zeros64(~used_cbs));
                                     std::string kernels_str;
                                     for (auto id : kernels) {
                                         std::shared_ptr<Kernel> kernel = handle_to_kernel.at(id);
@@ -1139,7 +1139,7 @@ void detail::ProgramImpl::update_kernel_groups(uint32_t programmable_core_type_i
                         if (remote_val != per_core_remote_cb_indices_.end() && remote_val->second.any()) {
                             min_remote_cb_start_index = std::min(
                                 min_remote_cb_start_index,
-                                static_cast<uint32_t>(__builtin_ctzll(remote_val->second.to_ullong())));
+                                static_cast<uint32_t>(tt::compiler::count_trailing_zeros64(remote_val->second.to_ullong())));
                         }
 
                         if (not hal.get_supports_dfbs(programmable_core_type_index)) {

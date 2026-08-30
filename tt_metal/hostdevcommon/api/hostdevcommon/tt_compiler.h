@@ -29,6 +29,9 @@ constexpr int popcount32(std::uint32_t v) { return __builtin_popcount(v); }
 constexpr int count_leading_zeros32(std::uint32_t v) { return __builtin_clz(v); }
 // Undefined for v == 0, matching __builtin_ctz.
 constexpr int count_trailing_zeros32(std::uint32_t v) { return __builtin_ctz(v); }
+// Undefined for v == 0, matching __builtin_clzll / __builtin_ctzll.
+constexpr int count_leading_zeros64(std::uint64_t v) { return __builtin_clzll(v); }
+constexpr int count_trailing_zeros64(std::uint64_t v) { return __builtin_ctzll(v); }
 #else
 // Constexpr-capable fallbacks (MSVC's <intrin.h> popcnt/bitscan intrinsics are not constexpr,
 // and device-shared headers are C++17 so std::popcount/std::countl_zero are unavailable).
@@ -50,6 +53,20 @@ constexpr int count_leading_zeros32(std::uint32_t v) {
 constexpr int count_trailing_zeros32(std::uint32_t v) {
     int n = 0;
     for (std::uint32_t bit = 1u; bit != 0 && (v & bit) == 0; bit <<= 1) {
+        ++n;
+    }
+    return n;
+}
+constexpr int count_leading_zeros64(std::uint64_t v) {
+    int n = 0;
+    for (std::uint64_t bit = 0x8000000000000000ull; bit != 0 && (v & bit) == 0; bit >>= 1) {
+        ++n;
+    }
+    return n;
+}
+constexpr int count_trailing_zeros64(std::uint64_t v) {
+    int n = 0;
+    for (std::uint64_t bit = 1ull; bit != 0 && (v & bit) == 0; bit <<= 1) {
         ++n;
     }
     return n;

@@ -54,7 +54,11 @@ public:
     void init_devices();
     void attach_devices();
     void detach_devices();
+    #if defined(__GNUC__) || defined(__clang__)
     void __attribute__((noinline)) dump(FILE* f);  // noinline so that this fn exists to be called from gdb
+#else
+    __declspec(noinline) void dump(FILE* f);  // noinline so that this fn exists to be called from a debugger
+#endif
     void dump() { dump(logfile_); }
     void isolated_dump(std::vector<ChipId>& device_ids);
     void clear_log() {

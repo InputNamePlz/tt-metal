@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
+#include "hostdevcommon/tt_packed.h"
+
 struct d2h_sender_socket_md {
     uint32_t bytes_sent_addr_hi;
     uint32_t data_addr_hi;
@@ -22,7 +24,7 @@ struct d2d_sender_socket_md {
 union sender_downstream_encoding {
     d2h_sender_socket_md d2h;
     d2d_sender_socket_md d2d;
-} __attribute__((packed));
+} TT_PACKED;
 
 // Config Buffer on Sender Core will be populated as follows. Metadata size based on number of downstream receivers.
 struct sender_socket_md {
@@ -67,7 +69,7 @@ struct receiver_socket_md {
     union {
         h2d_socket_md h2d;
         d2d_recv_socket_md d2d;
-    } __attribute__((packed));
+    } TT_PACKED;
 };
 
 struct H2DSocketInterface {
@@ -111,7 +113,7 @@ struct SocketSenderInterface {
     union {
         D2HSocketInterface d2h;
         D2DSocketSendInterface d2d;
-    } __attribute__((packed));
+    } TT_PACKED;
 };
 
 struct SocketReceiverInterface {
@@ -127,5 +129,5 @@ struct SocketReceiverInterface {
     union {
         H2DSocketInterface h2d;
         D2DSocketRecvInterface d2d;
-    } __attribute__((packed));
+    } TT_PACKED;
 };

@@ -6,6 +6,8 @@
 
 #include <cstdint>
 #include <cstring>  // for std::memcpy
+
+#include "hostdevcommon/tt_packed.h"
 #include <variant>  // Added include
 #include <limits>
 #include <algorithm>
@@ -141,10 +143,12 @@ struct alignas(uint64_t) KernelProfilerNocEventMetadata {
     };
 
     // represents a fabric routing fields event; follows a FabricNoCEvent
+    TT_PACK_BEGIN
     struct FabricRoutingFields1D {
         NocEventType noc_xfer_type;
         uint32_t routing_fields_value;
-    } __attribute__((packed));
+    } TT_PACKED;
+    TT_PACK_END
 
     struct FabricRoutingFields2D {
         NocEventType noc_xfer_type;
@@ -152,12 +156,15 @@ struct alignas(uint64_t) KernelProfilerNocEventMetadata {
         uint8_t e_hops;
         uint8_t w_hops;
         bool is_mcast;
-    } __attribute__((packed));
+    } TT_PACKED;
 
     struct RawEvent {
         NocEventType noc_xfer_type;
-        uint64_t remaining_data : 56;
-    } __attribute__((packed));
+        // Plain bytes instead of the former `uint64_t remaining_data : 56` packed bitfield:
+        // identical 8-byte layout on GCC, and portable to MSVC (whose bitfield allocation
+        // cannot merge a unit across a preceding char). Never read by name anywhere.
+        uint8_t remaining_data[7];
+    };
 
     // Union to hold either local or fabric event data
     union EventData {

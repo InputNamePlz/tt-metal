@@ -66,8 +66,11 @@ struct SliceRange {
     static SliceRange hw041() { return SliceRange{.h0 = 0, .h1 = 4, .hs = 1, .w0 = 0, .w1 = 4, .ws = 1}; }
 } ATTR_PACK;
 
-template <int MAX_BYTES = 0>
-struct TileSliceHostDev {
+// The fixed 16-byte prefix of TileSliceHostDev, split out so the host parser can name a type
+// without the trailing flexible array (MSVC only allows a zero-length array as the very last
+// member of a most-derived object). Layout of TileSliceHostDev is unchanged: the base occupies
+// the same 16 bytes and data follows immediately.
+struct TileSliceHostDevHeader {
     uint32_t cb_ptr;
     struct SliceRange slice_range;
     uint8_t cb_id;
@@ -76,6 +79,10 @@ struct TileSliceHostDev {
     uint8_t endl_rows;
     uint8_t return_code;
     uint8_t pad;
+} ATTR_PACK;
+
+template <int MAX_BYTES = 0>
+struct TileSliceHostDev : public TileSliceHostDevHeader {
     uint8_t data[MAX_BYTES];
 } ATTR_PACK;
 

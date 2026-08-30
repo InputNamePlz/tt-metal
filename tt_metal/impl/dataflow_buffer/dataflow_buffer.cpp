@@ -4,6 +4,7 @@
 
 #include <fmt/ranges.h>
 #include <tt_stl/fmt.hpp>
+#include "hostdevcommon/tt_compiler.h"
 #include "impl/dataflow_buffer/dataflow_buffer.hpp"
 
 #include <algorithm>
@@ -1377,7 +1378,7 @@ void DataflowBufferImpl::append_dm1_remapper_slots_for_core(const CoreCoord& cor
         }
 
         uint8_t num_clientRs =
-            static_cast<uint8_t>(__builtin_popcount(rc->config.remapper_consumer_ids_mask));
+            static_cast<uint8_t>(tt::compiler::popcount32(rc->config.remapper_consumer_ids_mask));
         uint8_t producer_client_type = rc->config.producer_client_type;
         uint8_t tc_id = ::dfb::get_counter_id(rc->config.packed_tile_counter[0]);
         uint8_t valid_mask = static_cast<uint8_t>((1u << num_clientRs) - 1);
@@ -1385,7 +1386,7 @@ void DataflowBufferImpl::append_dm1_remapper_slots_for_core(const CoreCoord& cor
         uint32_t clientR_val = 0;
         uint8_t mask_remaining = rc->config.remapper_consumer_ids_mask;
         for (uint8_t r = 0; r < num_clientRs && r < ::dfb::MAX_CLIENT_RS; r++) {
-            uint8_t id_R = static_cast<uint8_t>(__builtin_ctz(mask_remaining));
+            uint8_t id_R = static_cast<uint8_t>(tt::compiler::count_trailing_zeros32(mask_remaining));
             mask_remaining &= mask_remaining - 1;
             uint8_t tc_R = static_cast<uint8_t>((rc->config.consumer_tcs >> (r * 5)) & 0x1F);
             clientR_val |= (static_cast<uint32_t>(id_R & 0x7u) << (r * 8)) |
@@ -2356,7 +2357,7 @@ void ProgramImpl::finalize_single_dfb_config(
 
             // The ClientR valid mask decides which pool this pair must come from: fan-out needs one
             // of the 16 grouped-capable pairs, a single consumer can use the plentiful 1-to-1 pairs.
-            const bool one_to_many = __builtin_popcount(consumer_ids_mask) > 1;
+            const bool one_to_many = tt::compiler::popcount32(consumer_ids_mask) > 1;
             risc_config.config.remapper_pair_index = remapper_index_allocator_.allocate(core, one_to_many);
 
             log_debug(

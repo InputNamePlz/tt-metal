@@ -127,7 +127,11 @@ static uint64_t choose_quantized_bucket_size(uint64_t min_ns, uint64_t max_ns, u
     const uint64_t rounded = ((needed + (quantum_ns / 2)) / quantum_ns) * quantum_ns;
     uint64_t bucket_size = std::max<uint64_t>(quantum_ns, rounded);
 
-    if (static_cast<__int128>(bucket_size) * static_cast<__int128>(buckets) < static_cast<__int128>(span)) {
+    // Exact 64-bit form of the overflow-safe 128-bit check `bucket_size * buckets < span`
+    // (__int128 is GCC/Clang-only): true iff bucket_size < floor(span/buckets), or it equals
+    // the floor and the division had a remainder.
+    const uint64_t q = span / buckets;
+    if (bucket_size < q || (bucket_size == q && (span % buckets) != 0)) {
         bucket_size = ((needed + quantum_ns - 1) / quantum_ns) * quantum_ns;
     }
 
@@ -149,8 +153,8 @@ experimental::DurationHistogram make_quantized_histogram_ns(
 
     const uint64_t bucket_size = choose_quantized_bucket_size(min_ns, max_ns, buckets, quantum_ns);
     const uint64_t start = (min_ns / bucket_size) * bucket_size;
-    const uint64_t end =
-        static_cast<uint64_t>(static_cast<__int128>(start) + (static_cast<__int128>(bucket_size) * buckets));
+    // Plain uint64 arithmetic: identical to the former 128-bit sum truncated to 64 bits.
+    const uint64_t end = start + bucket_size * static_cast<uint64_t>(buckets);
 
     hist.min_ns = start;
     hist.max_ns = end;
@@ -159,8 +163,7 @@ experimental::DurationHistogram make_quantized_histogram_ns(
     hist.bucket_counts.assign(static_cast<size_t>(buckets), 0);
 
     for (uint32_t i = 0; i <= buckets; ++i) {
-        hist.bucket_edges_ns[i] =
-            static_cast<uint64_t>(static_cast<__int128>(start) + (static_cast<__int128>(bucket_size) * i));
+        hist.bucket_edges_ns[i] = start + bucket_size * static_cast<uint64_t>(i);
     }
 
     for (uint64_t sample : samples_ns) {
