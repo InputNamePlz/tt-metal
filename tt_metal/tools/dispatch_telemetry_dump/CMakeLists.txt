@@ -6,7 +6,7 @@ target_link_libraries(
     PRIVATE
         Metalium::Metal
         TT::STL
-        numa
+        "$<$<NOT:$<PLATFORM_ID:Windows>>:numa>"
 )
 target_include_directories(
     dispatch_telemetry_dump

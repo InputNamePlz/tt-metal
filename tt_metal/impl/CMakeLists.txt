@@ -23,6 +23,20 @@ endforeach()
 
 list(APPEND IMPL_SRC ${GENERATED_HEADERS})
 
+# Python interpreter for codegen scripts.  On Windows hosts a bare `python3` may
+# resolve to the Microsoft Store app-execution alias, so pin a real interpreter.
+if(CMAKE_HOST_WIN32)
+    find_program(
+        TT_CODEGEN_PYTHON
+        NAMES
+            python
+            python3
+        REQUIRED
+    )
+else()
+    set(TT_CODEGEN_PYTHON python3)
+endif()
+
 # Generate Inspector Cap'n Proto headers and RPC server implementation
 set(INSPECTOR_RPC_CAPNP ${CMAKE_CURRENT_SOURCE_DIR}/debug/inspector/rpc.capnp)
 set(JIT_COMPILE_RPC_CAPNP ${CMAKE_CURRENT_SOURCE_DIR}/jit_server/rpc.capnp)
@@ -42,7 +56,7 @@ add_custom_command(
         ${INSPECTOR_RPC_GENERATED_HEADER}
         ${INSPECTOR_RPC_GENERATED_SOURCE}
     COMMAND
-        python3 ${CMAKE_CURRENT_SOURCE_DIR}/debug/inspector/generate_rpc_server.py ${INSPECTOR_RPC_CAPNP}
+        ${TT_CODEGEN_PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/debug/inspector/generate_rpc_server.py ${INSPECTOR_RPC_CAPNP}
         ${INSPECTOR_RPC_GENERATED_HEADER} ${INSPECTOR_RPC_GENERATED_SOURCE}
     DEPENDS
         ${INSPECTOR_RPC_CAPNP}
@@ -127,7 +141,13 @@ target_include_directories(impl SYSTEM PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/flatb
 target_include_directories(impl SYSTEM PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/internal/disaggregation)
 
 # Set KJ_NO_EXCEPTIONS=0 to enable exceptions in Cap'n Proto code due to a detection bug with g++-12.
-target_compile_options(impl PUBLIC -Wno-int-to-pointer-cast PRIVATE -DKJ_NO_EXCEPTIONS=0)
+target_compile_options(
+    impl
+    PUBLIC
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-int-to-pointer-cast>
+    PRIVATE
+        -DKJ_NO_EXCEPTIONS=0
+)
 
 if(TT_UMD_BUILD_SIMULATION)
     target_compile_definitions(impl PRIVATE TT_UMD_BUILD_SIMULATION)
@@ -161,7 +181,7 @@ add_custom_command(
     OUTPUT
         ${INSPECTOR_RPC_STUB_FILE}
     COMMAND
-        python3 ${CMAKE_CURRENT_SOURCE_DIR}/debug/inspector/generate_rpc_stub.py ${INSPECTOR_RPC_CAPNP}
+        ${TT_CODEGEN_PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/debug/inspector/generate_rpc_stub.py ${INSPECTOR_RPC_CAPNP}
         ${INSPECTOR_RPC_STUB_FILE}
     DEPENDS
         ${INSPECTOR_RPC_CAPNP}

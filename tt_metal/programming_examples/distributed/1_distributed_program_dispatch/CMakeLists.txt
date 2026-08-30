@@ -5,7 +5,7 @@ target_link_libraries(
     distributed_program_dispatch
     PUBLIC
         tt_metal
-        pthread
+        "$<$<NOT:$<PLATFORM_ID:Windows>>:pthread>"
 )
 
 if(TARGET TT::CommonPCH)
