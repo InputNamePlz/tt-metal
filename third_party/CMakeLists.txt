@@ -464,6 +464,7 @@ if(NOT DEFINED cadical_SOURCE_DIR)
         DOWNLOAD_ONLY YES
         PATCHES
             cadical_vivify_include_tuple.patch
+            cadical_msvc_attribute_format.patch
     )
 endif()
 
