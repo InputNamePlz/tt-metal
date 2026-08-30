@@ -111,6 +111,7 @@
           "TT_SKIP_HW_TOOLCHAIN": {"value": "ON"},
           "TT_UMD_BUILD_SIMULATION": {"value": "OFF"},
           "TT_UNITY_BUILDS": {"value": "OFF"},
+          "CMAKE_DISABLE_PRECOMPILE_HEADERS": {"value": "ON"},
           "CMAKE_COMPILE_WARNING_AS_ERROR": {"value": "OFF"}
         }
       }
