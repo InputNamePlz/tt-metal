@@ -7,7 +7,16 @@ set(HAL_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated)
 set(DEV_MSGS_CODEGEN_COMMAND ${DEV_MSGS_CODEGEN_SH})
 if(CMAKE_HOST_WIN32)
     find_program(BASH_EXECUTABLE bash REQUIRED)
-    set(DEV_MSGS_CODEGEN_COMMAND ${BASH_EXECUTABLE} ${DEV_MSGS_CODEGEN_SH})
+    # PYTHONUTF8: codegen.py reads UTF-8 sources; don't let a non-UTF-8 ANSI
+    # codepage (e.g. cp949) break it.
+    set(DEV_MSGS_CODEGEN_COMMAND
+        ${CMAKE_COMMAND}
+        -E
+        env
+        PYTHONUTF8=1
+        ${BASH_EXECUTABLE}
+        ${DEV_MSGS_CODEGEN_SH}
+    )
 endif()
 
 # ── Per-file codegen commands ──────────────────────────────────────────────────
