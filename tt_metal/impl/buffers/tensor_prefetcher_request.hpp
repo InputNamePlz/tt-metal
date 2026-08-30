@@ -58,6 +58,8 @@
 
 #include <cstdint>
 
+#include "hostdevcommon/tt_packed.h"
+
 namespace tt::tt_metal {
 
 // Fixed usable payload size of one request page, in bytes. Both the host (layout/entry
@@ -84,6 +86,7 @@ constexpr uint32_t kNumCqSignalSlots = 2;
 // that produce identical layouts share a single table entry (deduplicated per page).
 //
 // Invariant: rows_per_sub > 1 implies M == 1 (the kernel cannot row-stride DMA).
+TT_PACK_BEGIN
 struct TensorPrefetcherTensorLayout {
     uint32_t num_sub = 0;              // sub-bands per ring-block
     uint32_t M = 0;                    // N-chunks per sub-band (divides num_receivers)
@@ -110,7 +113,7 @@ struct TensorPrefetcherTensorLayout {
     // appended rotation bytes extend each layout slot's stride and are deduped together with
     // the geometry, so tensors that differ only in rotation get distinct slots.
     uint32_t streaming = 0;
-} __attribute__((packed));
+} TT_PACKED;
 
 // One prefetched tensor: its bank-local address plus an index into the page's layout
 // table. The kernel resolves the layout via layout_index (see header comment for the
@@ -118,7 +121,7 @@ struct TensorPrefetcherTensorLayout {
 struct TensorPrefetcherEntry {
     uint32_t bank_local_base = 0;  // GDDR offset where this tensor starts in the bank
     uint32_t layout_index = 0;     // index into the page's TensorPrefetcherTensorLayout table
-} __attribute__((packed));
+} TT_PACKED;
 
 // One-byte command id at the front of every request page.
 enum TensorPrefetcherCmdId : uint8_t {
@@ -129,7 +132,7 @@ enum TensorPrefetcherCmdId : uint8_t {
 
 struct TensorPrefetcherBaseCmd {
     TensorPrefetcherCmdId cmd_id;  // 1 byte
-} __attribute__((packed));
+} TT_PACKED;
 
 // PREFETCH payload. The leading pad keeps the 32-bit fields 4-byte aligned past the
 // one-byte base (mirrors the pad fields in cq_commands.hpp commands); the resulting
@@ -139,14 +142,14 @@ struct TensorPrefetcherPrefetchCmd {
     uint16_t num_entries;     // number of valid TensorPrefetcherEntry entries
     uint32_t num_layouts;     // number of valid TensorPrefetcherTensorLayout table entries
     uint32_t gcb_state_addr;  // DRISC L1 base of the target GCB's sender state block
-} __attribute__((packed));
+} TT_PACKED;
 
 // WAIT_CQ payload.
 struct TensorPrefetcherWaitCqCmd {
     uint8_t cq_index;  // which per-core CQ signal slot to wait on (0/1)
     uint16_t pad1;
     uint32_t cq_wait_value;  // wait until slot >= this value (wrap-safe int32 compare)
-} __attribute__((packed));
+} TT_PACKED;
 
 // Header at the start of each request page: command id + per-command payload union.
 struct TensorPrefetcherRequestHeader {
@@ -154,8 +157,9 @@ struct TensorPrefetcherRequestHeader {
     union {
         TensorPrefetcherPrefetchCmd prefetch;
         TensorPrefetcherWaitCqCmd wait_cq;
-    } __attribute__((packed));
-} __attribute__((packed));
+    } TT_PACKED;
+} TT_PACKED;
+TT_PACK_END
 
 // The host fills this header and the kernel parses it field-by-field, so its layout is a
 // host↔kernel wire contract. Pin the size (and pack the struct above) so a difference in

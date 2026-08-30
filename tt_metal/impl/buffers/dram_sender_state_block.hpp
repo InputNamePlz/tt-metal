@@ -24,8 +24,11 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "hostdevcommon/tt_packed.h"
+
 namespace tt::tt_metal {
 
+TT_PACK_BEGIN
 struct DramSenderStateBlock {
     // ----- Fields the kernel loads into its RemoteSenderCBInterface (24 B) -----
     uint32_t config_ptr;              // -> the config block below (is_sender .. fifo_size_per_receiver)
@@ -57,7 +60,8 @@ struct DramSenderStateBlock {
     // (The per-receiver ring-index (g_r) rotation table that used to follow the NOC XY table is
     // gone: the streaming rotation is now host-owned and carried per-tensor in the request page,
     // not stamped into L1. See tensor_prefetcher_request.hpp.)
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 static_assert(sizeof(DramSenderStateBlock) == 12 * sizeof(uint32_t), "DramSenderStateBlock layout drift");
 static_assert(

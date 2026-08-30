@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include "hostdevcommon/tt_packed.h"
 
 #include <hostdevcommon/common_values.hpp>
 namespace tt::tt_metal {
@@ -115,11 +116,13 @@ struct __attribute__((packed, aligned(4))) DispatchTelemetryControl {
 
 constexpr uint32_t INVALID_SMC_DISPATCH_CORE_COORDS = UINT32_MAX;
 // Packed virtual dispatch-core coordinates. These are consumed by host telemetry readers and are not NOC coords.
-struct __attribute__((packed)) SMCDispatchCoreCoords {
+TT_PACK_BEGIN
+struct TT_PACKED SMCDispatchCoreCoords {
     uint32_t prefetch_xy = INVALID_SMC_DISPATCH_CORE_COORDS;
     uint32_t dispatch_xy = INVALID_SMC_DISPATCH_CORE_COORDS;
     uint32_t dispatch_s_xy = INVALID_SMC_DISPATCH_CORE_COORDS;
 };
+TT_PACK_END
 
 constexpr uint32_t smc_dispatch_core_x(uint32_t xy) { return xy >> 16; }
 
@@ -140,7 +143,8 @@ enum class SMCDispatchTelemetryFlags : uint8_t {
 };
 
 // Stored on device but data is host read/write only, so types can be any size
-struct __attribute__((packed)) SMCDispatchTelemetryControl {
+TT_PACK_BEGIN
+struct TT_PACKED SMCDispatchTelemetryControl {
     uint32_t version = DISPATCH_TELEMETRY_VERSION;
     uint32_t signature = SMC_TELEMETRY_SIGNATURE;
     uint8_t flags = 0;
@@ -150,10 +154,11 @@ struct __attribute__((packed)) SMCDispatchTelemetryControl {
     // Tensix cores in the compute-with-storage grid (excludes dispatch tensix and ethernet).
     // Host-published at device init. 0 means the field was not written (legacy control block).
     uint16_t num_worker_cores = 0;
-    struct __attribute__((packed)) SDTelemetry {
+    struct TT_PACKED SDTelemetry {
         // Reserved for future use
     } sd_telemetry[RESERVED_CQ_SPACE];
 };
+TT_PACK_END
 
 }  // namespace dispatch_telemetry_types
 }  // namespace tt::tt_metal

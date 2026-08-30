@@ -13,6 +13,13 @@
 #include <thread>
 #include <vector>
 
+#ifndef ESTALE
+// The Windows CRT does not define ESTALE (NFS stale-handle errno). Define it with the Linux
+// value so the NFS retry logic compiles; errno never takes this value on Windows, so the
+// retry paths simply never trigger there.
+#define ESTALE 116
+#endif
+
 // NFS-Specific Filesystem Utilities
 // =================================
 //
