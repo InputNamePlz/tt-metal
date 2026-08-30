@@ -18,10 +18,17 @@ namespace tt::jit_build::utils {
 
 bool run_command(const std::string& cmd, const std::string& log_file, bool verbose);
 
-// Like run_command but bypasses the shell entirely by using posix_spawn with an explicit
-// argument vector.  Immune to shell metacharacter injection.
+// Like run_command but bypasses the shell entirely by using posix_spawn (CreateProcessW on
+// Windows) with an explicit argument vector.  Immune to shell metacharacter injection.
 // |working_dir| is passed as the cwd for the child process (empty = inherit parent cwd).
 bool exec_command(const std::vector<std::string>& args, const std::string& working_dir, const std::string& log_file);
+
+// In-process equivalent of `grep <needle> <dir>/*<suffix> >> <out_file>`: appends every line
+// containing |needle| from regular files in |dir| whose names end with |suffix| to |out_file|,
+// each prefixed with "<path>:" like multi-file grep output. Returns true if any line matched
+// (mirroring grep's exit status). Used on platforms without a shell grep.
+bool grep_lines_to_file(
+    const std::string& dir, const std::string& suffix, const std::string& needle, const std::string& out_file);
 
 // Split a whitespace-delimited string into tokens (no shell quoting support).
 std::vector<std::string> tokenize_flags(const std::string& flags);
