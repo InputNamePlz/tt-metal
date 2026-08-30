@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "hostdevcommon/tt_compiler.h"
 #include <algorithm>
 
 #include <tt_stl/assert.hpp>
@@ -156,7 +157,7 @@ void issue_trace_commands(
             cq_id);
     }
 
-    uint32_t page_size_log2 = __builtin_ctz(dispatch_md.trace_buffer_page_size);
+    uint32_t page_size_log2 = tt::compiler::count_trailing_zeros32(dispatch_md.trace_buffer_page_size);
     TT_ASSERT(
         (dispatch_md.trace_buffer_page_size & (dispatch_md.trace_buffer_page_size - 1)) == 0,
         "Page size must be a power of 2");
@@ -242,7 +243,7 @@ std::size_t compute_interleaved_trace_buf_page_size(uint32_t buf_size, const uin
     // The algorithm below currently minimizes the amount of wasted space due to
     // padding
     std::vector<uint32_t> candidates;
-    candidates.reserve(__builtin_clz(kExecBufPageMin) - __builtin_clz(kExecBufPageMax) + 1);
+    candidates.reserve(tt::compiler::count_leading_zeros32(kExecBufPageMin) - tt::compiler::count_leading_zeros32(kExecBufPageMax) + 1);
     for (uint32_t size = 1; size <= kExecBufPageMax; size <<= 1) {
         if (size >= kExecBufPageMin) {
             candidates.push_back(size);
