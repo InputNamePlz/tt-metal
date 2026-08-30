@@ -29,7 +29,9 @@ private:
 public:
     StructInfo(const uintptr_t* offsets) : offsets_(offsets) {}
 
-    size_t get(size_t index) const { return reinterpret_cast<size_t>(offsets_[index]); }
+    // static_cast, not reinterpret_cast: on MSVC uintptr_t and size_t are distinct integral
+    // types and reinterpret_cast between them is ill-formed (on glibc they are the same type).
+    size_t get(size_t index) const { return static_cast<size_t>(offsets_[index]); }
     StructInfo get_info(size_t index) const { return {reinterpret_cast<uintptr_t*>(offsets_[index])}; }
     size_t get_size() const { return get(0); }
     size_t offset_of(size_t i) const { return i ? offsets_[i] : 0; }

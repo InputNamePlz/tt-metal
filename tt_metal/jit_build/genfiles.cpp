@@ -474,7 +474,9 @@ FORCE_INLINE constexpr uint32_t get_compile_time_vararg(uint32_t idx) {{
 )",
         cta_vararg_size);
 
-    write_file(path, content.str());
+    // Explicit .string(): fs::path only converts to std::string implicitly where value_type
+    // is char (not on Windows).
+    write_file(path.string(), content.str());
 }
 
 // Scan a kernel source for a TT_KERNEL entry and, if present, return the generated kernel_main()

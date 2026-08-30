@@ -8,8 +8,11 @@
 
 #include <algorithm>
 #include <array>
+#if __has_include(<experimental/type_traits>)
 #include <experimental/type_traits>
+#endif
 #include <map>
+#include <type_traits>
 #include <optional>
 #include <ostream>
 #include <reflect>
@@ -281,17 +284,30 @@ private:
 using Attributes = std::vector<std::tuple<AttributeName, Attribute>>;
 
 namespace detail {
+#if __has_include(<experimental/type_traits>)
+template <template <typename...> class Op, typename... Args>
+inline constexpr bool is_detected_v = std::experimental::is_detected_v<Op, Args...>;
+#else
+// MSVC ships no <experimental/type_traits>; minimal C++17 detection-idiom stand-in.
+template <typename Void, template <typename...> class Op, typename... Args>
+struct is_detected_helper : std::false_type {};
+template <template <typename...> class Op, typename... Args>
+struct is_detected_helper<std::void_t<Op<Args...>>, Op, Args...> : std::true_type {};
+template <template <typename...> class Op, typename... Args>
+inline constexpr bool is_detected_v = is_detected_helper<void, Op, Args...>::value;
+#endif
+
 template <typename T>
 using has_to_hash_t = decltype(std::declval<const T>().to_hash());
 
 template <typename T>
-constexpr bool supports_to_hash_v = std::experimental::is_detected_v<has_to_hash_t, T>;
+constexpr bool supports_to_hash_v = is_detected_v<has_to_hash_t, T>;
 
 template <typename T>
 using has_to_string_t = decltype(std::declval<const T>().to_string());
 
 template <typename T>
-constexpr bool supports_to_string_v = std::experimental::is_detected_v<has_to_string_t, T>;
+constexpr bool supports_to_string_v = is_detected_v<has_to_string_t, T>;
 
 template <typename T>
 static constexpr std::size_t get_num_attributes() {
@@ -308,8 +324,8 @@ template <typename T>
 using has_attribute_values_t = decltype(std::declval<T>().attribute_values());
 
 template <typename T>
-constexpr bool supports_compile_time_attributes_v = std::experimental::is_detected_v<has_attribute_names_t, T> and
-                                                    std::experimental::is_detected_v<has_attribute_values_t, T>;
+constexpr bool supports_compile_time_attributes_v =
+    is_detected_v<has_attribute_names_t, T> and is_detected_v<has_attribute_values_t, T>;
 
 template <typename T>
 constexpr bool supports_conversion_to_string_v =
