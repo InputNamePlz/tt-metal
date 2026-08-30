@@ -83,6 +83,35 @@
           "BUILD_TT_TRAIN": {"value": "OFF"}
         },
         "toolchainFile": "cmake/x86_64-linux-clang-20-libcpp-toolchain.cmake"
+      },
+      {
+        "name": "windows",
+        "displayName": "Windows MSVC (lean)",
+        "description": "Lean MSVC configuration for the in-progress Windows port",
+        "generator": "Visual Studio 17 2022",
+        "architecture": "x64",
+        "binaryDir": "${sourceDir}/.build/windows-msvc",
+        "condition": {
+          "type": "equals",
+          "lhs": "${hostSystemName}",
+          "rhs": "Windows"
+        },
+        "cacheVariables": {
+          "WITH_PYTHON_BINDINGS": {"value": "OFF"},
+          "ENABLE_TRACY": {"value": "OFF"},
+          "ENABLE_DISTRIBUTED": {"value": "OFF"},
+          "TT_METAL_BUILD_TESTS": {"value": "OFF"},
+          "TTNN_BUILD_TESTS": {"value": "OFF"},
+          "BUILD_TT_TRAIN": {"value": "OFF"},
+          "TT_ENABLE_LTO": {"value": "OFF"},
+          "TT_INSTALL": {"value": "OFF"},
+          "BUILD_SHARED_LIBS": {"value": "OFF"},
+          "BUILD_PROGRAMMING_EXAMPLES": {"value": "ON"},
+          "TT_METAL_BUILD_TTNN": {"value": "OFF"},
+          "TT_SKIP_HW_TOOLCHAIN": {"value": "ON"},
+          "TT_UNITY_BUILDS": {"value": "OFF"},
+          "CMAKE_COMPILE_WARNING_AS_ERROR": {"value": "OFF"}
+        }
       }
     ],
     "buildPresets": [
