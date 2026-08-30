@@ -10,6 +10,7 @@
 #include <type_traits>
 
 #include "tt_metal/hw/inc/hostdev/fabric_telemetry_msgs.h"
+#include "hostdevcommon/tt_packed.h"
 
 namespace tt::tt_fabric {
 
@@ -66,7 +67,8 @@ enum class compressed_routing_values : std::uint8_t {
 
 // Compressed routing table base structure using 3 bits
 template <std::uint32_t ArraySize>
-struct __attribute__((packed)) direction_table_t {
+TT_PACK_BEGIN
+struct TT_PACKED direction_table_t {
     static constexpr std::uint32_t BITS_PER_COMPRESSED_ENTRY = 3;
     static constexpr std::uint8_t COMPRESSED_ENTRY_MASK = 0x7;                // 3-bit mask (2^3 - 1)
     static constexpr std::uint32_t BITS_PER_BYTE = sizeof(std::uint8_t) * 8;  // 8 bits in a byte
@@ -90,12 +92,14 @@ struct __attribute__((packed)) direction_table_t {
     inline std::uint8_t get_original_direction(std::uint16_t index) const;
 #endif
 };
+TT_PACK_END
 
 // Compressed routing entry structures using manual bit packing
 // Note: Using uint32_t (4B) instead of packed uint16_t+uint8_t (3B) because union with 1D table
 // makes both equivalent in memory (union = max(1024, 1024) = 1024B). Prioritizing performance.
 // Can switch to 3B packed (uint16_t+uint8_t) if memory becomes critical in future.
-struct __attribute__((packed)) compressed_route_2d_t {
+TT_PACK_BEGIN
+struct TT_PACKED compressed_route_2d_t {
     // Field widths (source of truth)
     static constexpr uint32_t NS_HOPS_WIDTH = 7;
     static constexpr uint32_t EW_HOPS_WIDTH = 7;
@@ -133,6 +137,7 @@ struct __attribute__((packed)) compressed_route_2d_t {
     uint8_t get_turn_point() const { return (data >> TURN_POINT_SHIFT) & TURN_POINT_MASK; }
 #endif
 };
+TT_PACK_END
 
 static_assert(sizeof(compressed_route_2d_t) == 4, "2D route must be 4 bytes");
 
@@ -488,7 +493,8 @@ static const uint16_t SINGLE_ROUTE_SIZE_1D = 16;  // 4 words for 64 hops: base +
 static const uint16_t SINGLE_ROUTE_SIZE_2D = 32;
 
 template <uint8_t dim, bool compressed>
-struct __attribute__((packed)) intra_mesh_routing_path_t {
+TT_PACK_BEGIN
+struct TT_PACKED intra_mesh_routing_path_t {
     static_assert(dim == 1 || dim == 2, "dim must be 1 or 2");
 
     // Compressed routing uses much smaller encoding
@@ -521,7 +527,9 @@ struct __attribute__((packed)) intra_mesh_routing_path_t {
         uint16_t dst_chip_id, volatile uint8_t* out_route_buffer, bool prepend_one_hop = false) const;
 #endif
 };
+TT_PACK_END
 
+TT_PACK_BEGIN
 struct fabric_connection_info_t {
     uint32_t edm_buffer_base_addr;
     uint32_t edm_connection_handshake_addr;
@@ -533,7 +541,8 @@ struct fabric_connection_info_t {
     uint8_t edm_noc_y;
     uint8_t num_buffers_per_channel;
     uint16_t worker_free_slots_stream_id;
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 static_assert(sizeof(fabric_connection_info_t) == 24, "Struct size mismatch!");
 // NOTE: This assertion can be removed once "non device-init fabric"
@@ -595,7 +604,8 @@ struct routing_l1_info_t {
     direction_table_t<MAX_NUM_MESHES> inter_mesh_direction_table{};  // 384 bytes
 
     // Union overlaps 1D and 2D routing tables at same offset
-    union __attribute__((packed)) {
+    // TT_PACKED (empty on MSVC) suffices: both members are pack(1) types of equal size.
+    union TT_PACKED {
         intra_mesh_routing_path_t<1, false> routing_path_table_1d;  // 1024 bytes
         intra_mesh_routing_path_t<2, true> routing_path_table_2d;   // 1024 bytes
     };
@@ -612,7 +622,11 @@ static_assert(
     sizeof(intra_mesh_routing_path_t<1, false>) == 1024,
     "1D uncompressed routing path must be 1024 bytes (64 entries x 16 bytes per route)");
 
+#ifndef _MSC_VER
+// MSVC has no zero-size types (sizeof yields 1 there); this type is not part of any
+// host/device-shared layout, so the exact-zero check is a GCC/Clang-only invariant.
 static_assert(sizeof(intra_mesh_routing_path_t<1, true>) == 0, "1D compressed routing path must be 0 bytes");
+#endif
 
 // 256 chips * 4 bytes = 1024
 static_assert(
