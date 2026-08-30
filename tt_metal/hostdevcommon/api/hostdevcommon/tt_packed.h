@@ -32,3 +32,21 @@
 #define TT_PACK_BEGIN __pragma(pack(push, 1))
 #define TT_PACK_END __pragma(pack(pop))
 #endif
+
+// Padding member whose byte count is a compile-time C++ expression that may evaluate to zero.
+// GCC/Clang express this directly as a zero-length array (their extension); MSVC has no
+// zero-size members, so an empty [[msvc::no_unique_address]] struct stands in for the N == 0
+// case (it occupies zero bytes, keeping layouts byte-identical).
+#if defined(__GNUC__) || defined(__clang__)
+#define TT_PAD_BYTES(name, n) volatile unsigned char name[n]
+#else
+namespace tt::detail {
+template <int N>
+struct PadBytes {
+    volatile unsigned char bytes[N];
+};
+template <>
+struct PadBytes<0> {};
+}  // namespace tt::detail
+#define TT_PAD_BYTES(name, n) [[msvc::no_unique_address]] ::tt::detail::PadBytes<(n)> name
+#endif

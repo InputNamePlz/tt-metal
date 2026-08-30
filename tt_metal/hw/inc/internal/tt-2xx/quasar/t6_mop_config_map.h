@@ -15,6 +15,7 @@ extern "C" {
 
 #include <assert.h>
 #include <stdint.h>
+#include "hostdevcommon/tt_packed.h"
 
 // Reg - mop_config_regs::LOOP_LENGTH
 #define MOP_CONFIG_REGS__LOOP_LENGTH__LENGTH_bm 0x3ff
@@ -39,7 +40,8 @@ extern "C" {
 #define MOP_CONFIG_REGS__CONFIG__SW_CONTROL_reset 0x0
 
 // Regfile - mop_config_regs
-typedef struct __attribute__((__packed__)) {
+TT_PACK_BEGIN
+typedef struct TT_PACKED {
     uint32_t BANK0_LOOP0_LEN;
     uint32_t BANK0_LOOP1_LEN;
     uint32_t BANK0_LOOP_START_INSTR0;
@@ -62,11 +64,14 @@ typedef struct __attribute__((__packed__)) {
     uint8_t RESERVED_54_7f[0x2c];
     uint32_t MOP_CONFIG;
 } mop_config_regs_t;
+TT_PACK_END
 
 // Addrmap - t6_mop_config_map
-typedef struct __attribute__((__packed__)) {
+TT_PACK_BEGIN
+typedef struct TT_PACKED {
     mop_config_regs_t mop_config_regs;
 } t6_mop_config_map_t;
+TT_PACK_END
 
 static_assert(sizeof(t6_mop_config_map_t) == 0x84, "Packing error");
 
