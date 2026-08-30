@@ -8,6 +8,7 @@ set(HOSTDEVCOMMON_JIT_API_HEADERS
     api/hostdevcommon/flags.hpp
     api/hostdevcommon/fabric_common.h
     api/hostdevcommon/tensor_accessor/arg_config.hpp
+    api/hostdevcommon/tt_packed.h
 )
 
 set(HOSTDEVCOMMON_HOSTDEV_HEADERS

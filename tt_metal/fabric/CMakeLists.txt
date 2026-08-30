@@ -95,7 +95,7 @@ target_link_libraries(
 
 tt_reuse_precompile_headers(fabric TT::CommonPCH)
 
-target_compile_options(fabric PRIVATE -Wno-int-to-pointer-cast)
+target_compile_options(fabric PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-int-to-pointer-cast>)
 
 install(
     TARGETS
