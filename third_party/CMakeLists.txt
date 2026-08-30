@@ -7,7 +7,8 @@ set(CMAKE_VERIFY_INTERFACE_HEADER_SETS FALSE)
 set(DEFAULT_COMPONENT_NAME ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
 
 if(MSVC)
-    add_compile_options(/w)
+    # Scoped to C/CXX so /w does not leak into ml64 for ASM_MASM sources.
+    add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/w>")
 else()
     add_compile_options(-w)
 endif()
@@ -465,6 +466,7 @@ if(NOT DEFINED cadical_SOURCE_DIR)
         PATCHES
             cadical_vivify_include_tuple.patch
             cadical_msvc_attribute_format.patch
+            cadical_msvc_windows_port.patch
     )
 endif()
 
@@ -530,6 +532,8 @@ CPMAddPackage(
     GITHUB_REPOSITORY tenstorrent/tt-exalens
     GIT_TAG 6f5720240b7254b25cb3d78aef81769fc12a30f9
     SOURCE_SUBDIR ttexalens/cpp/elf
+    PATCHES
+        ttexalens_msvc_demangle.patch
     OPTIONS
         "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
 )
