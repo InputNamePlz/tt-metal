@@ -1,0 +1,33 @@
+diff --git a/ttexalens/cpp/elf/private/elf_file_impl.cpp b/ttexalens/cpp/elf/private/elf_file_impl.cpp
+index be1936c..e08173a 100644
+--- a/ttexalens/cpp/elf/private/elf_file_impl.cpp
++++ b/ttexalens/cpp/elf/private/elf_file_impl.cpp
+@@ -3,7 +3,9 @@
+ 
+ #include "elf_file_impl.hpp"
+ 
++#if defined(__GNUC__) || defined(__clang__)
+ #include <cxxabi.h>
++#endif
+ 
+ #include <cstdlib>
+ 
+@@ -32,6 +34,7 @@ std::vector<ElfSymbol> ElfFileImpl::read_symbol_table_section(std::string_view s
+ 
+         // Demangle the symbol name if possible.
+         std::string demangled;
++#if defined(__GNUC__) || defined(__clang__)
+         if (!name.empty()) {
+             int status = 0;
+             char* d = abi::__cxa_demangle(name.c_str(), nullptr, nullptr, &status);
+@@ -40,6 +43,10 @@ std::vector<ElfSymbol> ElfFileImpl::read_symbol_table_section(std::string_view s
+             }
+             std::free(d);
+         }
++#else
++        // MSVC has no __cxa_demangle (the symbols here are Itanium-mangled RISC-V ELF names);
++        // leave the demangled field empty and let consumers fall back to the raw name.
++#endif
+         result.push_back(ElfSymbol{
+             std::move(name),
+             std::move(demangled),
