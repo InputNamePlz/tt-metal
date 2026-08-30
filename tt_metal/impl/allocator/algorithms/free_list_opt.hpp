@@ -17,6 +17,10 @@
 #include "hal_types.hpp"
 
 namespace tt::tt_metal::allocator {
+
+#ifdef _WIN32
+using ssize_t = std::ptrdiff_t;  // POSIX type; the Windows CRT does not provide it
+#endif
 // Essentially the same free list algorithm as FreeList with BestFit policy, but with (IMO absurdly) optimized code.
 // Including
 // - SoA instead of linked list for the free list

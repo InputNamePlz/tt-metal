@@ -5,6 +5,7 @@
 #include <enchantum/enchantum.hpp>
 
 #include <cstdint>
+#include "hostdevcommon/tt_compiler.h"
 #include <tt_stl/assert.hpp>
 #include <tt_stl/fmt.hpp>
 #include <tt-metalium/experimental/fabric/control_plane.hpp>
@@ -1010,7 +1011,7 @@ FabricEriscDatamoverBuilder::CompileTimeArgs FabricEriscDatamoverBuilder::get_co
             return 0;
         }
         // Find position of most significant bit + 1
-        return 32 - __builtin_clz(mask);
+        return 32 - tt::compiler::count_leading_zeros32(mask);
     };
 
     uint32_t vc0_downstream_edm_size =

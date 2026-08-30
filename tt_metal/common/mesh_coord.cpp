@@ -112,8 +112,17 @@ size_t MeshShape::mesh_size() const {
                    : std::accumulate(value_.begin(), value_.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 }
 
+#ifndef _MSC_VER
 bool operator==(const MeshShape& lhs, const MeshShape& rhs) = default;
 bool operator!=(const MeshShape& lhs, const MeshShape& rhs) = default;
+#else
+// MSVC (C2610) rejects defaulting a friend-declared comparison out of line; spell out what the
+// defaulted operator does: memberwise comparison of the base subobject and strides_.
+bool operator==(const MeshShape& lhs, const MeshShape& rhs) {
+    return static_cast<const ShapeBase&>(lhs) == static_cast<const ShapeBase&>(rhs) && lhs.strides_ == rhs.strides_;
+}
+bool operator!=(const MeshShape& lhs, const MeshShape& rhs) { return !(lhs == rhs); }
+#endif
 
 std::ostream& operator<<(std::ostream& os, const MeshShape& shape) {
     os << "MeshShape([";

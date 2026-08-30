@@ -13,6 +13,7 @@
 #include <tt_stl/assert.hpp>
 #include <enchantum/enchantum.hpp>
 #include <tt_stl/reflection.hpp>
+#include "hostdevcommon/tt_compiler.h"
 #include "erisc_datamover_builder.hpp"
 #include <umd/device/types/cluster_descriptor_types.hpp>  // ChipId
 #include "tt_metal/fabric/fabric_context.hpp"
@@ -417,12 +418,12 @@ void FabricContext::compute_routing_mode() {
 
     // Validate dimension flags are orthogonal (only one can be set)
     TT_FATAL(
-        __builtin_popcount(mode & (ROUTING_MODE_1D | ROUTING_MODE_2D | ROUTING_MODE_3D)) == 1,
+        tt::compiler::popcount32(mode & (ROUTING_MODE_1D | ROUTING_MODE_2D | ROUTING_MODE_3D)) == 1,
         "Only one dimension mode (1D, 2D, 3D) can be active at once");
 
     // Validate topology flags are orthogonal
     TT_FATAL(
-        __builtin_popcount(
+        tt::compiler::popcount32(
             mode & (ROUTING_MODE_RING | ROUTING_MODE_LINE | ROUTING_MODE_NEIGHBOR_EXCHANGE | ROUTING_MODE_MESH |
                     ROUTING_MODE_TORUS)) == 1,
         "Only one topology mode (RING, LINE, NEIGHBOR_EXCHANGE, MESH, TORUS) can be active at once");

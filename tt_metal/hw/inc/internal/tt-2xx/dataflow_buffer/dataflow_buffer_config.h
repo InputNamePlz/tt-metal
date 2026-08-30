@@ -7,6 +7,9 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "hostdevcommon/tt_compiler.h"
+#include "hostdevcommon/tt_packed.h"
+
 // Transaction-id space is [0, HW_TXN_ID_MAX]. Id 0 is NOC_OVERLAY_TRID_STATIC (untagged).
 // Quasar-only pool split:
 //   user / kernel : [0, USER_TXN_ID_MAX]
@@ -87,11 +90,11 @@ constexpr uint8_t PACKED_TC_TENSIX_ID_MASK =
     (1 << PACKED_TC_TENSIX_ID_BITS) - 1;  // 0x03 - mask for 2-bit tensix_id (0-3)
 
 // NOLINTBEGIN(readability-redundant-inline-specifier)
-inline __attribute__((always_inline)) constexpr uint8_t get_tensix_id(PackedTileCounter p) {
+TT_FORCE_INLINE constexpr uint8_t get_tensix_id(PackedTileCounter p) {
     return (p >> PACKED_TC_TENSIX_ID_SHIFT) & PACKED_TC_TENSIX_ID_MASK;
 }
 
-inline __attribute__((always_inline)) constexpr uint8_t get_counter_id(PackedTileCounter p) {
+TT_FORCE_INLINE constexpr uint8_t get_counter_id(PackedTileCounter p) {
     return p & PACKED_TC_COUNTER_ID_MASK;
 }
 // NOLINTEND(readability-redundant-inline-specifier)
@@ -163,7 +166,7 @@ inline uint32_t dfb_config_header_size() { return sizeof(dfb_global_header_t); }
 
 // Number of init/wait entries in a hart blob (= popcount of participation_mask[h]).
 inline uint8_t dfb_hart_participation_count(uint32_t participation_mask) {
-    return static_cast<uint8_t>(__builtin_popcount(participation_mask));
+    return static_cast<uint8_t>(tt::compiler::popcount32(participation_mask));
 }
 
 // Flag bits for dfb_hart_init_entry_t::flags
@@ -191,6 +194,7 @@ static_assert(sizeof(dfb_blob_tc_pair_t) == 8, "dfb_blob_tc_pair_t must be 8B");
 // Fixed 28B header, followed by dfb_blob_tc_pair_t[num_tcs] (8B each), then
 // uint8_t packed_tile_counter[num_tcs] padded to 4B.
 // Total entry size = 28 + ceil9(num_tcs) where ceil9(n) = (n*9 + 3) & ~3.
+TT_PACK_BEGIN
 struct dfb_hart_init_entry_t {
     uint8_t  logical_dfb_id;
     uint8_t  num_tcs;
@@ -214,7 +218,8 @@ struct dfb_hart_init_entry_t {
                                              // reclaims this byte for remapper_pair_index.
     uint16_t num_entries;                    // bytes 24-25; ring entry count (main update_size path)
     uint16_t capacity;  // bytes 26-27; producer: TC capacity; consumer: 0
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 static_assert(sizeof(dfb_hart_init_entry_t) == 28, "dfb_hart_init_entry_t must be 28B");
 static_assert(offsetof(dfb_hart_init_entry_t, capacity) == 26, "capacity must occupy former pad bytes 26-27");
 static_assert(offsetof(dfb_hart_init_entry_t, num_entries) == 24, "num_entries must stay at bytes 24-25");
@@ -268,13 +273,15 @@ inline constexpr uint32_t dfb_hart_init_entry_byte_size(uint32_t num_tcs) {
     return static_cast<uint32_t>(sizeof(dfb_hart_init_entry_t)) + ((tc_bytes + 3u) & ~3u);
 }
 
+TT_PACK_BEGIN
 struct dfb_txn_id_descriptor_t {
     uint8_t txn_ids[dfb::NUM_TXN_IDS];
     uint8_t num_entries_to_process_threshold; // entries each txn ID tracks before posting/acking
     uint8_t num_txn_ids;
     uint8_t num_entries_per_txn_id;
     uint8_t num_entries_per_txn_id_per_tc;
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 // Every field is naturally aligned at its current offset:
 // entry_size/stride_in_entries (u32) at 0/4, capacity/num_entries (u16) at 8/10,
@@ -302,10 +309,12 @@ static_assert(sizeof(dfb_initializer_t) == 36, "dfb_initializer_t size changed â
 
 // Core-wide header for the DM1 remapper blob.
 // Followed by dfb_dm1_remapper_slot_t[num_slots] aggregated in ascending DFB id order.
+TT_PACK_BEGIN
 struct dfb_dm1_remapper_core_header_t {  // 4 bytes
     uint16_t num_slots;
     uint8_t _pad[2];
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 
 // Core-wide header at dm0_isr_blob_offset (before txn threshold + descriptor pools).
 // Host ORs txn ids across all DFBs on this core; DM0 loads once for CMDBUF IE programming.
@@ -349,12 +358,14 @@ struct dfb_dm0_txn_descriptor_image_t {
 //
 // Device side: setup_dfb_remapper() writes clientR_val/clientL_val directly to remapper HW
 // registers (no staging through g_remapper_configurator arrays).
+TT_PACK_BEGIN
 struct dfb_dm1_remapper_slot_t {
     uint8_t  pair_index;   // remapper pair index for this producer
     uint8_t  _pad[3];      // pad to 8 bytes
     uint32_t clientR_val;  // pre-computed ClientR config register value
     uint32_t clientL_val;  // pre-computed ClientL config register value
-} __attribute__((packed));
+} TT_PACKED;
+TT_PACK_END
 static_assert(sizeof(dfb_dm1_remapper_slot_t) == 12, "dfb_dm1_remapper_slot_t must be 12 bytes");
 
 static_assert(sizeof(dfb_dm0_isr_blob_core_header_t) == 8, "dfb_dm0_isr_blob_core_header_t must be 8 bytes");
@@ -366,12 +377,12 @@ static_assert(sizeof(dfb_dm0_isr_txn_threshold_t) == 4, "dfb_dm0_isr_txn_thresho
 // DFB ids are allocated from the top of the pool, so indexing by raw txn id would make even a
 // single-DFB core emit (and invalidate) a full 32-slot table.
 inline uint32_t dm0_isr_txn_slot_count(uint32_t producer_txn_id_mask, uint32_t consumer_txn_id_mask) {
-    return static_cast<uint32_t>(__builtin_popcount(producer_txn_id_mask | consumer_txn_id_mask));
+    return static_cast<uint32_t>(tt::compiler::popcount32(producer_txn_id_mask | consumer_txn_id_mask));
 }
 
 // Dense slot for txn_id: how many used ids precede it. txn_id must be set in all_mask.
 inline uint32_t dm0_isr_txn_slot_index(uint32_t all_mask, uint32_t txn_id) {
-    return static_cast<uint32_t>(__builtin_popcount(all_mask & ((1u << txn_id) - 1u)));
+    return static_cast<uint32_t>(tt::compiler::popcount32(all_mask & ((1u << txn_id) - 1u)));
 }
 
 inline uint32_t dm0_isr_txn_hw_pool_byte_size(uint32_t producer_txn_id_mask, uint32_t consumer_txn_id_mask) {
