@@ -1,0 +1,150 @@
+diff --git a/src/file.cpp b/src/file.cpp
+index 7f8a82d..3a3553e 100644
+--- a/src/file.cpp
++++ b/src/file.cpp
+@@ -11,8 +11,15 @@ extern "C" {
+ #include <string.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ }
++#ifdef _WIN32
++extern "C" {
++#include <io.h>
++}
++#endif
+ 
+ #ifndef _WIN32
+ 
+diff --git a/src/file.hpp b/src/file.hpp
+index 488210d..51db2ac 100644
+--- a/src/file.hpp
++++ b/src/file.hpp
+@@ -1,6 +1,8 @@
+ #ifndef _file_hpp_INCLUDED
+ #define _file_hpp_INCLUDED
+ 
++#include "inttypes.hpp"
++
+ #include <cassert>
+ #include <cstdint>
+ #include <cstdio>
+diff --git a/src/internal.hpp b/src/internal.hpp
+index 8664df3..d8bb7c6 100644
+--- a/src/internal.hpp
++++ b/src/internal.hpp
+@@ -23,9 +23,11 @@
+ 
+ // Less common 'C' header.
+ 
++#ifndef _WIN32
+ extern "C" {
+ #include <unistd.h>
+ }
++#endif
+ 
+ /*------------------------------------------------------------------------*/
+ 
+diff --git a/src/inttypes.hpp b/src/inttypes.hpp
+index d3fbf85..d914d27 100644
+--- a/src/inttypes.hpp
++++ b/src/inttypes.hpp
+@@ -25,6 +25,37 @@
+ 
+ #include <cinttypes>
+ 
++// MSVC (cl.exe) has no GNU builtins; map the few CaDiCaL uses onto equivalents. Kept here so
++// every translation unit that goes through 'internal.hpp' picks them up.
++#if defined(_MSC_VER) && !defined(__clang__) && !defined(__GNUC__)
++#define __builtin_unreachable() __assume (false)
++#define __builtin_prefetch(...) ((void) 0)
++#define __PRETTY_FUNCTION__ __FUNCSIG__
++
++// POSIX pieces the MSVC CRT spells differently.
++#include <io.h>
++#include <stdio.h>
++#include <sys/stat.h>
++#ifndef R_OK
++#define R_OK 4
++#endif
++#ifndef W_OK
++#define W_OK 2
++#endif
++#ifndef S_ISDIR
++#define S_ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
++#endif
++#ifndef S_ISFIFO
++#define S_ISFIFO(m) (((m) & _S_IFMT) == _S_IFIFO)
++#endif
++#define access _access
++#define isatty _isatty
++#define popen _popen
++#define pclose _pclose
++#define getc_unlocked _getc_nolock
++#define putc_unlocked _putc_nolock
++#endif
++
+ #ifdef NDEBUG
+ #undef assert
+ #define assert(...) \
+diff --git a/src/random.cpp b/src/random.cpp
+index 9903230..ab201de 100644
+--- a/src/random.cpp
++++ b/src/random.cpp
+@@ -159,7 +159,12 @@ static uint64_t hash_time () {
+ 
+ extern "C" {
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#else
++#include <process.h>
++#define getpid _getpid
++#endif
+ }
+ 
+ namespace CaDiCaL {
+diff --git a/src/reap.cpp b/src/reap.cpp
+index 8c383cb..6f03a67 100644
+--- a/src/reap.cpp
++++ b/src/reap.cpp
+@@ -1,5 +1,8 @@
+ #include "reap.hpp"
+ #include <cassert>
++#if defined(_MSC_VER) && !defined(__clang__) && !defined(__GNUC__)
++#include <intrin.h>
++#endif
+ #include <climits>
+ #include <cstring>
+ 
+@@ -27,7 +30,12 @@ Reap::Reap () {
+ }
+ 
+ static inline unsigned leading_zeroes_of_unsigned (unsigned x) {
++#if defined(_MSC_VER) && !defined(__clang__) && !defined(__GNUC__)
++  unsigned long i;
++  return _BitScanReverse (&i, x) ? 31u - i : sizeof (unsigned) * 8;
++#else
+   return x ? __builtin_clz (x) : sizeof (unsigned) * 8;
++#endif
+ }
+ 
+ void Reap::push (unsigned e) {
+diff --git a/src/signal.cpp b/src/signal.cpp
+index cf5364d..2eaa91d 100644
+--- a/src/signal.cpp
++++ b/src/signal.cpp
+@@ -9,9 +9,11 @@
+ 
+ /*------------------------------------------------------------------------*/
+ 
++#ifndef _WIN32
+ extern "C" {
+ #include <unistd.h>
+ }
++#endif
+ 
+ /*------------------------------------------------------------------------*/
+ 
