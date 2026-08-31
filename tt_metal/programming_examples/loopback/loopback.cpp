@@ -106,8 +106,13 @@ int main() {
         distributed::EnqueueWriteMeshBuffer(cq, input_dram_buffer, input_vec, /*blocking=*/false);
 
         // Set runtime arguments for the kernel.
+        // Buffer addresses are DeviceAddr (64-bit); runtime args are 32-bit words, so narrow
+        // explicitly (braced init rejects the implicit narrowing on MSVC).
         const std::vector<uint32_t> runtime_args = {
-            l1_buffer->address(), input_dram_buffer->address(), output_dram_buffer->address(), num_tiles};
+            static_cast<uint32_t>(l1_buffer->address()),
+            static_cast<uint32_t>(input_dram_buffer->address()),
+            static_cast<uint32_t>(output_dram_buffer->address()),
+            num_tiles};
 
         SetRuntimeArgs(program, dram_copy_kernel_id, core, runtime_args);
 
