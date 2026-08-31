@@ -15,6 +15,11 @@ from loguru import logger
 
 import ttnn._ttnn
 
+# Windows bring-up scaffolding (TTNN_BUILD_FULL=OFF): the trimmed _ttnn extension
+# registers only a subset of the op families; guarded blocks below are skipped
+# when their C++ bindings are absent.
+_TTNN_FULL_OPSET = hasattr(ttnn._ttnn.operations, "moreh")
+
 Config = ttnn._ttnn.core.Config
 CONFIG = ttnn._ttnn.CONFIG
 CONFIG_PATH = None
@@ -123,9 +128,10 @@ from ttnn._ttnn.operations.trace import (
     release_trace,
 )
 
-from ttnn._ttnn.operations.debug import (
-    apply_device_delay,
-)
+if _TTNN_FULL_OPSET:
+    from ttnn._ttnn.operations.debug import (
+        apply_device_delay,
+    )
 
 from ttnn.trace_allocation_config import TRACE_ALLOC_TRACKING
 
@@ -510,114 +516,116 @@ from ttnn.operations.matmul import (
     matmul_select_program_factory,
 )
 
-from ttnn.operations.normalization import (
-    SoftmaxProgramConfig,
-    SoftmaxDefaultProgramConfig,
-    SoftmaxShardedMultiCoreProgramConfig,
-    LayerNormDefaultProgramConfig,
-    LayerNormShardedMultiCoreProgramConfig,
-    LayerNormType,
-    DistributedLayerNormStage,
-    LayerNormParams,
-    LayerNormInputs,
-    LayerNormDeviceOperation,
-    LayerNormMultiCoreProgramFactory,
-    LayerNormShardedProgramFactory,
-    create_group_norm_input_mask,
-    create_group_norm_input_negative_mask,
-    create_group_norm_weight_bias_rm,
-    create_group_norm_reciprocals,
-    create_layer_norm_reciprocals,
-    determine_expected_group_norm_sharded_config_and_grid_size,
-    determine_expected_group_norm_dram_grid_size,
-    get_group_norm_cores_across_channel,
-    dram_group_norm_params_from_torch,
-    layernorm_default_compute_config,
-    rmsnorm_default_compute_config,
-    create_layernorm_program_config,
-)
+if _TTNN_FULL_OPSET:
+    from ttnn.operations.normalization import (
+        SoftmaxProgramConfig,
+        SoftmaxDefaultProgramConfig,
+        SoftmaxShardedMultiCoreProgramConfig,
+        LayerNormDefaultProgramConfig,
+        LayerNormShardedMultiCoreProgramConfig,
+        LayerNormType,
+        DistributedLayerNormStage,
+        LayerNormParams,
+        LayerNormInputs,
+        LayerNormDeviceOperation,
+        LayerNormMultiCoreProgramFactory,
+        LayerNormShardedProgramFactory,
+        create_group_norm_input_mask,
+        create_group_norm_input_negative_mask,
+        create_group_norm_weight_bias_rm,
+        create_group_norm_reciprocals,
+        create_layer_norm_reciprocals,
+        determine_expected_group_norm_sharded_config_and_grid_size,
+        determine_expected_group_norm_dram_grid_size,
+        get_group_norm_cores_across_channel,
+        dram_group_norm_params_from_torch,
+        layernorm_default_compute_config,
+        rmsnorm_default_compute_config,
+        create_layernorm_program_config,
+    )
 
-from ttnn.operations.embedding import (
-    EmbeddingsType,
-)
+    from ttnn.operations.embedding import (
+        EmbeddingsType,
+    )
 
-from ttnn.operations.losses import (
-    LossReductionMode,
-)
+    from ttnn.operations.losses import (
+        LossReductionMode,
+    )
 
 from ttnn.operations.reduction import (
     ReduceType,
 )
 
-from ttnn.operations.ccl import (
-    Topology,
-    get_usable_topology,
-    DispatchAlgorithm,
-    WorkerMode,
-    MMSignalAggregatorMode,
-)
+if _TTNN_FULL_OPSET:
+    from ttnn.operations.ccl import (
+        Topology,
+        get_usable_topology,
+        DispatchAlgorithm,
+        WorkerMode,
+        MMSignalAggregatorMode,
+    )
 
-from ttnn.operations.conv2d import (
-    Conv2dConfig,
-    PaddingMode,
-    get_conv_output_dim,
-    Conv2dSliceConfig,
-    Conv2dDRAMSliceHeight,
-    Conv2dDRAMSliceWidth,
-    Conv2dL1Full,
-    Conv2dL1FullSliceConfig,
-    prepare_conv_weights,
-    prepare_conv_bias,
-    prepare_conv_transpose2d_weights,
-    prepare_conv_transpose2d_bias,
-    SlidingWindowParallelConfig,
-    Op2DSliceConfig,
-    Op2DDRAMSliceHeight,
-    Op2DDRAMSliceWidth,
-    Op2DL1Full,
-    Op2DL1FullSliceConfig,
-)
+    from ttnn.operations.conv2d import (
+        Conv2dConfig,
+        PaddingMode,
+        get_conv_output_dim,
+        Conv2dSliceConfig,
+        Conv2dDRAMSliceHeight,
+        Conv2dDRAMSliceWidth,
+        Conv2dL1Full,
+        Conv2dL1FullSliceConfig,
+        prepare_conv_weights,
+        prepare_conv_bias,
+        prepare_conv_transpose2d_weights,
+        prepare_conv_transpose2d_bias,
+        SlidingWindowParallelConfig,
+        Op2DSliceConfig,
+        Op2DDRAMSliceHeight,
+        Op2DDRAMSliceWidth,
+        Op2DL1Full,
+        Op2DL1FullSliceConfig,
+    )
 
-from ttnn.operations.pool import (
-    prepare_grid_sample_grid,
-)
+    from ttnn.operations.pool import (
+        prepare_grid_sample_grid,
+    )
 
-from ttnn._ttnn.operations.experimental import Conv3dConfig
-from ttnn._ttnn.operations.experimental import disaggregation
-from ttnn._ttnn.operations.experimental import MinimalMatmulConfig
-from ttnn._ttnn.operations.experimental import RoutedExpertActivation
+    from ttnn._ttnn.operations.experimental import Conv3dConfig
+    from ttnn._ttnn.operations.experimental import disaggregation
+    from ttnn._ttnn.operations.experimental import MinimalMatmulConfig
+    from ttnn._ttnn.operations.experimental import RoutedExpertActivation
 
-# Expose disaggregation in experimental namespace
-experimental.disaggregation = disaggregation
+    # Expose disaggregation in experimental namespace
+    experimental.disaggregation = disaggregation
 
-# RGB -> YUV conversion op
-from ttnn._ttnn.operations.experimental import YUVCoefficients
-from ttnn._ttnn.operations.experimental import YUVColorSpace
-from ttnn._ttnn.operations.experimental import RGBRange
-from ttnn._ttnn.operations.experimental import YUVRange
-from ttnn._ttnn.operations.experimental import YUVFormat
-from ttnn._ttnn.operations.experimental import rgb_to_yuv
-from ttnn._ttnn.operations.experimental import yuv_bt601_coefficients
-from ttnn._ttnn.operations.experimental import yuv_bt709_coefficients
+    # RGB -> YUV conversion op
+    from ttnn._ttnn.operations.experimental import YUVCoefficients
+    from ttnn._ttnn.operations.experimental import YUVColorSpace
+    from ttnn._ttnn.operations.experimental import RGBRange
+    from ttnn._ttnn.operations.experimental import YUVRange
+    from ttnn._ttnn.operations.experimental import YUVFormat
+    from ttnn._ttnn.operations.experimental import rgb_to_yuv
+    from ttnn._ttnn.operations.experimental import yuv_bt601_coefficients
+    from ttnn._ttnn.operations.experimental import yuv_bt709_coefficients
 
-experimental.YUVCoefficients = YUVCoefficients
-experimental.YUVColorSpace = YUVColorSpace
-experimental.RGBRange = RGBRange
-experimental.YUVRange = YUVRange
-experimental.YUVFormat = YUVFormat
-experimental.rgb_to_yuv = rgb_to_yuv
-experimental.yuv_bt601_coefficients = yuv_bt601_coefficients
-experimental.yuv_bt709_coefficients = yuv_bt709_coefficients
+    experimental.YUVCoefficients = YUVCoefficients
+    experimental.YUVColorSpace = YUVColorSpace
+    experimental.RGBRange = RGBRange
+    experimental.YUVRange = YUVRange
+    experimental.YUVFormat = YUVFormat
+    experimental.rgb_to_yuv = rgb_to_yuv
+    experimental.yuv_bt601_coefficients = yuv_bt601_coefficients
+    experimental.yuv_bt709_coefficients = yuv_bt709_coefficients
 
-Conv1dConfig = ttnn._ttnn.operations.conv.Conv2dConfig
+    Conv1dConfig = ttnn._ttnn.operations.conv.Conv2dConfig
 
-from ttnn.operations.transformer import SDPAProgramConfig, PagedCacheGeometryOverride, SparseKVFormat
+    from ttnn.operations.transformer import SDPAProgramConfig, PagedCacheGeometryOverride, SparseKVFormat
 
-transformer.SparseKVFormat = SparseKVFormat
+    transformer.SparseKVFormat = SparseKVFormat
 
-QkvCausalConv1dSiluProgramConfig = ttnn._ttnn.operations.experimental.kda.QkvCausalConv1dSiluProgramConfig
+    QkvCausalConv1dSiluProgramConfig = ttnn._ttnn.operations.experimental.kda.QkvCausalConv1dSiluProgramConfig
 
-IndexerScoreProgramConfig = ttnn._ttnn.operations.experimental.IndexerScoreProgramConfig
+    IndexerScoreProgramConfig = ttnn._ttnn.operations.experimental.IndexerScoreProgramConfig
 
 import ttnn.graph
 
