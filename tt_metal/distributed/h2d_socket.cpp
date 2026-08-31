@@ -27,8 +27,18 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <sys/mman.h>
 #include <unistd.h>
+#endif
 
 namespace tt::tt_metal::distributed {
 
@@ -74,7 +84,13 @@ H2DSocket::PinnedBufferInfo H2DSocket::init_bytes_acked_buffer(
     const MeshCoordinateRangeSet& device_range,
     uint32_t pcie_alignment,
     const std::string& shm_name) {
+#ifdef _WIN32
+    SYSTEM_INFO si{};
+    GetSystemInfo(&si);
+    size_t page_size = si.dwPageSize;
+#else
     size_t page_size = sysconf(_SC_PAGESIZE);
+#endif
     // The pinned region is just a 4-byte bytes_acked counter; the rest of the
     // page hosts the connector-state struct so consecutive driver processes
     // can resume from the previous driver's bytes_sent / write_ptr / page_size.
@@ -116,7 +132,13 @@ H2DSocket::PinnedBufferInfo H2DSocket::init_host_data_buffer(
     const std::string& shm_name) {
     uint32_t host_buffer_size_bytes = fifo_size_ + sizeof(uint32_t);
     uint32_t host_buffer_size_words = host_buffer_size_bytes / sizeof(uint32_t);
+#ifdef _WIN32
+    SYSTEM_INFO si{};
+    GetSystemInfo(&si);
+    size_t page_size = si.dwPageSize;
+#else
     size_t page_size = sysconf(_SC_PAGESIZE);
+#endif
     // Reserve room for HDSocketConnectorState immediately after the pinned region,
     // aligned up to its own alignment requirement so the reinterpret_cast<> in
     // connect() is well-defined. The pinned HostBuffer view below still spans
