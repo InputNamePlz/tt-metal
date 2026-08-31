@@ -149,7 +149,10 @@ private:
 
     std::string shm_path_;
     Role role_;
-    int fd_ = -1;
+    int fd_ = -1;  // POSIX only; unused on Windows
+#ifdef _WIN32
+    void* mapping_ = nullptr;  // HANDLE to the named file mapping
+#endif
     InterProcessCounterSegment* seg_ = nullptr;
     bool had_clean_prior_shutdown_ = false;
 

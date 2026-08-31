@@ -25,9 +25,19 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <sys/mman.h>
 #include <unistd.h>
-#if defined(__x86_64__) || defined(__i386__)
+#endif
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
 #include <immintrin.h>
 #else
 // The hugepage D2H path requires explicit cache-line eviction (_mm_clflush + _mm_lfence)
@@ -80,7 +90,13 @@ D2HSocket::PinnedBufferInfo D2HSocket::init_host_buffer(
     // Buffer layout: [data_region (fifo_size bytes)][bytes_sent (4 bytes)][HDSocketConnectorState]
     uint32_t total_buffer_size_bytes = fifo_size_ + sizeof(uint32_t);
     uint32_t total_buffer_size_words = total_buffer_size_bytes / sizeof(uint32_t);
+#ifdef _WIN32
+    SYSTEM_INFO si{};
+    GetSystemInfo(&si);
+    size_t page_size = si.dwPageSize;
+#else
     size_t page_size = sysconf(_SC_PAGESIZE);
+#endif
     // Reserve room for HDSocketConnectorState past the pinned region, aligned up
     // to its own alignment requirement so the reinterpret_cast<> in connect() is
     // well-defined. The pinned HostBuffer view below still spans only
@@ -90,6 +106,18 @@ D2HSocket::PinnedBufferInfo D2HSocket::init_host_buffer(
 
     void* aligned_ptr = nullptr;
     if (process_scope_ == ProcessScope::InProcess) {
+#ifdef _WIN32
+        // Process-private zeroed pages, the VirtualAlloc analogue of anonymous MAP_PRIVATE.
+        void* p = VirtualAlloc(nullptr, alloc_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        TT_FATAL(
+            p != nullptr,
+            "VirtualAlloc failed for D2H socket buffer ({} B): error {}",
+            alloc_size,
+            static_cast<unsigned>(GetLastError()));
+        aligned_ptr = p;
+        host_buffer_ = std::shared_ptr<uint32_t[]>(
+            static_cast<uint32_t*>(p), [](uint32_t* ptr) { VirtualFree(ptr, 0, MEM_RELEASE); });
+#else
         void* p = mmap(nullptr, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         TT_FATAL(
             p != MAP_FAILED,
@@ -99,6 +127,7 @@ D2HSocket::PinnedBufferInfo D2HSocket::init_host_buffer(
         aligned_ptr = p;
         host_buffer_ = std::shared_ptr<uint32_t[]>(
             static_cast<uint32_t*>(p), [alloc_size](uint32_t* ptr) { munmap(ptr, alloc_size); });
+#endif
     } else {
         shm_ = std::make_unique<NamedShm>(NamedShm::create(shm_name, alloc_size));
         aligned_ptr = shm_->ptr();
@@ -129,7 +158,7 @@ D2HSocket::PinnedBufferInfo D2HSocket::init_host_buffer(
 }
 
 D2HSocket::PinnedBufferInfo D2HSocket::init_host_buffer_hugepage(const std::shared_ptr<MeshDevice>& mesh_device) {
-#if !defined(__x86_64__) && !defined(__i386__)
+#if !defined(__x86_64__) && !defined(__i386__) && !defined(_M_X64) && !defined(_M_IX86)
     // Cache management for WB + non-snooped PCIe DMA is x86-specific (clflush + lfence).
     // WH — the only architecture that takes this hugepage path — is x86-only, so this
     // should never be reachable on other architectures.

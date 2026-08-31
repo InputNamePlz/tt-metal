@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <fmt/format.h>
@@ -103,7 +104,13 @@ struct HDSocketDescriptor {
 };
 
 inline std::string descriptor_path_for_socket(const std::string& type, const std::string& socket_id) {
+#ifdef _WIN32
+    // No /dev/shm on Windows; exported socket descriptors live in the shared temp directory,
+    // where the ShmResourceTracker's stale-PID scan also reclaims them after crashes.
+    return fmt::format("{}/tt_{}_{}.bin", std::filesystem::temp_directory_path().generic_string(), type, socket_id);
+#else
     return fmt::format("/dev/shm/tt_{}_{}.bin", type, socket_id);
+#endif
 }
 
 }  // namespace tt::tt_metal::distributed
