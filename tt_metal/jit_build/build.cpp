@@ -121,9 +121,11 @@ std::string get_default_root_path() {
     // outside POSIX-emulation shells, and the "/tmp" fallback is a drive-relative path there.
     const std::string local_app_data = parse_env<std::string>("LOCALAPPDATA", emptyString);
     if (!local_app_data.empty() && std::filesystem::exists(local_app_data)) {
-        return local_app_data + "/tt-metal-cache/";
+        // generic_string() so the cache root carries uniform separators: the env var arrives
+        // with backslashes while everything downstream composes paths with '/'.
+        return (std::filesystem::path(local_app_data) / "tt-metal-cache").generic_string() + "/";
     }
-    const std::string temp_dir = std::filesystem::temp_directory_path().string();
+    const std::string temp_dir = std::filesystem::temp_directory_path().generic_string();
     if (!temp_dir.empty()) {
         return temp_dir + "/tt-metal-cache/";
     }
@@ -986,7 +988,15 @@ void JitBuildState::build(const JitBuildSettings* settings, std::span<const JitB
                 fs::rename(src_path, dst_path);
                 src_path += ".dephash";
                 dst_path += ".dephash";
-                fs::rename(src_path, dst_path);
+                if (fs::exists(src_path)) {
+                    fs::rename(src_path, dst_path);
+                } else {
+                    // No dephash was produced (dependency parsing failed, so the writer removed
+                    // the incomplete file). Degrade to a cache miss on the next run rather than
+                    // failing this build -- and drop any stale dephash so it cannot validate
+                    // against the object we just renamed in.
+                    fs::remove(dst_path);
+                }
             } else {
                 fs::remove(src_path);
             }
