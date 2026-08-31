@@ -188,7 +188,7 @@ ttnn::Tensor roll(const ttnn::Tensor& input_tensor, const int shift, const std::
     }
 
     // Flatten the input tensor to shape [1, total_elements]
-    ttnn::Tensor result = ttnn::reshape(input_tensor, ttnn::Shape({1, total_elements}));
+    ttnn::Tensor result = ttnn::reshape(input_tensor, ttnn::Shape({1, static_cast<uint32_t>(total_elements)}));
 
     result = roll(result, shifts, dims, memory_config);
     // Reshape back to the original shape

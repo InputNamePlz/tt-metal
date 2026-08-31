@@ -107,7 +107,8 @@ inline NcoresWH compute_ncores_wh(size_t grid_area, uint32_t nblocks, uint32_t w
     const uint32_t total_blocks_height = tt::div_up(height_tiles, single_block_size);
     const uint32_t total_blocks = total_blocks_width * total_blocks_height;
     const uint32_t ncores = (nblocks_per_core == 0) ? nblocks : total_blocks;
-    return NcoresWH{ncores, nblocks_per_core, total_blocks_width, total_blocks_height, single_block_size};
+    return NcoresWH{
+        ncores, nblocks_per_core, total_blocks_width, total_blocks_height, static_cast<uint32_t>(single_block_size)};
 }
 
 // Non-throwing: returns nullopt when no sub-block assignment satisfies the L1-derived

@@ -447,7 +447,7 @@ Tensor where_tss(
     auto param = std::visit(
         [op_type](const auto& val_true, const auto& val_false) {
             using T = std::decay_t<decltype(val_true)>;
-            return EltwiseUnaryWithParam{op_type, std::vector<T>{val_true, val_false}};
+            return EltwiseUnaryWithParam{op_type, std::vector<T>{val_true, static_cast<T>(val_false)}};
         },
         value_true,
         value_false);
@@ -511,7 +511,7 @@ Tensor rdiv(
     uint32_t rounding_mode_value = !rounding_mode ? 0 : (*rounding_mode == "trunc" ? 1 : 2);
     return operations::unary::detail::unary_impl(
         input_tensor,
-        {UnaryWithParam{UnaryOpType::RDIV, {value, rounding_mode_value}}},
+        {UnaryWithParam{UnaryOpType::RDIV, {value, static_cast<float>(rounding_mode_value)}}},
         memory_config,
         optional_output_tensor,
         sub_core_grids);

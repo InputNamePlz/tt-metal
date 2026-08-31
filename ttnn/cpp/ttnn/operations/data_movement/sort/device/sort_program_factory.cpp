@@ -807,7 +807,7 @@ Tensor build_physical_core_lookup_table_tensor(const SortInputs& tensor_args, st
         }
     }
     const tt::tt_metal::TensorSpec physical_core_lookup_table_spec(
-        ttnn::Shape{1, physical_core_lookup_table_data.size()},
+        ttnn::Shape{1, static_cast<uint32_t>(physical_core_lookup_table_data.size())},
         TensorLayout{DataType::UINT32, PageConfig{Layout::ROW_MAJOR}, MemoryConfig()});
     Tensor physical_core_lookup_table_tensor =
         Tensor::from_vector(std::move(physical_core_lookup_table_data), physical_core_lookup_table_spec);

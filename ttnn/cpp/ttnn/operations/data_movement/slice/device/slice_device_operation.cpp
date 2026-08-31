@@ -16,16 +16,17 @@
 
 #include <tt-metalium/constants.hpp>
 #include <tt-metalium/hal.hpp>
+#include <hostdevcommon/tt_compiler.h>
 
 using namespace tt::tt_metal;
 
 namespace ttnn::operations::data_movement {
 
-inline __attribute__((always_inline)) uint32_t get_upper_dims_compressed(const ttnn::Shape& shape) {
+TT_FORCE_INLINE uint32_t get_upper_dims_compressed(const ttnn::Shape& shape) {
     return std::accumulate(shape.cbegin(), shape.cend() - 2, 1, std::multiplies<uint32_t>{});
 }
 
-inline __attribute__((always_inline)) uint32_t
+TT_FORCE_INLINE uint32_t
 get_upper_start_offset(const ttnn::Shape& shape, Layout layout, const ttnn::Shape& slice_start) {
     // offset for every dim except last 2
     // 64-bit: shape.volume() (element count) overflows uint32 for tensors > 4 GB.
@@ -49,7 +50,7 @@ get_upper_start_offset(const ttnn::Shape& shape, Layout layout, const ttnn::Shap
     return static_cast<uint32_t>(start_offset);  // page index, fits uint32
 }
 
-inline __attribute__((always_inline)) uint32_t
+TT_FORCE_INLINE uint32_t
 get_upper_start_offset(const Tensor& tensor, const ttnn::Shape& slice_start) {
     return get_upper_start_offset(tensor.padded_shape(), tensor.layout(), slice_start);
 }

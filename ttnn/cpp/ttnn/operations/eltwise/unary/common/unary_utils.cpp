@@ -7,6 +7,7 @@
 #include "ttnn/operations/data_movement/common/synthesize_output_shard_spec.hpp"
 
 #include <mutex>
+#include <tt_stl/unreachable.hpp>
 
 namespace ttnn::operations::unary {
 
@@ -150,7 +151,7 @@ CoreRangeSet get_worker_grid(
                 return sub_device_workers;
             }
         }
-        __builtin_unreachable();
+        ttsl::unreachable();
     };
 
     if (output_tensor.has_value() && output_tensor->is_sharded()) {
