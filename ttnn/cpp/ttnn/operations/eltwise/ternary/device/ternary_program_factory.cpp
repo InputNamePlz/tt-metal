@@ -10,6 +10,7 @@
 #include <tt-metalium/host_api.hpp>
 #include "ttnn/operations/eltwise/binary/common/binary_op_utils.hpp"
 #include "ttnn/operations/eltwise/binary_ng/device/binary_ng_utils.hpp"
+#include <tt_stl/unreachable.hpp>
 
 using namespace tt::tt_metal;
 namespace {
@@ -868,7 +869,7 @@ void populate_runtime_arguments(
                 case TernaryBroadcastType::NONE:
                 case TernaryBroadcastType::OUTER_BCAST:
                 case TernaryBroadcastType::ROW_BCAST: return std::pair{0u, 0u};
-                default: __builtin_unreachable();
+                default: ttsl::unreachable();
             }
         }();
         std::array<uint32_t, num_kernel_args> compute_runtime_args = {num_tiles_per_core, freq, counter, scalar_arg};

@@ -137,8 +137,8 @@ ProgramDescriptor GatherDeviceOperation::SingleRowSingleCore::create_descriptor(
         Wt_input,
         Wt_index,
         total_number_of_cores,
-        compute_with_storage_grid_size.x,
-        compute_with_storage_grid_size.y};
+        static_cast<uint32_t>(compute_with_storage_grid_size.x),
+        static_cast<uint32_t>(compute_with_storage_grid_size.y)};
     TensorAccessorArgs(*input_index_tensor_buffer).append_to(reader_compile_time_args);
 
     KernelDescriptor reader_desc;
@@ -157,8 +157,8 @@ ProgramDescriptor GatherDeviceOperation::SingleRowSingleCore::create_descriptor(
         Wt_input,
         Wt_index,
         total_number_of_cores,
-        compute_with_storage_grid_size.x,
-        compute_with_storage_grid_size.y};
+        static_cast<uint32_t>(compute_with_storage_grid_size.x),
+        static_cast<uint32_t>(compute_with_storage_grid_size.y)};
     TensorAccessorArgs(*input_tensor_buffer).append_to(writer_compile_time_args);
     TensorAccessorArgs(*output_tensor_buffer).append_to(writer_compile_time_args);
 
@@ -294,8 +294,8 @@ ProgramDescriptor GatherDeviceOperation::SingleRowMultiCore::create_descriptor(
         Wt_input,
         Wt_index,
         total_number_of_cores,
-        compute_with_storage_grid_size.x,
-        compute_with_storage_grid_size.y};
+        static_cast<uint32_t>(compute_with_storage_grid_size.x),
+        static_cast<uint32_t>(compute_with_storage_grid_size.y)};
     TensorAccessorArgs(*input_index_tensor_buffer).append_to(reader_compile_time_args);
 
     KernelDescriptor reader_desc;
@@ -314,8 +314,8 @@ ProgramDescriptor GatherDeviceOperation::SingleRowMultiCore::create_descriptor(
         Wt_input,
         Wt_index,
         total_number_of_cores,
-        compute_with_storage_grid_size.x,
-        compute_with_storage_grid_size.y};
+        static_cast<uint32_t>(compute_with_storage_grid_size.x),
+        static_cast<uint32_t>(compute_with_storage_grid_size.y)};
     TensorAccessorArgs(*input_tensor_buffer).append_to(writer_compile_time_args);
     TensorAccessorArgs(*output_tensor_buffer).append_to(writer_compile_time_args);
 

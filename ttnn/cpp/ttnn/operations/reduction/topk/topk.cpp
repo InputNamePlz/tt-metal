@@ -611,7 +611,8 @@ std::vector<Tensor> topk(
     // can never be selected, so the index value used to pad is irrelevant.
     auto padded_indices_tensor = indices_tensor;
     if (pad_amount > 0) {
-        ttsl::SmallVector<std::array<uint32_t, 2>> padding = {{0, 0}, {0, 0}, {0, 0}, {0, pad_amount}};
+        ttsl::SmallVector<std::array<uint32_t, 2>> padding = {
+            {0, 0}, {0, 0}, {0, 0}, {0, static_cast<uint32_t>(pad_amount)}};
 
         // Use multicore padding for BFLOAT16 tensors not in L1 memory for better performance
         const bool pad_multicore = transformed_tensor.dtype() == DataType::BFLOAT16 &&

@@ -142,7 +142,12 @@ tt::tt_metal::ProgramDescriptor DeepseekMoEFastReduceNCProgramFactory::create_de
     TensorAccessorArgs(input_tensor.buffer()).append_to(reader_ct_args);
 
     std::vector<uint32_t> writer_ct_args = {
-        compute_output_cb_id, output_page_size, num_cores_to_be_used, input_tensor_Wt, slice_Wt, output_tensors.size()};
+        compute_output_cb_id,
+        output_page_size,
+        num_cores_to_be_used,
+        input_tensor_Wt,
+        slice_Wt,
+        static_cast<uint32_t>(output_tensors.size())};
     for (uint32_t i = 0; i < output_tensors.size(); ++i) {
         writer_ct_args.push_back(output_page_size);
     }

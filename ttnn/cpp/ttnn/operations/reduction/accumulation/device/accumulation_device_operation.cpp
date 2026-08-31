@@ -113,7 +113,7 @@ ttnn::Tensor accumulation(
     using OperationType = AccumulationDeviceOperation;
     return ttnn::device_operation::launch<OperationType>(
         OperationType::operation_attributes_t{
-            (dim < 0) ? (dim + input_tensor.logical_shape().rank()) : dim,
+            (dim < 0) ? static_cast<int32_t>(dim + input_tensor.logical_shape().rank()) : dim,
             dtype.has_value() ? dtype.value()
                               : (optional_out.has_value() ? optional_out->dtype() : input_tensor.dtype()),
             memory_config.has_value()

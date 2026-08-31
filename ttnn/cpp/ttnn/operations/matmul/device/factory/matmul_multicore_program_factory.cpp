@@ -124,7 +124,7 @@ ProgramDescriptor MatmulMultiCoreProgramFactory::create_descriptor(
         .total_size = num_output_tiles * output_single_tile_size,
         .core_ranges = all_cores,
         .format_descriptors = {{CBFormatDescriptor{
-            .buffer_index = output_cb_index,
+            .buffer_index = static_cast<uint8_t>(output_cb_index),
             .data_format = output_data_format,
             .page_size = output_single_tile_size,
         }}},

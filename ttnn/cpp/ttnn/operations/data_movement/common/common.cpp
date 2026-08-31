@@ -471,8 +471,8 @@ ttnn::Tensor pad_to_tile_vol(
         uint32_t num_non_hw_dims = rank - 2u;
         auto padding_vec = ttsl::SmallVector<std::array<uint32_t, 2>>(num_non_hw_dims, {0, 0});
         padding_vec.reserve(rank);
-        padding_vec.emplace_back(0, padded_height - padded_shape[-2]);
-        padding_vec.emplace_back(0, padded_width - padded_shape[-1]);
+        padding_vec.emplace_back(0u, static_cast<uint32_t>(padded_height - padded_shape[-2]));
+        padding_vec.emplace_back(0u, static_cast<uint32_t>(padded_width - padded_shape[-1]));
 
         auto padded_output = ttnn::pad(tensor, padding_vec, value, use_multicore, memory_config);
         TT_FATAL(

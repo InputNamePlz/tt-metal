@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <bit>
 #include <limits>
 #include "ttnn/operations/reduction/topk/device/topk_constants.hpp"
 #include "ttnn/operations/reduction/topk/device/topk_utils.hpp"
@@ -22,7 +23,7 @@ namespace ttnn::prim {
  * - largest_power_of_two(16) = 16 (2^4)
  * - largest_power_of_two(100) = 64 (2^6)
  */
-uint32_t largest_power_of_two(uint32_t x) { return x == 0 ? 0 : (1U << (31 - __builtin_clz(x))); }
+uint32_t largest_power_of_two(uint32_t x) { return std::bit_floor(x); }
 
 bool topk_multicore_structurally_eligible(uint32_t reduced_width, uint32_t num_tile_rows, uint32_t k) {
     // Requirement #1: enough width for parallel execution to pay off. The single-core

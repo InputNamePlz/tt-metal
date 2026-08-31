@@ -63,11 +63,11 @@ tt::tt_metal::ProgramDescriptor TransposeCNProgramFactory::create_descriptor(
 
     KernelDescriptor::Defines reader_defines;
     std::vector<uint32_t> reader_compile_time_args = {
-        static_cast<uint32_t>(src0_cb_index), src0_buffer->aligned_page_size(), stick_size};
+        static_cast<uint32_t>(src0_cb_index), static_cast<uint32_t>(src0_buffer->aligned_page_size()), stick_size};
     TensorAccessorArgs(*src0_buffer).append_to(reader_compile_time_args);
     KernelDescriptor::Defines writer_defines;
     std::vector<uint32_t> writer_compile_time_args = {
-        static_cast<uint32_t>(src0_cb_index), dst_buffer->aligned_page_size(), stick_size};
+        static_cast<uint32_t>(src0_cb_index), static_cast<uint32_t>(dst_buffer->aligned_page_size()), stick_size};
     TensorAccessorArgs(*dst_buffer).append_to(writer_compile_time_args);
 
     if (row_major) {

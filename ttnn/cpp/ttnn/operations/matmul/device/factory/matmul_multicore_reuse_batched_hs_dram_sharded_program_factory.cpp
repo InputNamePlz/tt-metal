@@ -281,7 +281,7 @@ static ProgramDescriptor create_program_batch_sharded_descriptor(
             cb_desc.total_size = out_reshard_CB_size;
             cb_desc.core_ranges = all_worker_cores;
             cb_desc.format_descriptors.push_back(CBFormatDescriptor{
-                .buffer_index = output_cb_index,
+                .buffer_index = static_cast<uint8_t>(output_cb_index),
                 .data_format = output_data_format,
                 .page_size = output_single_tile_size,
                 .tile = output_tile_desc});
@@ -292,7 +292,7 @@ static ProgramDescriptor create_program_batch_sharded_descriptor(
             cb_desc.total_size = interm0_CB_size;
             cb_desc.core_ranges = all_worker_cores;
             cb_desc.format_descriptors.push_back(CBFormatDescriptor{
-                .buffer_index = interm0_cb_index,
+                .buffer_index = static_cast<uint8_t>(interm0_cb_index),
                 .data_format = interm0_data_format,
                 .page_size = interm0_single_tile_size,
                 .tile = output_tile_desc});
@@ -304,12 +304,12 @@ static ProgramDescriptor create_program_batch_sharded_descriptor(
         cb_desc.total_size = out_reshard_CB_size;
         cb_desc.core_ranges = all_worker_cores;
         cb_desc.format_descriptors.push_back(CBFormatDescriptor{
-            .buffer_index = output_cb_index,
+            .buffer_index = static_cast<uint8_t>(output_cb_index),
             .data_format = output_data_format,
             .page_size = output_single_tile_size,
             .tile = output_tile_desc});
         cb_desc.format_descriptors.push_back(CBFormatDescriptor{
-            .buffer_index = interm0_cb_index,
+            .buffer_index = static_cast<uint8_t>(interm0_cb_index),
             .data_format = interm0_data_format,
             .page_size = interm0_single_tile_size,
             .tile = output_tile_desc});
