@@ -4,6 +4,21 @@
 
 include(sources.cmake)
 
+if(NOT TTNN_BUILD_FULL)
+    # Reduced bring-up subset (see TTNN_BUILD_FULL in cmake/project_options.cmake):
+    # only core/creation/data_movement/eltwise/full/matmul/reduction op families are
+    # built. Drop the sources that belong to trimmed families, and let their code
+    # paths in kept files be compiled out via the TTNN_TRIMMED_BUILD definition.
+    add_compile_definitions(TTNN_TRIMMED_BUILD)
+    list(FILTER TTNNCPP_SRCS EXCLUDE REGEX "cpp/ttnn/operations/(experimental|normalization)/")
+    list(FILTER TTNN_SRC_PYBIND EXCLUDE REGEX "cpp/ttnn/operations/experimental/")
+    # Sources from trimmed families that kept code references directly.
+    list(APPEND TTNNCPP_SRCS
+        cpp/ttnn/operations/ccl/ccl_op_fusion.cpp
+        cpp/ttnn/operations/moreh/moreh_helper_functions.cpp
+    )
+endif()
+
 add_compile_options("$<$<CXX_COMPILER_ID:Clang>:-Wunused-parameter>")
 
 # FIXME: Many lambda functions in ttnn capture variables and don't use them.
@@ -25,7 +40,7 @@ add_library(ttnn_pch_lean STATIC)
 add_library(TTNN::PCHLean ALIAS ttnn_pch_lean)
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ttnn_pch_lean.cpp CONTENT "/*dummy ttnn lean pch file*/\n")
 target_sources(ttnn_pch_lean PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/ttnn_pch_lean.cpp)
-target_precompile_headers(ttnn_pch_lean REUSE_FROM TT::CommonPCH)
+tt_reuse_precompile_headers(ttnn_pch_lean TT::CommonPCH)
 target_link_libraries(
     ttnn_pch_lean
     PUBLIC
@@ -257,12 +272,28 @@ target_link_libraries(
         TTNN::Ops::OperationsShared
         TTNN::Ops::Eltwise::Quantization
         TTNN::Ops::Eltwise
-        TTNN::Ops::Experimental
-        TTNN::Ops::Experimental::DeepSeekPrefill
-        TTNN::Ops::Experimental::Transformer
-        TTNN::Ops::Moreh
-        TTNN::Ops::Transformer
 )
+if(TTNN_BUILD_FULL)
+    target_link_libraries(
+        ttnncpp
+        PRIVATE
+            TTNN::Ops::Experimental
+            TTNN::Ops::Experimental::DeepSeekPrefill
+            TTNN::Ops::Experimental::Transformer
+            TTNN::Ops::Moreh
+            TTNN::Ops::Transformer
+    )
+else()
+    # Bring-up subset: only the experimental leaves the kept families reference.
+    # These are OBJECT libraries linked directly, so their objects are absorbed.
+    target_link_libraries(
+        ttnncpp
+        PRIVATE
+            TTNN::Ops::Experimental::Reduction
+            TTNN::Ops::Experimental::Reshape
+            TTNN::Ops::Experimental::TopkLargeIndices
+    )
+endif()
 if(TT_INSTALL)
     install(
         TARGETS
@@ -446,11 +477,20 @@ set(FixmeOpIncDirs
 add_subdirectory(cpp/ttnn/operations)
 add_subdirectory(cpp/ttnn/operations/eltwise)
 add_subdirectory(cpp/ttnn/operations/eltwise/quantization)
-add_subdirectory(cpp/ttnn/operations/experimental)
-add_subdirectory(cpp/ttnn/operations/experimental/deepseek_prefill)
-add_subdirectory(cpp/ttnn/operations/experimental/transformer)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(cpp/ttnn/operations/experimental)
+    add_subdirectory(cpp/ttnn/operations/experimental/deepseek_prefill)
+    add_subdirectory(cpp/ttnn/operations/experimental/transformer)
+else()
+    # Bring-up subset: only the experimental leaves referenced by kept families.
+    add_subdirectory(cpp/ttnn/operations/experimental/reduction)
+    add_subdirectory(cpp/ttnn/operations/experimental/reshape)
+    add_subdirectory(cpp/ttnn/operations/experimental/topk_large_indices)
+endif()
 add_subdirectory(cpp/ttnn/kernel_lib)
 add_subdirectory(cpp/ttnn/operations/kernel_helper_functions)
-add_subdirectory(cpp/ttnn/operations/moreh)
-add_subdirectory(cpp/ttnn/operations/transformer)
-add_subdirectory(examples)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(cpp/ttnn/operations/moreh)
+    add_subdirectory(cpp/ttnn/operations/transformer)
+    add_subdirectory(examples)
+endif()

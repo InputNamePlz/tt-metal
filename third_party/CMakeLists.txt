@@ -88,6 +88,33 @@ CPMAddPackage(
 )
 
 ensureboosttarget(algorithm)
+# boost/algorithm's string headers reach into these header-only modular libraries;
+# in the modular source tree each needs its include dir wired up explicitly.
+foreach(
+    _boost_algorithm_dep
+    IN
+    ITEMS
+        assert
+        bind
+        concept_check
+        config
+        core
+        detail
+        function
+        iterator
+        mpl
+        preprocessor
+        range
+        regex
+        static_assert
+        throw_exception
+        type_traits
+        utility
+)
+    ensureboosttarget(${_boost_algorithm_dep})
+    target_link_libraries(Boost::algorithm INTERFACE Boost::${_boost_algorithm_dep})
+endforeach()
+unset(_boost_algorithm_dep)
 ensureboosttarget(move)
 if(TARGET Boost::config)
     # boost/move headers include boost/config.hpp
