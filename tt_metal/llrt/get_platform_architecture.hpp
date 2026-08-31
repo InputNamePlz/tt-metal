@@ -87,9 +87,15 @@ inline tt::ARCH get_platform_architecture(const tt::llrt::RunTimeOptions& rtopti
         return arch;
     }
     if (rtoptions.get_target_device() == tt::TargetDevice::Simulator) {
+#ifdef _WIN32
+        // The simulator backend is excluded from Windows builds; keeping this branch
+        // unreferenced also avoids pulling umd::SimulationChip symbols into the link.
+        TT_THROW("TT_METAL_SIMULATOR is not supported on Windows builds");
+#else
         auto soc_desc =
             umd::SimulationChip::get_soc_descriptor_path_from_simulator_path(rtoptions.get_simulator_path());
         arch = umd::SocDescriptor::get_arch_from_soc_descriptor_path(soc_desc);
+#endif
     } else {
         arch = get_physical_architecture();
     }

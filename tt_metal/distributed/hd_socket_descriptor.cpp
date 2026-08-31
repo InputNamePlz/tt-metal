@@ -163,3 +163,72 @@ HDSocketDescriptor HDSocketDescriptor::wait_and_read(
 }
 
 }  // namespace tt::tt_metal::distributed
+
+#ifdef _WIN32
+// ---------------------------------------------------------------------------
+// Windows link stubs for the POSIX shared-memory host<->device socket
+// transport. The implementations (h2d_socket.cpp, d2h_socket.cpp,
+// named_shm.cpp, inter_process_counter_channel.cpp, shm_resource_tracker.cpp)
+// are excluded from Windows builds in sources.cmake; these stubs close the
+// link for code paths that reference the surface without exercising it
+// (tensor prefetcher, realtime profiler). Every entry point throws -- a real
+// Windows shared-memory port is a later milestone.
+// ---------------------------------------------------------------------------
+#include <tt-metalium/experimental/sockets/d2h_socket.hpp>
+#include <tt-metalium/experimental/sockets/h2d_socket.hpp>
+#include "tt_metal/distributed/pcie_core_writer.hpp"
+#include "impl/buffers/h2d_socket_internal.hpp"
+
+namespace tt::tt_metal::distributed {
+
+namespace {
+[[noreturn]] void hd_socket_unsupported() {
+    TT_THROW("Host<->device shared-memory sockets are not yet supported on Windows");
+}
+}  // namespace
+
+// Members are a string and scalars; nothing was acquired, nothing to release.
+NamedShm::~NamedShm() noexcept = default;
+
+uint32_t D2HSocket::required_config_buffer_size() { hd_socket_unsupported(); }
+
+D2HSocket::D2HSocket(
+    const std::shared_ptr<MeshDevice>& /*mesh_device*/,
+    const MeshCoreCoord& /*sender_core*/,
+    uint32_t /*fifo_size*/,
+    ExternalConfigBuffer /*external_config*/,
+    ProcessScope /*scope*/) {
+    hd_socket_unsupported();
+}
+
+// No stub socket is ever successfully constructed, so there is nothing to tear down.
+D2HSocket::~D2HSocket() noexcept = default;
+
+void D2HSocket::set_page_size(uint32_t /*page_size*/) { hd_socket_unsupported(); }
+void D2HSocket::read(void* /*data*/, uint32_t /*num_pages*/, bool /*blocking*/) { hd_socket_unsupported(); }
+uint32_t D2HSocket::pages_available() { hd_socket_unsupported(); }
+uint32_t D2HSocket::discard_pending_pages() { hd_socket_unsupported(); }
+
+H2DSocket::~H2DSocket() noexcept = default;
+void H2DSocket::set_page_size(uint32_t /*page_size*/) { hd_socket_unsupported(); }
+
+}  // namespace tt::tt_metal::distributed
+
+namespace tt::tt_metal::experimental::detail {
+
+bool H2DSocketTryWriteAccess::try_write(distributed::H2DSocket& /*socket*/, void* /*data*/, uint32_t /*num_pages*/) {
+    TT_THROW("Host<->device shared-memory sockets are not yet supported on Windows");
+}
+
+std::unique_ptr<distributed::H2DSocket> H2DSocketDramRecvAccess::create(
+    const std::shared_ptr<distributed::MeshDevice>& /*mesh_device*/,
+    const distributed::MeshCoreCoord& /*recv_core*/,
+    uint32_t /*fifo_size*/,
+    uint32_t /*config_l1_local_addr*/,
+    uint32_t /*data_l1_local_addr*/,
+    uint64_t /*dram_l1_noc_offset*/) {
+    TT_THROW("Host<->device shared-memory sockets are not yet supported on Windows");
+}
+
+}  // namespace tt::tt_metal::experimental::detail
+#endif  // _WIN32

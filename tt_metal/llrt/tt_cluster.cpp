@@ -56,7 +56,11 @@ namespace {
 inline std::string get_soc_description_file(
     const tt::ARCH& arch, tt::TargetDevice target_device, const tt::llrt::RunTimeOptions& rtoptions) {
     if (target_device == tt::TargetDevice::Simulator) {
+#ifdef _WIN32
+        TT_THROW("TT_METAL_SIMULATOR is not supported on Windows builds");
+#else
         return tt::umd::SimulationChip::get_soc_descriptor_path_from_simulator_path(rtoptions.get_simulator_path());
+#endif
     }
     std::string path = rtoptions.get_root_dir();
     if (path.back() != '/') {
@@ -95,6 +99,7 @@ tt::tt_metal::ClusterType Cluster::get_cluster_type_from_cluster_desc(
         // Descriptor-less simulator callers have no topology to classify. Preserve the legacy architecture-only
         // simulator types for that fallback, but prefer a supplied/discovered descriptor below so direct simulation
         // is classified the same way as silicon (for example, a discovered two-chip N300 remains an N300).
+#ifndef _WIN32  // Simulator backend is excluded from Windows builds
         if (rtoptions.get_simulator_enabled()) {
             auto soc_desc =
                 tt::umd::SimulationChip::get_soc_descriptor_path_from_simulator_path(rtoptions.get_simulator_path());
@@ -110,6 +115,7 @@ tt::tt_metal::ClusterType Cluster::get_cluster_type_from_cluster_desc(
             }
             return tt::tt_metal::ClusterType::INVALID;
         }
+#endif  // !_WIN32
         temp_cluster_desc = rtoptions.get_mock_enabled() ? get_mock_cluster_desc(rtoptions)
                                                          : tt::umd::Cluster::create_cluster_descriptor();
         cluster_desc = temp_cluster_desc.get();
