@@ -60,6 +60,7 @@ inline std::string get_core_descriptor_file(
             arch, dispatch_core_config, soc_desc, env.get_rtoptions().get_use_quasar_tensix_dispatch_cores()) ==
             CoreType::WORKER;
 
+#ifndef _WIN32  // Simulator backend is excluded from Windows builds
     if (env.get_rtoptions().get_simulator_enabled()) {
         const std::string soc_desc_path = tt::umd::SimulationChip::get_soc_descriptor_path_from_simulator_path(
             env.get_rtoptions().get_simulator_path());
@@ -82,6 +83,7 @@ inline std::string get_core_descriptor_file(
             };
         }
     }
+#endif  // !_WIN32
     // Check if fabric tensix is enabled based on fabric tensix config
     tt_fabric::FabricTensixConfig fabric_tensix_config = env.get_fabric_tensix_config();
     bool use_fabric_tensix = (fabric_tensix_config != tt_fabric::FabricTensixConfig::DISABLED);
