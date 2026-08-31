@@ -154,6 +154,11 @@ void JitBuildEnv::init(
     bool sfpi_found = false;
     for (unsigned i = 0; i < 2; ++i) {
         auto gxx = sfpi_roots[i] + "/compiler/bin/riscv-tt-elf-g++";
+#ifdef _WIN32
+        // Native Windows toolchain binaries carry the .exe suffix. Keep it in gpp_ too, so
+        // every spawn of the compiler (CreateProcessW, the version probe) names the real file.
+        gxx += ".exe";
+#endif
         if (std::filesystem::exists(gxx)) {
             this->gpp_ += gxx + " ";
             this->gpp_include_dir_ = sfpi_roots[i] + "/include";
