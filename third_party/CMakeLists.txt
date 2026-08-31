@@ -117,6 +117,9 @@ CPMAddPackage(
         "protobuf_BUILD_EXAMPLES OFF"
         "BUILD_SHARED_LIBS OFF"
         "CMAKE_POSITION_INDEPENDENT_CODE ON"
+        # protobuf defaults to the static CRT (/MT) on MSVC, which conflicts
+        # with the /MD used by everything else at final link.
+        "protobuf_MSVC_STATIC_RUNTIME OFF"
     PATCHES
         protobuf_noreturn.patch
 )
@@ -493,6 +496,10 @@ set_target_properties(
         POSITION_INDEPENDENT_CODE
             ON
 )
+if(WIN32)
+    # resources.cpp uses GetProcessMemoryInfo
+    target_link_libraries(cadical PRIVATE psapi)
+endif()
 
 ####################################################################################################################
 # Cap'n Proto : https://github.com/capnproto/capnproto
@@ -534,6 +541,7 @@ CPMAddPackage(
     SOURCE_SUBDIR ttexalens/cpp/elf
     PATCHES
         ttexalens_msvc_demangle.patch
+        ttexalens_msvc_elfsymbol_struct.patch
     OPTIONS
         "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
 )
