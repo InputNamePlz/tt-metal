@@ -195,7 +195,14 @@ install(
 # Most of the use cases will link to ttnn without caring a lot about the backend, but
 # for those who need this second use case, now it is officially supported
 
-add_library(ttnncpp SHARED)
+set(TTNNCPP_LIB_TYPE SHARED)
+if(WIN32)
+    # ttnn relies on ELF default-visibility exports; on Windows a DLL that marks
+    # nothing dllexport produces no import library at all (LNK1181 downstream).
+    # Fold ttnncpp into its consumers as a static library instead.
+    set(TTNNCPP_LIB_TYPE STATIC)
+endif()
+add_library(ttnncpp ${TTNNCPP_LIB_TYPE})
 add_library(TTNN::CPP ALIAS ttnncpp)
 add_library(TTNN::TTNN ALIAS ttnncpp)
 add_library(Metalium::TTNNCPP ALIAS ttnncpp) # backwards compatibility. FIXME: remove
@@ -346,6 +353,12 @@ if(WITH_PYTHON_BINDINGS)
             Development.SABIModule
     )
     message(STATUS "Python3 include dirs: ${Python3_INCLUDE_DIRS}")
+
+    if(WIN32)
+        # pyconfig.h auto-links pythonXY.lib via #pragma comment(lib, ...) on MSVC;
+        # make sure the linker can find it next to the interpreter.
+        target_link_directories(ttnn PRIVATE ${Python3_LIBRARY_DIRS})
+    endif()
 
     # https://nanobind.readthedocs.io/en/latest/api_cmake.html#low-level-interface
     # -static Perform a static library build (without this suffix, a shared build is used)
