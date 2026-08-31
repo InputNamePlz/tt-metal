@@ -86,21 +86,23 @@ ttnn::device_operation::ProgramArtifacts AccumulationProgramFactory::create_prog
 
     const auto dst_cb_data_format{datatype_to_dataformat_converter(output_tensor.dtype())};
 
-    const uint32_t input_rank{input_tensor.padded_shape().rank()};
+    const uint32_t input_rank{static_cast<uint32_t>(input_tensor.padded_shape().rank())};
 
     auto grid = device->compute_with_storage_grid_size();
     const auto num_cores_y = grid.y;
     TT_FATAL(num_cores_y != 0, "Compute grid y-dimension must be non-zero");
 
     const int32_t dim{
-        (operation_attributes.dim >= 0) ? operation_attributes.dim : (input_rank + operation_attributes.dim)};
+        (operation_attributes.dim >= 0) ? operation_attributes.dim
+                                        : static_cast<int32_t>(input_rank + operation_attributes.dim)};
 
     const auto& tile = input_tensor.tensor_spec().tile();
     // how many tiles along accumulation axis
     const uint32_t tiles_per_row{input_tensor.padded_shape()[dim]};
     TT_FATAL(tiles_per_row != 0, "tiles_per_row must be non-zero (got 0 for dim={})", dim);
     // all work units (product of all row lengths besides the accumulation row)
-    const uint32_t num_rows_total{input_tensor.physical_volume() / tile.get_tile_hw() / tiles_per_row};
+    const uint32_t num_rows_total{
+        static_cast<uint32_t>(input_tensor.physical_volume() / tile.get_tile_hw() / tiles_per_row)};
     // tiles between consecutive tiles along accumulation row
     const uint32_t input_tile_offset{calc_input_tile_offset(input_shape, dim, tile.get_height(), tile.get_width())};
     TT_FATAL(input_tile_offset != 0, "input_tile_offset must be non-zero (got 0 for dim={})", dim);

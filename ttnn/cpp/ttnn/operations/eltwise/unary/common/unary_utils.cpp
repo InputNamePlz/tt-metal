@@ -6,6 +6,7 @@
 #include "ttnn/tensor/tensor_utils.hpp"
 
 #include <mutex>
+#include <tt_stl/unreachable.hpp>
 
 namespace ttnn::operations::unary {
 
@@ -149,7 +150,7 @@ CoreRangeSet get_worker_grid(
                 return sub_device_workers;
             }
         }
-        __builtin_unreachable();
+        ttsl::unreachable();
     };
 
     if (output_tensor.has_value() && output_tensor->is_sharded()) {
@@ -216,7 +217,7 @@ tt::tt_metal::ShardSpec generate_shard_spec_all_cores(
         auto height_padded = tt::round_up(tensor_height, grid_size.y * tt::constants::TILE_HEIGHT);
         auto shard_height = tt::round_up(tt::div_up(height_padded, grid_size.y), tt::constants::TILE_HEIGHT);
         auto shard_width = tt::round_up(tt::div_up(tensor_width, grid_size.x), tt::constants::TILE_WIDTH);
-        shard_shape = {shard_height, shard_width};
+        shard_shape = {static_cast<uint32_t>(shard_height), static_cast<uint32_t>(shard_width)};
     }
     log_debug(tt::LogOp, "Unary: Generated shard spec using all {} worker cores", num_cores);
     return ShardSpec(all_cores, shard_shape, ShardOrientation::ROW_MAJOR);

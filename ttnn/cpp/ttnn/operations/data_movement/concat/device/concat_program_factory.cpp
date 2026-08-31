@@ -211,7 +211,7 @@ tt::tt_metal::ProgramDescriptor ConcatProgramFactory::create_descriptor(
 
     KernelDescriptor::CompileTimeArgs writer_compile_time_args;
     if (rm_layout) {
-        writer_compile_time_args = {(std::uint32_t)src0_cb_index, dst_buffer->page_size()};
+        writer_compile_time_args = {(std::uint32_t)src0_cb_index, (std::uint32_t)dst_buffer->page_size()};
     } else {
         writer_compile_time_args = {(std::uint32_t)src0_cb_index};
     }

@@ -2489,9 +2489,9 @@ MatmulMultiCoreReuseMcast1DProgramFactory::shared_variables_t process_gather_in0
 
         out_subblock_h,          // out_subblock_h
         out_subblock_w,          // out_subblock_w
-        out_subblock_num_tiles,  // out_subblock_num_tiles
-        batch,                   // batch
-        out_block_tiles,         // out_block_num_tiles
+        out_subblock_num_tiles,          // out_subblock_num_tiles
+        (std::uint32_t)batch,            // batch
+        out_block_tiles,                 // out_block_num_tiles
 
         untilize_out,             // untilize_out
         in1_is_dram_interleaved,  // in1_is_dram_interleaved
@@ -2768,9 +2768,9 @@ MatmulMultiCoreReuseMcast1DProgramFactory::shared_variables_t process_gather_in0
 
         std::vector<uint32_t> mm_in0_args = {
             (std::uint32_t)core_type,
-            i,                // ring_index
-            next_core_noc.x,  // next_core_noc_x
-            next_core_noc.y,  // next_core_noc_y
+            i,                               // ring_index
+            (std::uint32_t)next_core_noc.x,  // next_core_noc_x
+            (std::uint32_t)next_core_noc.y,  // next_core_noc_y
             noc,
             (std::uint32_t)false,  // end_of_hop
         };
@@ -2782,8 +2782,8 @@ MatmulMultiCoreReuseMcast1DProgramFactory::shared_variables_t process_gather_in0
         /* in1 */
         std::vector<uint32_t> mm_in1_args = {
             (std::uint32_t)core_type,
-            in1_tensor.address(),  // in1_tensor_addr
-            i,                     // ring_idx
+            (std::uint32_t)in1_tensor.address(),  // in1_tensor_addr
+            i,                                    // ring_idx
         };
         if (in1_is_dram_sharded) {
             // Look up bank_id based on core.y and which column group core.x belongs to
@@ -2880,9 +2880,9 @@ MatmulMultiCoreReuseMcast1DProgramFactory::shared_variables_t process_gather_in0
 
         std::vector<uint32_t> mm_in0_args = {
             (std::uint32_t)core_type,
-            0,                // ring_index
-            next_core_noc.x,  // next_core_noc_x
-            next_core_noc.y,  // next_core_noc_y
+            0,                               // ring_index
+            (std::uint32_t)next_core_noc.x,  // next_core_noc_x
+            (std::uint32_t)next_core_noc.y,  // next_core_noc_y
             noc,
             (std::uint32_t)end_of_hop,  // end_of_hop
         };

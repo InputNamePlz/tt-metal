@@ -37,17 +37,17 @@ ProgramDescriptor MoeExpertTokenRemapDeviceOperation::Multicore::create_descript
 
     const auto l1_alignment = tt::tt_metal::hal::get_l1_alignment();
 
-    const auto mapping_page_size_bytes = mapping_tensor.tensor_spec().compute_page_size_bytes();
-    const auto aligned_mapping_page_size_bytes = tt::align(mapping_page_size_bytes, l1_alignment);
+    const auto mapping_page_size_bytes = static_cast<uint32_t>(mapping_tensor.tensor_spec().compute_page_size_bytes());
+    const auto aligned_mapping_page_size_bytes = static_cast<uint32_t>(tt::align(mapping_page_size_bytes, l1_alignment));
 
-    const auto metadata_page_size_bytes = metadata_tensor.tensor_spec().compute_page_size_bytes();
-    const auto aligned_metadata_page_size_bytes = tt::align(metadata_page_size_bytes, l1_alignment);
+    const auto metadata_page_size_bytes = static_cast<uint32_t>(metadata_tensor.tensor_spec().compute_page_size_bytes());
+    const auto aligned_metadata_page_size_bytes = static_cast<uint32_t>(tt::align(metadata_page_size_bytes, l1_alignment));
 
-    const auto topk_page_size_bytes = topk_tensor.tensor_spec().compute_page_size_bytes();
-    const auto aligned_topk_page_size_bytes = tt::align(topk_page_size_bytes, l1_alignment);
+    const auto topk_page_size_bytes = static_cast<uint32_t>(topk_tensor.tensor_spec().compute_page_size_bytes());
+    const auto aligned_topk_page_size_bytes = static_cast<uint32_t>(tt::align(topk_page_size_bytes, l1_alignment));
 
-    const auto output_mapping_page_size_bytes = output_mapping_tensor.tensor_spec().compute_page_size_bytes();
-    const auto output_reduced_page_size_bytes = output_reduced_tensor.tensor_spec().compute_page_size_bytes();
+    const auto output_mapping_page_size_bytes = static_cast<uint32_t>(output_mapping_tensor.tensor_spec().compute_page_size_bytes());
+    const auto output_reduced_page_size_bytes = static_cast<uint32_t>(output_reduced_tensor.tensor_spec().compute_page_size_bytes());
 
     ProgramDescriptor desc;
 
@@ -77,7 +77,7 @@ ProgramDescriptor MoeExpertTokenRemapDeviceOperation::Multicore::create_descript
     const auto local_experts_cb_id = tt::CBIndex::c_1;
     using local_experts_t = uint16_t;
     const auto aligned_local_expert_page_size_bytes =
-        tt::align(experts_per_device * sizeof(local_experts_t), l1_alignment);
+        static_cast<uint32_t>(tt::align(experts_per_device * sizeof(local_experts_t), l1_alignment));
     const auto local_experts_dataformat =
         datatype_to_dataformat_converter(tt::tt_metal::convert_to_data_type<local_experts_t>());
     desc.cbs.push_back(CBDescriptor{

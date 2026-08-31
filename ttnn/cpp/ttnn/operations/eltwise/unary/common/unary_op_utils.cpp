@@ -305,7 +305,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                     "bitwise_xor_tile<DataFormat::{}>({}, {}u);",
                     bitwise_shift_data_format_str(op_type, input_dtype),
                     idst,
-                    (uint)params[0])};
+                    (uint32_t)params[0])};
         case UnaryOpType::BITWISE_AND:
             return {
                 "bitwise_and_tile_init();",
@@ -313,7 +313,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                     "bitwise_and_tile<DataFormat::{}>({}, {}u);",
                     bitwise_shift_data_format_str(op_type, input_dtype),
                     idst,
-                    (uint)params[0])};
+                    (uint32_t)params[0])};
         case UnaryOpType::BITWISE_OR:
             return {
                 "bitwise_or_tile_init();",
@@ -321,7 +321,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                     "bitwise_or_tile<DataFormat::{}>({}, {}u);",
                     bitwise_shift_data_format_str(op_type, input_dtype),
                     idst,
-                    (uint)params[0])};
+                    (uint32_t)params[0])};
         case UnaryOpType::RIGHT_SHIFT:
             return {
                 "right_shift_tile_init();",
@@ -329,7 +329,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                     "right_shift_tile<DataFormat::{}>({}, {}u);",
                     bitwise_shift_data_format_str(op_type, input_dtype),
                     idst,
-                    (uint)params[0])};
+                    (uint32_t)params[0])};
         case UnaryOpType::LEFT_SHIFT:
             return {
                 "left_shift_tile_init();",
@@ -337,7 +337,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                     "left_shift_tile<DataFormat::{}>({}, {}u);",
                     bitwise_shift_data_format_str(op_type, input_dtype),
                     idst,
-                    (uint)params[0])};
+                    (uint32_t)params[0])};
         case UnaryOpType::REMAINDER:
             if (input_dtype == DataType::UINT32) {
                 if constexpr (std::is_floating_point_v<T>) {
@@ -432,7 +432,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                 return {
                     "binop_with_scalar_tile_init();",
                     // TODO: Use uint32_t tile API here once implemented #27621
-                    fmt::format("sub_unary_tile_int32({}, {}u);", idst, (uint)param0_raw)};
+                    fmt::format("sub_unary_tile_int32({}, {}u);", idst, (uint32_t)param0_raw)};
             } else {
                 return {
                     "binop_with_scalar_tile_init();",
@@ -453,7 +453,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
                 return {
                     "binop_with_scalar_tile_init();",
                     // TODO: Use uint32_t tile API here once implemented
-                    fmt::format("add_unary_tile_int32({}, {}u);", idst, (uint)param0_raw)};
+                    fmt::format("add_unary_tile_int32({}, {}u);", idst, (uint32_t)param0_raw)};
             }
             return {
                 "binop_with_scalar_tile_init();",
@@ -594,7 +594,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
             if (input_dtype == DataType::UINT32) {
                 return {
                     "unary_max_uint32_tile_init();",
-                    fmt::format("unary_max_uint32_tile({}, {}u);", idst, (uint)params[0])};
+                    fmt::format("unary_max_uint32_tile({}, {}u);", idst, (uint32_t)params[0])};
             }
             return {
                 "unary_max_tile_init();",
@@ -611,7 +611,7 @@ std::pair<std::string, std::string> get_op_init_and_func_parameterized(
             if (input_dtype == DataType::UINT32) {
                 return {
                     "unary_min_uint32_tile_init();",
-                    fmt::format("unary_min_uint32_tile({}, {}u);", idst, (uint)params[0])};
+                    fmt::format("unary_min_uint32_tile({}, {}u);", idst, (uint32_t)params[0])};
             }
             return {
                 "unary_min_tile_init();",

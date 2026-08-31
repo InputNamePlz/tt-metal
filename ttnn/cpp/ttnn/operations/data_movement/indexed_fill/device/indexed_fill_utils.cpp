@@ -279,7 +279,7 @@ tt::tt_metal::ShardSpec generate_shard_spec_all_cores(
         auto height_padded = tt::round_up(tensor_height, grid_size.y * height_align);
         auto shard_height = tt::round_up(tt::div_up(height_padded, grid_size.y), height_align);
         auto shard_width = tt::round_up(tt::div_up(tensor_width, grid_size.x), width_align);
-        shard_shape = {shard_height, shard_width};
+        shard_shape = {static_cast<uint32_t>(shard_height), static_cast<uint32_t>(shard_width)};
     }
     return ShardSpec(all_cores, shard_shape, ShardOrientation::ROW_MAJOR);
 }

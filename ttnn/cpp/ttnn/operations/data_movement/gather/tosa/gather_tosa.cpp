@@ -24,7 +24,10 @@ Tensor pre_tosa_gather_transform_input_index_tensor(const Tensor& input_tensor, 
     // Unsqueeze the input tensor to add a new dimension
     const Tensor unsqueezed_tensor = ttnn::unsqueeze(input_tensor, -1);
     // Create a shape vector for the new tensor
-    ttsl::SmallVector<int32_t> shape_vector = {input_tensor.logical_shape()[0], input_tensor.logical_shape()[1], C};
+    ttsl::SmallVector<int32_t> shape_vector = {
+        static_cast<int32_t>(input_tensor.logical_shape()[0]),
+        static_cast<int32_t>(input_tensor.logical_shape()[1]),
+        static_cast<int32_t>(C)};
     Tensor expanded_tensor = ttnn::expand(unsqueezed_tensor, shape_vector, unsqueezed_tensor.memory_config());
 
     return expanded_tensor;

@@ -8,6 +8,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <unordered_map>
+#include <tt_stl/unreachable.hpp>
 
 namespace ttnn::operations::ternary {
 
@@ -390,7 +391,7 @@ std::string get_kernel_file_path(KernelName kernel_name, bool is_fpu) {
         case KernelName::ComputeRowBcastAddcOp:
             return fmt::format(
                 compute, root, is_fpu ? "ternary_addc_ops_fpu_rowbcast.cpp" : "ternary_addc_ops_sfpu.cpp");
-        default: __builtin_unreachable();
+        default: ttsl::unreachable();
     }
 }
 
@@ -401,7 +402,7 @@ std::string override_addcmul_compute_kernel(KernelName kernel_name) {
         case KernelName::ComputeNoBcastAddcOp: return fmt::format(compute, root, "ternary_addcmul_int_sfpu.cpp");
         case KernelName::ComputeBcastAddcOp:
         case KernelName::ComputeRowBcastAddcOp: return fmt::format(compute, root, "ternary_addcmul_int_sfpu_bcast.cpp");
-        default: __builtin_unreachable();
+        default: ttsl::unreachable();
     }
 }
 

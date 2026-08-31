@@ -44,7 +44,7 @@ ProgramDescriptor MoeRoutingRemapDeviceOperation::SingleCore::create_descriptor(
     const auto l1_alignment = tt::tt_metal::hal::get_l1_alignment();
 
     const auto routing_weight_page_size_bytes = routing_weights.tensor_spec().compute_page_size_bytes();
-    const auto aligned_routing_weight_page_size_bytes = tt::align(routing_weight_page_size_bytes, l1_alignment);
+    const auto aligned_routing_weight_page_size_bytes = static_cast<uint32_t>(tt::align(routing_weight_page_size_bytes, l1_alignment));
 
     // single core is fine
     const CoreRangeSet total_cores{CoreRange{{0, 0}, {0, 0}}};
@@ -69,7 +69,7 @@ ProgramDescriptor MoeRoutingRemapDeviceOperation::SingleCore::create_descriptor(
     const auto local_weights_idxs_cb_id = tt::CBIndex::c_1;
     using local_weights_idxs_t = uint16_t;
     const auto aligned_local_weights_idxs_page_size_bytes =
-        tt::align(non_zero_per_device * sizeof(local_weights_idxs_t), l1_alignment);
+        static_cast<uint32_t>(tt::align(non_zero_per_device * sizeof(local_weights_idxs_t), l1_alignment));
     const auto local_weights_idxs_dataformat =
         datatype_to_dataformat_converter(tt::tt_metal::convert_to_data_type<local_weights_idxs_t>());
     desc.cbs.push_back(CBDescriptor{
@@ -85,7 +85,7 @@ ProgramDescriptor MoeRoutingRemapDeviceOperation::SingleCore::create_descriptor(
     // output routing weight buffer
     const auto local_weights_cb_id = tt::CBIndex::c_2;
     const auto local_weights_page_size_bytes = tensor_return_value.tensor_spec().compute_page_size_bytes();
-    const auto aligned_local_weights_page_size_bytes = tt::align(local_weights_page_size_bytes, l1_alignment);
+    const auto aligned_local_weights_page_size_bytes = static_cast<uint32_t>(tt::align(local_weights_page_size_bytes, l1_alignment));
     // this actually needs to be the same datatype as the input. Also checked `validate`
     const auto local_weights_format = datatype_to_dataformat_converter(tensor_return_value.dtype());
 
