@@ -10,7 +10,9 @@
 #include "ttnn/operations/data_movement/common/common.hpp"
 #include "ttnn/operations/eltwise/unary/unary.hpp"
 #include "ttnn/operations/eltwise/binary/binary.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/moreh/moreh_sum/moreh_sum.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/data_movement/permute/permute.hpp"
 #include "ttnn/operations/data_movement/pad/pad.hpp"
 #include "ttnn/operations/data_movement/slice/slice.hpp"
@@ -1586,6 +1588,15 @@ std::vector<Tensor> repeat_bw(
     const ttnn::Shape& shape,
     const std::optional<MemoryConfig>& output_mem_config) {
     std::vector<Tensor> grad_tensor;
+#ifdef TTNN_TRIMMED_BUILD
+    // repeat_bw reduces via ttnn::moreh_sum; the moreh op family is excluded from this
+    // reduced build.
+    (void)grad;
+    (void)input;
+    (void)shape;
+    (void)output_mem_config;
+    TT_THROW("repeat_bw requires the moreh ops (moreh_sum), which are excluded from this trimmed TTNN build");
+#else
     auto output_memory_config = output_mem_config.value_or(
         input.memory_config());  // TODO: Remove after ternary forward ops migration is completed
 
@@ -1630,6 +1641,7 @@ std::vector<Tensor> repeat_bw(
         return grad_tensor;
     }
     return grad_tensor;
+#endif  // TTNN_TRIMMED_BUILD
 }
 
 }  // namespace ttnn

@@ -14,7 +14,9 @@
 #include "ttnn/operations/data_movement/transpose/transpose.hpp"
 #include "ttnn/operations/copy/typecast/typecast.hpp"
 #include "ttnn/operations/core/core.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/pool/upsample/upsample.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 
 #include "repeat_interleave_force.hpp"
 
@@ -73,6 +75,9 @@ Tensor repeat_interleave_native(
         // output would silently ignore a differing requested config. Always compute the native sharded
         // result first (letting the config be derived from the input), then convert to whatever the
         // caller actually requested at the very end (a no-op if it already matches).
+#ifndef TTNN_TRIMMED_BUILD
+        // ttnn::upsample belongs to the pool op family, which is excluded from the trimmed
+        // build; the round-trip fallback below is used for all sharded inputs there.
         if (input_a.layout() == Layout::ROW_MAJOR && rank == 4 && input_a.memory_config().is_l1()) {
             const auto& shape = input_a.logical_shape();
             ttnn::Tensor native_result;
@@ -98,6 +103,7 @@ Tensor repeat_interleave_native(
             return output_mem_config.has_value() ? ttnn::to_memory_config(native_result, *output_mem_config)
                                                  : native_result;
         }
+#endif  // TTNN_TRIMMED_BUILD
 
         // Fallback (TILE layout or non-4D tensors, since the native path above only handles ROW_MAJOR
         // rank-4 tensors): run the op in interleaved and restore the requested sharded config on the
