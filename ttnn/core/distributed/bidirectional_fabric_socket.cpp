@@ -3,8 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ttnn/distributed/bidirectional_fabric_socket.hpp"
+#include <tt_stl/assert.hpp>
+
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/experimental/ccl/send_recv_async/send_async/send_async.hpp"
 #include "ttnn/operations/experimental/ccl/send_recv_async/recv_async/recv_async.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 
 namespace ttnn::distributed {
 
@@ -14,10 +18,25 @@ BidirectionalFabricSocket::BidirectionalFabricSocket(
     send_socket_(send_socket), recv_socket_(recv_socket) {}
 
 void BidirectionalFabricSocket::send(const ttnn::Tensor& tensor) {
+#ifdef TTNN_TRIMMED_BUILD
+    // send_async lives in the experimental ccl op family, excluded from this build.
+    (void)tensor;
+    TT_THROW(
+        "BidirectionalFabricSocket::send requires the experimental ccl ops, excluded from this trimmed TTNN build");
+#else
     ttnn::experimental::send_async(tensor, send_socket_);
+#endif  // TTNN_TRIMMED_BUILD
 }
 
-void BidirectionalFabricSocket::recv(ttnn::Tensor& tensor) { ttnn::experimental::recv_async(tensor, recv_socket_); }
+void BidirectionalFabricSocket::recv(ttnn::Tensor& tensor) {
+#ifdef TTNN_TRIMMED_BUILD
+    (void)tensor;
+    TT_THROW(
+        "BidirectionalFabricSocket::recv requires the experimental ccl ops, excluded from this trimmed TTNN build");
+#else
+    ttnn::experimental::recv_async(tensor, recv_socket_);
+#endif  // TTNN_TRIMMED_BUILD
+}
 
 tt::tt_metal::distributed::multihost::Rank BidirectionalFabricSocket::get_rank() const {
     auto socket_config = send_socket_.get_config();
