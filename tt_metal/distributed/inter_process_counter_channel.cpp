@@ -8,10 +8,20 @@
 
 #include <tt-logger/tt-logger.hpp>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 
 #include <cerrno>
 #include <chrono>
@@ -47,6 +57,93 @@ std::string posix_errno_str() { return std::strerror(errno); }
 // On any failure mid-way, undo what was done so we don't leak a half-
 // initialised segment on /dev/shm.
 // =============================================================================
+#ifdef _WIN32
+InterProcessCounterChannel::InterProcessCounterChannel(const std::string& shm_name) :
+    shm_path_(shm_name), role_(Role::Owner) {
+    // Named pagefile-backed mapping in place of shm_open+ftruncate+mmap; exclusive creation is
+    // detected via ERROR_ALREADY_EXISTS (the POSIX O_CREAT|O_EXCL stale-segment failure). The
+    // region arrives zero-filled, like a freshly ftruncated segment.
+    const std::string win_name = "Local\\" + shm_path_.substr(1);
+    HANDLE mapping = CreateFileMappingA(
+        INVALID_HANDLE_VALUE,
+        nullptr,
+        PAGE_READWRITE,
+        0,
+        static_cast<DWORD>(sizeof(InterProcessCounterSegment)),
+        win_name.c_str());
+    if (mapping == nullptr) {
+        throw std::runtime_error(
+            "InterProcessCounterChannel: CreateFileMapping failed (" + shm_path_ + "): error " +
+            std::to_string(GetLastError()));
+    }
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        CloseHandle(mapping);
+        throw std::runtime_error(
+            "InterProcessCounterChannel: shared memory '" + shm_path_ +
+            "' already exists (another process in this session still holds it open)");
+    }
+    void* mapped = MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(InterProcessCounterSegment));
+    if (mapped == nullptr) {
+        DWORD map_error = GetLastError();
+        CloseHandle(mapping);
+        throw std::runtime_error(
+            "InterProcessCounterChannel: MapViewOfFile failed (" + shm_path_ + "): error " +
+            std::to_string(map_error));
+    }
+    mapping_ = mapping;
+    seg_ = static_cast<InterProcessCounterSegment*>(mapped);
+
+    // Same initial state as the POSIX path: zero-filled region, prior_clean_shutdown stamped
+    // to 1 so the first connector's had_clean_prior_shutdown() returns true.
+    seg_->prior_clean_shutdown = 1;
+}
+
+std::unique_ptr<InterProcessCounterChannel> InterProcessCounterChannel::connect(
+    const std::string& shm_name, uint32_t connect_timeout_ms) {
+    if (shm_name.empty() || shm_name[0] != '/' || shm_name.find('/', 1) != std::string::npos) {
+        throw std::runtime_error(
+            "InterProcessCounterChannel::connect: shm_name must start with '/' and contain no other '/'");
+    }
+    const std::string win_name = "Local\\" + shm_name.substr(1);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(connect_timeout_ms);
+    HANDLE mapping = nullptr;
+    while (true) {
+        mapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, win_name.c_str());
+        if (mapping != nullptr) {
+            break;
+        }
+        if (GetLastError() != ERROR_FILE_NOT_FOUND) {
+            throw std::runtime_error(
+                "InterProcessCounterChannel::connect: OpenFileMapping failed (" + shm_name + "): error " +
+                std::to_string(GetLastError()));
+        }
+        if (std::chrono::steady_clock::now() >= deadline) {
+            throw std::runtime_error(
+                "InterProcessCounterChannel::connect: timed out after " + std::to_string(connect_timeout_ms) +
+                " ms waiting for " + shm_name + " — owner process has not exported this shm_name");
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    void* mapped = MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(InterProcessCounterSegment));
+    if (mapped == nullptr) {
+        DWORD map_error = GetLastError();
+        CloseHandle(mapping);
+        throw std::runtime_error(
+            "InterProcessCounterChannel::connect: MapViewOfFile failed (" + shm_name + "): error " +
+            std::to_string(map_error));
+    }
+    auto* seg = static_cast<InterProcessCounterSegment*>(mapped);
+
+    // Same snapshot-and-clear protocol as the POSIX path (see below).
+    const bool had_clean_prior_shutdown = (seg->prior_clean_shutdown != 0);
+    seg->prior_clean_shutdown = 0;
+
+    auto channel = std::unique_ptr<InterProcessCounterChannel>(
+        new InterProcessCounterChannel(shm_name, Role::Connector, /*fd=*/-1, seg, had_clean_prior_shutdown));
+    channel->mapping_ = mapping;
+    return channel;
+}
+#else
 InterProcessCounterChannel::InterProcessCounterChannel(const std::string& shm_name) :
     shm_path_(shm_name),
     role_(Role::Owner),
@@ -165,6 +262,7 @@ std::unique_ptr<InterProcessCounterChannel> InterProcessCounterChannel::connect(
     return std::unique_ptr<InterProcessCounterChannel>(
         new InterProcessCounterChannel(shm_name, Role::Connector, fd, seg, had_clean_prior_shutdown));
 }
+#endif  // !_WIN32
 
 // Private ctor used only by connect() above.
 InterProcessCounterChannel::InterProcessCounterChannel(
@@ -260,9 +358,23 @@ void InterProcessCounterChannel::shutdown() {
             // first).
             seg_->prior_clean_shutdown = 1;
         }
+#ifdef _WIN32
+        UnmapViewOfFile(seg_);
+#else
         ::munmap(seg_, sizeof(InterProcessCounterSegment));
+#endif
         seg_ = nullptr;
     }
+#ifdef _WIN32
+    if (mapping_ != nullptr) {
+        // Releasing our handle stands in for close + (owner-side) shm_unlink: the named
+        // mapping disappears when the last handle/view is gone. A still-attached connector's
+        // view keeps the segment alive until it detaches, matching POSIX semantics; the name
+        // also lives on until then, unlike POSIX where unlink hides it immediately.
+        CloseHandle(mapping_);
+        mapping_ = nullptr;
+    }
+#else
     if (fd_ != -1) {
         ::close(fd_);
         fd_ = -1;
@@ -274,6 +386,7 @@ void InterProcessCounterChannel::shutdown() {
         // call is a no-op anyway via the exchange guard above.
         ::shm_unlink(shm_path_.c_str());
     }
+#endif
 }
 
 // =============================================================================

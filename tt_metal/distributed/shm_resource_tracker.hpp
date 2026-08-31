@@ -8,6 +8,9 @@
 #include <set>
 #include <string>
 #include <sys/types.h>
+#ifdef _WIN32
+using pid_t = int;  // Not provided by the Windows CRT; Windows process IDs fit in int.
+#endif
 
 namespace tt::tt_metal::distributed {
 

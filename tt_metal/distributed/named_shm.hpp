@@ -72,6 +72,11 @@ private:
     std::string name_;
     void* ptr_ = nullptr;
     size_t size_ = 0;
+#ifdef _WIN32
+    // HANDLE to the named file mapping. Kept open for the object's lifetime so the kernel
+    // object (and its name, which other processes open) reliably outlives the view.
+    void* mapping_ = nullptr;
+#endif
 };
 
 /**
