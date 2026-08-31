@@ -450,7 +450,9 @@ auto_register_ttnn_cpp_operations(ttnn._ttnn)
 import ttnn.operations
 
 import ttnn.experimental_loader
-import ttnn.experimental_loader.golden_functions
+
+if _TTNN_FULL_OPSET:
+    import ttnn.experimental_loader.golden_functions
 
 # After experimental_loader creates ttnn.experimental, append all submodules from _experimental
 # This allows us to add new experimental modules without conflicting with experimental_loader
