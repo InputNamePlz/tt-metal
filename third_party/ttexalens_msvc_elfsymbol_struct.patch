@@ -1,0 +1,11 @@
+--- a/ttexalens/cpp/elf/dwarf_die.hpp
++++ b/ttexalens/cpp/elf/dwarf_die.hpp
+@@ -22,7 +22,7 @@ namespace details {
+ class DwarfInfoImpl;
+ }  // namespace details
+ 
+-class ElfSymbol;
++struct ElfSymbol;
+ class DwarfCompileUnit;
+ class FrameInspection;
+ 
