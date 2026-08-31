@@ -6,8 +6,10 @@
 #include <optional>
 #include <span>
 
+#ifndef _WIN32
 #include <sys/mman.h>
 #include <unistd.h>
+#endif
 
 #include "tt-metalium/tensor/host_tensor.hpp"
 #include "tt-metalium/tensor/tensor_apis.hpp"

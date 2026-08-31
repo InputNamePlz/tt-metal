@@ -132,14 +132,14 @@ std::vector<BufferPageInfo> get_buffer_pages(const std::vector<tt::tt_metal::dis
                     auto bank_id = device->allocator()->get_bank_ids_from_logical_core(buffer_type, core)[0];
                     auto page_address = buffer->address() + (mapped_page.device_page * buffer->aligned_page_size());
                     buffer_page_infos.push_back(BufferPageInfo{
-                        .device_id = device_id,
-                        .address = address,
-                        .core_y = core.y,
-                        .core_x = core.x,
+                        .device_id = static_cast<uint32_t>(device_id),
+                        .address = static_cast<uint32_t>(address),
+                        .core_y = static_cast<uint32_t>(core.y),
+                        .core_x = static_cast<uint32_t>(core.x),
                         .bank_id = bank_id,
                         .page_index = mapped_page.host_page,
-                        .page_address = page_address,
-                        .page_size = page_size,
+                        .page_address = static_cast<uint32_t>(page_address),
+                        .page_size = static_cast<uint32_t>(page_size),
                         .buffer_type = buffer_type,
                     });
                 }
@@ -151,14 +151,14 @@ std::vector<BufferPageInfo> get_buffer_pages(const std::vector<tt::tt_metal::dis
                     bank_id = (bank_id + 1) % num_banks;
 
                     buffer_page_infos.push_back(BufferPageInfo{
-                        .device_id = device_id,
-                        .address = address,
-                        .core_y = core.y,
-                        .core_x = core.x,
+                        .device_id = static_cast<uint32_t>(device_id),
+                        .address = static_cast<uint32_t>(address),
+                        .core_y = static_cast<uint32_t>(core.y),
+                        .core_x = static_cast<uint32_t>(core.x),
                         .bank_id = bank_id,
                         .page_index = page_index,
-                        .page_address = page_address,
-                        .page_size = page_size,
+                        .page_address = static_cast<uint32_t>(page_address),
+                        .page_size = static_cast<uint32_t>(page_size),
                         .buffer_type = buffer_type,
                     });
                 }
