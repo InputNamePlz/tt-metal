@@ -22,7 +22,7 @@ for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
     sys.modules[f"{module_name}"] = _module
     try:
         spec.loader.exec_module(_module)
-    except AttributeError:
+    except (AttributeError, ModuleNotFoundError):
         if not _TTNN_TRIMMED_BUILD:
             raise
         # Trimmed build: this op family's C++ bindings are not present.
