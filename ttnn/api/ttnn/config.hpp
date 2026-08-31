@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdlib>
 #include <filesystem>
 #include <iosfwd>
 #include <optional>
@@ -19,10 +20,26 @@ namespace ttnn {
 
 namespace core {
 
+namespace detail {
+// $HOME is guaranteed on POSIX but absent in a plain Windows shell (only
+// USERPROFILE is). getenv returning nullptr would make the path constructor
+// throw inside CONFIG's static initializer -- during DLL attach on Windows,
+// which surfaces as ERROR_DLL_INIT_FAILED at import time.
+inline std::filesystem::path home_directory() {
+    if (const char* home = std::getenv("HOME")) {
+        return std::filesystem::path{home};
+    }
+    if (const char* profile = std::getenv("USERPROFILE")) {
+        return std::filesystem::path{profile};
+    }
+    return std::filesystem::temp_directory_path();
+}
+}  // namespace detail
+
 struct Config {
     struct attributes_t {
-        std::filesystem::path cache_path = std::filesystem::path{std::getenv("HOME")} / ".cache/ttnn";
-        std::filesystem::path model_cache_path = std::filesystem::path{std::getenv("HOME")} / ".cache/ttnn/models";
+        std::filesystem::path cache_path = detail::home_directory() / ".cache/ttnn";
+        std::filesystem::path model_cache_path = detail::home_directory() / ".cache/ttnn/models";
         std::filesystem::path tmp_dir = "/tmp/ttnn";
         bool enable_model_cache = false;
         bool enable_fast_runtime_mode = true;
