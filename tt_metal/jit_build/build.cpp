@@ -116,6 +116,18 @@ void hard_link_or_copy(const std::filesystem::path& target, const std::filesyste
 
 std::string get_default_root_path() {
     const std::string emptyString;
+#ifdef _WIN32
+    // %LOCALAPPDATA% is the conventional per-user cache root on Windows. HOME is usually unset
+    // outside POSIX-emulation shells, and the "/tmp" fallback is a drive-relative path there.
+    const std::string local_app_data = parse_env<std::string>("LOCALAPPDATA", emptyString);
+    if (!local_app_data.empty() && std::filesystem::exists(local_app_data)) {
+        return local_app_data + "/tt-metal-cache/";
+    }
+    const std::string temp_dir = std::filesystem::temp_directory_path().string();
+    if (!temp_dir.empty()) {
+        return temp_dir + "/tt-metal-cache/";
+    }
+#endif
     const std::string home_path = parse_env<std::string>("HOME", emptyString);
     if (!home_path.empty() && std::filesystem::exists(home_path)) {
         return home_path + "/.cache/tt-metal-cache/";
@@ -724,7 +736,7 @@ void JitBuildState::compile_one(const string& out_dir, const JitBuildSettings* s
     bool result = tt::jit_build::utils::exec_command(args, out_dir, log_file.path());
     report_result(this->target_name_, "compile", fmt::format("{}", fmt::join(args, " ")), log_file.path(), result);
     jit_build::write_dependency_hashes(out_dir, obj_temp_path, obj_temp_path + ".dephash");
-    fs::remove(temp_d_path);  // .d file not needed after hash is written
+    tt::jit_build::utils::remove_file_with_retry(temp_d_path);  // .d file not needed after hash is written
 }
 
 bool JitBuildState::need_compile(const string& out_dir, const string& obj) const {
