@@ -97,7 +97,7 @@
           "rhs": "Windows"
         },
         "cacheVariables": {
-          "WITH_PYTHON_BINDINGS": {"value": "OFF"},
+          "WITH_PYTHON_BINDINGS": {"value": "ON"},
           "ENABLE_TRACY": {"value": "OFF"},
           "ENABLE_DISTRIBUTED": {"value": "OFF"},
           "TT_METAL_BUILD_TESTS": {"value": "OFF"},
@@ -107,7 +107,8 @@
           "TT_INSTALL": {"value": "OFF"},
           "BUILD_SHARED_LIBS": {"value": "OFF"},
           "BUILD_PROGRAMMING_EXAMPLES": {"value": "ON"},
-          "TT_METAL_BUILD_TTNN": {"value": "OFF"},
+          "TT_METAL_BUILD_TTNN": {"value": "ON"},
+          "TTNN_BUILD_FULL": {"value": "OFF"},
           "TT_SKIP_HW_TOOLCHAIN": {"value": "ON"},
           "TT_UMD_BUILD_SIMULATION": {"value": "OFF"},
           "TT_UMD_BUILD_STATIC": {"value": "ON"},
