@@ -12,39 +12,51 @@
 # moving them), and transformer/ (one CMake target spanning multiple teams'
 # code — needs an actual target split before ownership can split too).
 
-# metalium-developers-convolutions
-add_subdirectory(conv)
-add_subdirectory(pool)
-add_subdirectory(sliding_window)
+if(TTNN_BUILD_FULL)
+    # metalium-developers-convolutions
+    add_subdirectory(conv)
+    add_subdirectory(pool)
+    add_subdirectory(sliding_window)
 
-# metalium-developers-ops-data-movement
-add_subdirectory(ccl)
-add_subdirectory(point_to_point)
+    # metalium-developers-ops-data-movement
+    add_subdirectory(ccl)
+    add_subdirectory(point_to_point)
+endif()
 add_subdirectory(data_movement)
-add_subdirectory(embedding)
-add_subdirectory(embedding_backward)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(embedding)
+    add_subdirectory(embedding_backward)
+endif()
 
 # metalium-developers-mmfusedreduce
 add_subdirectory(matmul)
-add_subdirectory(normalization)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(normalization)
+endif()
 add_subdirectory(reduction)
 
 # No team-specific CODEOWNERS rule — falls back to the ops-leads catch-all
 # today. Kept as the status quo owner rather than guessed at.
-add_subdirectory(bernoulli)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(bernoulli)
+endif()
 add_subdirectory(creation)
 add_subdirectory(core)
-add_subdirectory(debug)
-add_subdirectory(examples)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(debug)
+    add_subdirectory(examples)
+endif()
 add_subdirectory(full)
-add_subdirectory(full_like)
-add_subdirectory(index_fill)
-add_subdirectory(kv_cache)
-add_subdirectory(loss)
-add_subdirectory(prefetcher)
-add_subdirectory(rand)
-add_subdirectory(randn)
-add_subdirectory(uniform)
+if(TTNN_BUILD_FULL)
+    add_subdirectory(full_like)
+    add_subdirectory(index_fill)
+    add_subdirectory(kv_cache)
+    add_subdirectory(loss)
+    add_subdirectory(prefetcher)
+    add_subdirectory(rand)
+    add_subdirectory(randn)
+    add_subdirectory(uniform)
+endif()
 
 # Umbrella target for everything migrated into this file: ttnncpp links this
 # one target instead of enumerating these op libraries itself. Add/remove
@@ -52,35 +64,48 @@ add_subdirectory(uniform)
 # ttnn/CMakeLists.txt.
 add_library(ttnn_op_operations_shared INTERFACE)
 add_library(TTNN::Ops::OperationsShared ALIAS ttnn_op_operations_shared)
-target_link_libraries(
-    ttnn_op_operations_shared
-    INTERFACE
-        TTNN::Ops::Bernoulli
-        TTNN::Ops::CCL
-        TTNN::Ops::Conv
-        TTNN::Ops::Core
-        TTNN::Ops::Creation
-        TTNN::Ops::DataMovement
-        TTNN::Ops::Debug
-        TTNN::Ops::Embedding
-        TTNN::Ops::Embedding::Backward
-        TTNN::Ops::Examples
-        TTNN::Ops::Full
-        TTNN::Ops::FullLike
-        TTNN::Ops::IndexFill
-        TTNN::Ops::KvCache
-        TTNN::Ops::Loss
-        TTNN::Ops::Matmul
-        TTNN::Ops::Normalization
-        TTNN::Ops::PointToPoint
-        TTNN::Ops::Pool
-        TTNN::Ops::Prefetcher
-        TTNN::Ops::Rand
-        TTNN::Ops::Randn
-        TTNN::Ops::Reduction
-        TTNN::Ops::SlidingWindow
-        TTNN::Ops::Uniform
-)
+if(TTNN_BUILD_FULL)
+    target_link_libraries(
+        ttnn_op_operations_shared
+        INTERFACE
+            TTNN::Ops::Bernoulli
+            TTNN::Ops::CCL
+            TTNN::Ops::Conv
+            TTNN::Ops::Core
+            TTNN::Ops::Creation
+            TTNN::Ops::DataMovement
+            TTNN::Ops::Debug
+            TTNN::Ops::Embedding
+            TTNN::Ops::Embedding::Backward
+            TTNN::Ops::Examples
+            TTNN::Ops::Full
+            TTNN::Ops::FullLike
+            TTNN::Ops::IndexFill
+            TTNN::Ops::KvCache
+            TTNN::Ops::Loss
+            TTNN::Ops::Matmul
+            TTNN::Ops::Normalization
+            TTNN::Ops::PointToPoint
+            TTNN::Ops::Pool
+            TTNN::Ops::Prefetcher
+            TTNN::Ops::Rand
+            TTNN::Ops::Randn
+            TTNN::Ops::Reduction
+            TTNN::Ops::SlidingWindow
+            TTNN::Ops::Uniform
+    )
+else()
+    target_link_libraries(
+        ttnn_op_operations_shared
+        INTERFACE
+            TTNN::Ops::Core
+            TTNN::Ops::Creation
+            TTNN::Ops::DataMovement
+            TTNN::Ops::Full
+            TTNN::Ops::Matmul
+            TTNN::Ops::Reduction
+    )
+endif()
 
 # target_link_libraries() alone is not enough: per the CMake docs, an OBJECT
 # library named in a target's INTERFACE_LINK_LIBRARIES (as these leaves are,
@@ -93,32 +118,45 @@ target_link_libraries(
 # nothing (and is harmless) for leaves that aren't OBJECT libraries — e.g.
 # SHARED or STATIC, both of which ttnn can compile these as depending on
 # build options — so this is safe unconditionally.
-target_sources(
-    ttnn_op_operations_shared
-    INTERFACE
-        $<TARGET_OBJECTS:TTNN::Ops::Bernoulli>
-        $<TARGET_OBJECTS:TTNN::Ops::CCL>
-        $<TARGET_OBJECTS:TTNN::Ops::Conv>
-        $<TARGET_OBJECTS:TTNN::Ops::Core>
-        $<TARGET_OBJECTS:TTNN::Ops::Creation>
-        $<TARGET_OBJECTS:TTNN::Ops::DataMovement>
-        $<TARGET_OBJECTS:TTNN::Ops::Debug>
-        $<TARGET_OBJECTS:TTNN::Ops::Embedding>
-        $<TARGET_OBJECTS:TTNN::Ops::Embedding::Backward>
-        $<TARGET_OBJECTS:TTNN::Ops::Examples>
-        $<TARGET_OBJECTS:TTNN::Ops::Full>
-        $<TARGET_OBJECTS:TTNN::Ops::FullLike>
-        $<TARGET_OBJECTS:TTNN::Ops::IndexFill>
-        $<TARGET_OBJECTS:TTNN::Ops::KvCache>
-        $<TARGET_OBJECTS:TTNN::Ops::Loss>
-        $<TARGET_OBJECTS:TTNN::Ops::Matmul>
-        $<TARGET_OBJECTS:TTNN::Ops::Normalization>
-        $<TARGET_OBJECTS:TTNN::Ops::PointToPoint>
-        $<TARGET_OBJECTS:TTNN::Ops::Pool>
-        $<TARGET_OBJECTS:TTNN::Ops::Prefetcher>
-        $<TARGET_OBJECTS:TTNN::Ops::Rand>
-        $<TARGET_OBJECTS:TTNN::Ops::Randn>
-        $<TARGET_OBJECTS:TTNN::Ops::Reduction>
-        $<TARGET_OBJECTS:TTNN::Ops::SlidingWindow>
-        $<TARGET_OBJECTS:TTNN::Ops::Uniform>
-)
+if(TTNN_BUILD_FULL)
+    target_sources(
+        ttnn_op_operations_shared
+        INTERFACE
+            $<TARGET_OBJECTS:TTNN::Ops::Bernoulli>
+            $<TARGET_OBJECTS:TTNN::Ops::CCL>
+            $<TARGET_OBJECTS:TTNN::Ops::Conv>
+            $<TARGET_OBJECTS:TTNN::Ops::Core>
+            $<TARGET_OBJECTS:TTNN::Ops::Creation>
+            $<TARGET_OBJECTS:TTNN::Ops::DataMovement>
+            $<TARGET_OBJECTS:TTNN::Ops::Debug>
+            $<TARGET_OBJECTS:TTNN::Ops::Embedding>
+            $<TARGET_OBJECTS:TTNN::Ops::Embedding::Backward>
+            $<TARGET_OBJECTS:TTNN::Ops::Examples>
+            $<TARGET_OBJECTS:TTNN::Ops::Full>
+            $<TARGET_OBJECTS:TTNN::Ops::FullLike>
+            $<TARGET_OBJECTS:TTNN::Ops::IndexFill>
+            $<TARGET_OBJECTS:TTNN::Ops::KvCache>
+            $<TARGET_OBJECTS:TTNN::Ops::Loss>
+            $<TARGET_OBJECTS:TTNN::Ops::Matmul>
+            $<TARGET_OBJECTS:TTNN::Ops::Normalization>
+            $<TARGET_OBJECTS:TTNN::Ops::PointToPoint>
+            $<TARGET_OBJECTS:TTNN::Ops::Pool>
+            $<TARGET_OBJECTS:TTNN::Ops::Prefetcher>
+            $<TARGET_OBJECTS:TTNN::Ops::Rand>
+            $<TARGET_OBJECTS:TTNN::Ops::Randn>
+            $<TARGET_OBJECTS:TTNN::Ops::Reduction>
+            $<TARGET_OBJECTS:TTNN::Ops::SlidingWindow>
+            $<TARGET_OBJECTS:TTNN::Ops::Uniform>
+    )
+else()
+    target_sources(
+        ttnn_op_operations_shared
+        INTERFACE
+            $<TARGET_OBJECTS:TTNN::Ops::Core>
+            $<TARGET_OBJECTS:TTNN::Ops::Creation>
+            $<TARGET_OBJECTS:TTNN::Ops::DataMovement>
+            $<TARGET_OBJECTS:TTNN::Ops::Full>
+            $<TARGET_OBJECTS:TTNN::Ops::Matmul>
+            $<TARGET_OBJECTS:TTNN::Ops::Reduction>
+    )
+endif()
