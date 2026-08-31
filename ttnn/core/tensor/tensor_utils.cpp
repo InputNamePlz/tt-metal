@@ -45,7 +45,8 @@ CBDescriptor cb_descriptor_from_sharded_tensor(
         (address_offset + total_size) <= tensor.buffer()->aligned_size_per_bank(),
         "Address offset + total size exceeds buffer size");
 
-    uint32_t effective_total_size = (total_size != 0) ? total_size : tensor.buffer()->aligned_size_per_bank();
+    uint32_t effective_total_size =
+        (total_size != 0) ? total_size : static_cast<uint32_t>(tensor.buffer()->aligned_size_per_bank());
 
     return CBDescriptor{
         .total_size = effective_total_size,
@@ -53,7 +54,7 @@ CBDescriptor cb_descriptor_from_sharded_tensor(
         .format_descriptors = {CBFormatDescriptor{
             .buffer_index = cb_index,
             .data_format = datatype_to_dataformat_converter(tensor.tensor_spec().tensor_layout().get_data_type()),
-            .page_size = tensor.buffer()->aligned_page_size(),
+            .page_size = static_cast<uint32_t>(tensor.buffer()->aligned_page_size()),
             .tile = TileDescriptor(tensor.tensor_spec().tile())}},
         .buffer = tensor.buffer(),
         .address_offset = address_offset,

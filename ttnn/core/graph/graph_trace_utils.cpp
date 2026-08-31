@@ -268,7 +268,7 @@ std::vector<TensorInfo> extract_output_info(const nlohmann::json& trace) {
             const std::string shape_string = tensor[kParams][kShape];
             const auto shape = parse_shape(shape_string);
 
-            output.emplace_back(TensorInfo{.shape = shape, .size = size, .type = type});
+            output.emplace_back(TensorInfo{.shape = shape, .size = static_cast<uint32_t>(size), .type = type});
         }
     }
 

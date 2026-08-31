@@ -10,10 +10,12 @@
 #include <cerrno>
 #include <string>
 #include <string_view>
+#ifndef _WIN32
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#endif
 #include <cstring>
 
 #include <flatbuffers/flatbuffers.h>
@@ -112,6 +114,29 @@ void dump_tensor_flatbuffer(const std::string& file_name, const Tensor& tensor, 
 }
 
 Tensor load_tensor_flatbuffer(const std::string& file_name, tt::tt_metal::distributed::MeshDevice* device) {
+#ifdef _WIN32
+    // Windows has no mmap; read the whole file into memory instead. The tensor data
+    // is consumed as soon as it is loaded, so eager reading only forfeits lazy paging.
+    FILE* file = fopen(file_name.c_str(), "rb");
+    TT_FATAL(file != nullptr, "Cannot open \"{}\": errno={} \"{}\"", file_name, errno, strerror(errno));
+    auto cleanup = ttsl::make_cleanup([file]() { fclose(file); });
+
+    TT_FATAL(_fseeki64(file, 0, SEEK_END) == 0, "Failed to get file size for \"{}\"", file_name);
+    const auto file_size_signed = _ftelli64(file);
+    TT_FATAL(file_size_signed >= 0, "Failed to get file size for \"{}\"", file_name);
+    const size_t file_size = static_cast<size_t>(file_size_signed);
+    TT_FATAL(_fseeki64(file, 0, SEEK_SET) == 0, "Failed to rewind \"{}\"", file_name);
+    TT_FATAL(file_size >= sizeof(uint64_t), "Tensor file \"{}\" is too small to be valid", file_name);
+
+    std::shared_ptr<void> mmap_ptr(::operator new(file_size), [](void* addr) { ::operator delete(addr); });
+    void* mmap_addr = mmap_ptr.get();
+    TT_FATAL(
+        fread(mmap_addr, 1, file_size, file) == file_size,
+        "Failed to read \"{}\": errno={} \"{}\"",
+        file_name,
+        errno,
+        strerror(errno));
+#else
     int fd = open(file_name.c_str(), O_RDONLY | O_CLOEXEC);
     TT_FATAL(fd != -1, "Cannot open \"{}\": errno={} \"{}\"", file_name, errno, strerror(errno));
     auto cleanup = ttsl::make_cleanup([fd]() { close(fd); });
@@ -126,6 +151,7 @@ Tensor load_tensor_flatbuffer(const std::string& file_name, tt::tt_metal::distri
     TT_FATAL(mmap_addr != MAP_FAILED, "Failed to mmap file \"{}\": {}", file_name, strerror(errno));
 
     std::shared_ptr<void> mmap_ptr(mmap_addr, [file_size](void* addr) { munmap(addr, file_size); });
+#endif
     MemoryPin memory_pin(mmap_ptr);
 
     auto* file_data = static_cast<std::byte*>(mmap_addr);

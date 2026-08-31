@@ -11,7 +11,17 @@
 #include <cstring>
 #include <exception>
 #include <thread>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 #include <unordered_set>
 
 #include <tt_stl/assert.hpp>
@@ -273,7 +283,13 @@ struct CompletionLayout {
 
 CompletionLayout make_completion_layout(uint32_t num_counters) {
     TT_FATAL(num_counters > 0, "H2DStreamService: completion state requires at least one counter");
+#ifdef _WIN32
+    SYSTEM_INFO si{};
+    GetSystemInfo(&si);
+    const size_t page = si.dwPageSize;
+#else
     const size_t page = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+#endif
     const uint32_t pcie_alignment = hal::get_pcie_alignment();
     const uint64_t raw_size =
         static_cast<uint64_t>(pcie_alignment) + static_cast<uint64_t>(num_counters) * pcie_alignment;

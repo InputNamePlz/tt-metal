@@ -229,7 +229,7 @@ XtensorAdapter<typename Expression::value_type> concat_ndim(
 
 template <typename Expression>
 XtensorAdapter<typename Expression::value_type> concat(const std::vector<Expression>& v, int dim) {
-    return concat_ndim<Expression>(v, {v.size()}, {dim});
+    return concat_ndim<Expression>(v, {static_cast<int>(v.size())}, {dim});
 }
 
 // Adaptor APIs from xtensor to ttnn::Tensor.
