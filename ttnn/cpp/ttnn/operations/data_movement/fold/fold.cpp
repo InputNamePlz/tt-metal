@@ -11,8 +11,10 @@
 #include "ttnn/operations/data_movement/reshape_on_device/reshape.hpp"
 #include "ttnn/operations/data_movement/pad/pad.hpp"
 #include "ttnn/operations/data_movement/untilize/untilize.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/sliding_window/sliding_window.hpp"
 #include "ttnn/operations/sliding_window/halo/halo.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/core/compute_kernel/compute_kernel_config.hpp"
 #include <tt-metalium/constants.hpp>
 #include <tt-metalium/hal.hpp>
@@ -304,6 +306,15 @@ static void validate_height_sharding(const Tensor& tensor) {
 
 static Tensor apply_halo_padding(
     const Tensor& input_tensor, uint32_t pad_top, uint32_t pad_bottom, uint32_t pad_left, uint32_t pad_right) {
+#ifdef TTNN_TRIMMED_BUILD
+    // The sliding_window/halo op family is not part of this reduced build.
+    (void)input_tensor;
+    (void)pad_top;
+    (void)pad_bottom;
+    (void)pad_left;
+    (void)pad_right;
+    TT_THROW("fold: halo padding requires the sliding_window ops, which are excluded from this trimmed TTNN build");
+#else
     using namespace ttnn::operations::sliding_window;
 
     auto input_shape = input_tensor.logical_shape();
@@ -338,6 +349,7 @@ static Tensor apply_halo_padding(
     ::ttnn::Shape padded_shape(
         {input_shape[0], input_shape[1] + pad_top + pad_bottom, input_shape[2] + pad_left + pad_right, input_shape[3]});
     return ttnn::reshape(halo_output, padded_shape);
+#endif  // TTNN_TRIMMED_BUILD
 }
 
 // Reshard so shard_h is a multiple of stride_h·input_width (zero-NOC pre-condition).

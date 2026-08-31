@@ -39,11 +39,15 @@
 #include "ttnn/core.hpp"
 #include "ttnn/distributed/distributed_nanobind.hpp"
 #include "ttnn/graph/graph_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/bernoulli/bernoulli_nanobind.hpp"
 #include "ttnn/operations/ccl/ccl_nanobind.hpp"
 #include "ttnn/operations/conv/conv_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/creation/creation_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/debug/debug_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/data_movement/data_movement_nanobind.hpp"
 #include "ttnn/operations/eltwise/binary/binary_nanobind.hpp"
 #include "ttnn/operations/eltwise/binary_backward/binary_backward_nanobind.hpp"
@@ -55,17 +59,24 @@
 #include "ttnn/operations/eltwise/ternary_backward/ternary_backward_nanobind.hpp"
 #include "ttnn/operations/eltwise/unary/unary_nanobind.hpp"
 #include "ttnn/operations/eltwise/unary_backward/unary_backward_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/embedding/embedding_nanobind.hpp"
 #include "ttnn/operations/embedding_backward/embedding_backward_nanobind.hpp"
 #include "ttnn/operations/examples/examples_nanobind.hpp"
 #include "ttnn/operations/experimental/experimental_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/full/full_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/full_like/full_like_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/generic/generic_op_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/index_fill/index_fill_nanobind.hpp"
 #include "ttnn/operations/kv_cache/kv_cache_nanobind.hpp"
 #include "ttnn/operations/loss/loss_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/matmul/matmul_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/moreh/moreh_nanobind.hpp"
 #include "ttnn/operations/normalization/normalization_nanobind.hpp"
 #include "ttnn/operations/point_to_point/point_to_point_nanobind.hpp"
@@ -74,13 +85,16 @@
 #include "ttnn/operations/pool/upsample/upsample_nanobind.hpp"
 #include "ttnn/operations/pool/grid_sample/grid_sample_nanobind.hpp"
 #include "ttnn/operations/prefetcher/prefetcher_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include "ttnn/operations/reduction/reduction_nanobind.hpp"
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/sliding_window/sliding_window_nanobind.hpp"
 #include "ttnn/operations/transformer/transformer_nanobind.hpp"
 #include "ttnn/operations/uniform/uniform_nanobind.hpp"
 #include "ttnn/operations/rand/rand_nanobind.hpp"
 #include "ttnn/operations/randn/randn_nanobind.hpp"
 #include "ttnn/operations/experimental/test/hang_device/hang_device_operation_nanobind.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 
 namespace nb = nanobind;
 
@@ -97,8 +111,10 @@ void py_module(nb::module_& mod) {
     trace::py_module_types(m_trace);
     trace::py_module(m_trace);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_examples = mod.def_submodule("examples", "examples of operations");
     examples::py_module(m_examples);
+#endif  // TTNN_TRIMMED_BUILD
 
     //  Eltwise operations: unary, binary, ternary, backward, complex
     auto m_unary = mod.def_submodule("unary", "unary operations");
@@ -131,26 +147,32 @@ void py_module(nb::module_& mod) {
     auto m_complex_unary_backward = mod.def_submodule("complex_unary_backward", "complex_unary_backward operations");
     complex_unary_backward::py_module(m_complex_unary_backward);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_ccl = mod.def_submodule("ccl", "collective communication operations");
     ccl::py_module(m_ccl);
 
     auto m_debug = mod.def_submodule("debug", "debug operations");
     debug::py_module(m_debug);
+#endif  // TTNN_TRIMMED_BUILD
 
     auto m_creation = mod.def_submodule("creation", "creation operations");
     creation::bind_creation_operations(m_creation);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_embedding = mod.def_submodule("embedding", "embedding operations");
     embedding::py_module(m_embedding);
 
     auto m_embedding_backward = mod.def_submodule("embedding_backward", "embedding backward operations");
     embedding_backward::bind_embedding_backward(m_embedding_backward);
+#endif  // TTNN_TRIMMED_BUILD
 
     auto m_full = mod.def_submodule("full", "full operation");
     full::bind_full_operation(m_full);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_loss = mod.def_submodule("loss", "loss operations");
     loss::bind_loss_functions(m_loss);
+#endif  // TTNN_TRIMMED_BUILD
 
     auto m_matmul = mod.def_submodule("matmul", "matmul operations");
     matmul::py_module(m_matmul);
@@ -158,6 +180,7 @@ void py_module(nb::module_& mod) {
     auto m_data_movement = mod.def_submodule("data_movement", "data_movement operations");
     data_movement::py_module(m_data_movement);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_sliding_window = mod.def_submodule("sliding_window", "sliding_window operations");
     sliding_window::bind_sliding_window(m_sliding_window);
 
@@ -178,16 +201,20 @@ void py_module(nb::module_& mod) {
 
     auto m_prefetcher = mod.def_submodule("prefetcher", "prefetcher operations");
     prefetcher::py_module(m_prefetcher);
+#endif  // TTNN_TRIMMED_BUILD
 
     auto m_reduction = mod.def_submodule("reduction", "reduction operations");
     reduction::py_module(m_reduction);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_kv_cache = mod.def_submodule("kv_cache", "KV cache operations");
     kv_cache::bind_kv_cache(m_kv_cache);
+#endif  // TTNN_TRIMMED_BUILD
 
     auto m_copy = mod.def_submodule("copy", "copy operations");
     copy::py_module(m_copy);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_experimental = mod.def_submodule("experimental", "experimental operations");
     experimental::py_module(m_experimental);
 
@@ -209,10 +236,12 @@ void py_module(nb::module_& mod) {
 
     auto m_bernoulli = mod.def_submodule("bernoulli", "bernoulli operations");
     bernoulli::bind_bernoulli_operation(m_bernoulli);
+#endif  // TTNN_TRIMMED_BUILD
 
     auto m_generic = mod.def_submodule("generic", "ttnn generic operation interface");
     generic::bind_generic_operation(m_generic);
 
+#ifndef TTNN_TRIMMED_BUILD
     auto m_rand = mod.def_submodule("rand", "ttnn rand operation");
     rand::bind_rand_operation(m_rand);
 
@@ -221,6 +250,7 @@ void py_module(nb::module_& mod) {
 
     auto m_point_to_point = mod.def_submodule("point_to_point", "point_to_point operations");
     point_to_point::bind_point_to_point(m_point_to_point);
+#endif  // TTNN_TRIMMED_BUILD
 }
 }  // namespace ttnn::operations
 
