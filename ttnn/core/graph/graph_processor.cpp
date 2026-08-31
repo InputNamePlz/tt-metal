@@ -536,7 +536,8 @@ void GraphProcessor::track_function_start(
     }
 
     for (const auto& tracked_arg : input_parameters) {
-        const auto* const it =
+        // Note: std::array iterators are not raw pointers on all standard libraries (e.g. MSVC).
+        const auto it =
             std::ranges::find(begin_function_any_map, tracked_arg.value.type(), [](const auto& pair) -> const auto& {
                 return pair.first;
             });
@@ -663,7 +664,8 @@ void GraphProcessor::track_function_end(const std::any& output_tensors) {
     }
     this->track_function_end_impl();
 
-    const auto* const it = std::ranges::find(
+    // Note: std::array iterators are not raw pointers on all standard libraries (e.g. MSVC).
+    const auto it = std::ranges::find(
         end_function_any_map, output_tensors.type(), [](const auto& pair) -> const auto& { return pair.first; });
 
     if (it != end_function_any_map.end()) {

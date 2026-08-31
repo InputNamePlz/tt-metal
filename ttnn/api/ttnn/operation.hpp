@@ -4,7 +4,9 @@
 
 #pragma once
 
+#if __has_include(<experimental/type_traits>)
 #include <experimental/type_traits>
+#endif
 #include <ttnn/tensor/tensor.hpp>
 #include "ttnn/tensor/tensor_ops.hpp"
 
