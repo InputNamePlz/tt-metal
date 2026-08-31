@@ -1,6 +1,12 @@
 project(tt_stl)
 
-add_library(tt_stl SHARED)
+if(WIN32)
+    # A DLL with no explicit dllexports produces no import library on Windows,
+    # which breaks every consumer's link; build static until an export story exists.
+    add_library(tt_stl STATIC)
+else()
+    add_library(tt_stl SHARED)
+endif()
 add_library(TT::STL ALIAS tt_stl)
 
 # FIXME: TT-STL should support down to C++17 (so that TT-Metalium can), but we have headers (eg: <reflect>) in our
