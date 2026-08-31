@@ -3,8 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ttnn/distributed/fabric_socket.hpp"
+#include <tt_stl/assert.hpp>
+
+#ifndef TTNN_TRIMMED_BUILD
 #include "ttnn/operations/experimental/ccl/send_recv_async/send_async/send_async.hpp"
 #include "ttnn/operations/experimental/ccl/send_recv_async/recv_async/recv_async.hpp"
+#endif  // TTNN_TRIMMED_BUILD
 #include <stdexcept>
 
 namespace ttnn::distributed {
@@ -32,15 +36,26 @@ bool check_if_recv_socket(const tt::tt_metal::distributed::MeshSocket& mesh_sock
 FabricSocket::FabricSocket(const tt::tt_metal::distributed::MeshSocket& mesh_socket) : mesh_socket_(mesh_socket) {}
 
 void FabricSocket::send(const ttnn::Tensor& tensor) {
+#ifdef TTNN_TRIMMED_BUILD
+    // send_async lives in the experimental ccl op family, excluded from this build.
+    (void)tensor;
+    TT_THROW("FabricSocket::send requires the experimental ccl ops, excluded from this trimmed TTNN build");
+#else
     using namespace CMAKE_UNIQUE_NAMESPACE;
     assert(check_if_send_socket(mesh_socket_));
     ttnn::experimental::send_async(tensor, mesh_socket_);
+#endif  // TTNN_TRIMMED_BUILD
 }
 
 void FabricSocket::recv(ttnn::Tensor& tensor) {
+#ifdef TTNN_TRIMMED_BUILD
+    (void)tensor;
+    TT_THROW("FabricSocket::recv requires the experimental ccl ops, excluded from this trimmed TTNN build");
+#else
     using namespace CMAKE_UNIQUE_NAMESPACE;
     assert(check_if_recv_socket(mesh_socket_));
     ttnn::experimental::recv_async(tensor, mesh_socket_);
+#endif  // TTNN_TRIMMED_BUILD
 }
 
 tt::tt_metal::distributed::multihost::Rank FabricSocket::get_rank() const {

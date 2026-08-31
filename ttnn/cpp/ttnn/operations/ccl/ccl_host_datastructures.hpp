@@ -258,8 +258,8 @@ public:
             this->termination_mode,
             1,
             static_cast<uint32_t>(this->num_senders > 0 && active_channels.at(0).is_sender),
-            this->num_buffers_per_channel,
-            chip_id};
+            static_cast<uint32_t>(this->num_buffers_per_channel),
+            static_cast<uint32_t>(chip_id)};
     }
 
     [[nodiscard]]
