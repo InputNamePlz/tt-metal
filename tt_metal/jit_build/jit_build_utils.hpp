@@ -85,6 +85,12 @@ std::string format_named_ct_arg_map_header(const std::unordered_map<std::string,
 
 void create_file(const std::string& file_path_str);
 
+// Remove |path|. On Windows, retries briefly on sharing violations (antivirus scanners and
+// just-exited child process trees can hold a freshly written file for a few milliseconds)
+// and degrades to a warning if the file is still held; elsewhere identical to
+// std::filesystem::remove(path).
+void remove_file_with_retry(const std::string& path);
+
 // Read the entire contents of a binary file into a byte vector.
 // Throws std::runtime_error if the file cannot be read or if the read is incomplete.
 std::vector<std::uint8_t> read_file_bytes(const std::string& path);

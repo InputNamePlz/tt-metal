@@ -16,7 +16,9 @@
 #include <mutex>
 #include <random>
 #include <string>
+#include <chrono>
 #include <system_error>
+#include <thread>
 #include <vector>
 
 #ifdef _WIN32
@@ -246,13 +248,44 @@ bool exec_command(const std::vector<std::string>& args, const std::string& worki
         }
     }
 
-    STARTUPINFOW si{};
-    si.cb = sizeof(si);
+    // Restrict handle inheritance to exactly this child's log handle. With a bare
+    // bInheritHandles=TRUE, EVERY inheritable handle in the process leaks into the child --
+    // under parallel firmware builds, compiler child A would inherit (and hold open until it
+    // exits) child B's log handle, making B's post-build rename/delete of its own log fail
+    // with sharing violations. PROC_THREAD_ATTRIBUTE_HANDLE_LIST scopes inheritance to the
+    // one listed handle.
+    STARTUPINFOEXW six{};
+    six.StartupInfo.cb = sizeof(six);
+    std::vector<unsigned char> attr_buf;
     if (log_handle != INVALID_HANDLE_VALUE) {
-        si.dwFlags |= STARTF_USESTDHANDLES;
-        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-        si.hStdOutput = log_handle;
-        si.hStdError = log_handle;
+        six.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
+        // No stdin: the compiler never reads it, and the console handle is not in the
+        // inherit list anyway.
+        six.StartupInfo.hStdInput = INVALID_HANDLE_VALUE;
+        six.StartupInfo.hStdOutput = log_handle;
+        six.StartupInfo.hStdError = log_handle;
+
+        SIZE_T attr_size = 0;
+        InitializeProcThreadAttributeList(nullptr, 1, 0, &attr_size);
+        attr_buf.resize(attr_size);
+        auto* attr_list = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attr_buf.data());
+        if (!InitializeProcThreadAttributeList(attr_list, 1, 0, &attr_size) ||
+            !UpdateProcThreadAttribute(
+                attr_list,
+                0,
+                PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+                &log_handle,
+                sizeof(HANDLE),
+                nullptr,
+                nullptr)) {
+            log_error(
+                tt::LogBuildKernels,
+                "Failed to set up handle-inheritance list: error {}",
+                static_cast<unsigned>(GetLastError()));
+            CloseHandle(log_handle);
+            return false;
+        }
+        six.lpAttributeList = attr_list;
     }
 
     // CreateProcessW may scribble on the command-line buffer, so it must be mutable.
@@ -267,15 +300,22 @@ bool exec_command(const std::vector<std::string>& args, const std::string& worki
         nullptr,
         nullptr,
         /*bInheritHandles=*/log_handle != INVALID_HANDLE_VALUE,
-        0,
+        EXTENDED_STARTUPINFO_PRESENT,
         nullptr,
         working_dir.empty() ? nullptr : wcwd.c_str(),
-        &si,
+        &six.StartupInfo,
         &pi);
+    DWORD create_error = GetLastError();
 
+    // Drop the parent's copy of the log handle immediately -- before waiting on the child --
+    // so the only remaining reference lives in the child and dies with it.
+    if (six.lpAttributeList != nullptr) {
+        DeleteProcThreadAttributeList(six.lpAttributeList);
+    }
     if (log_handle != INVALID_HANDLE_VALUE) {
         CloseHandle(log_handle);
     }
+    SetLastError(create_error);
 
     bool success = false;
     if (!ok) {
@@ -492,6 +532,24 @@ void create_file(const std::string& file_path_str) {
     ofs.close();
 }
 
+void remove_file_with_retry(const std::string& path) {
+#ifdef _WIN32
+    // As with FileRenamer above: sharing violations on freshly written files are usually
+    // transient on Windows. A leftover file is harmless, so degrade to a warning.
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+    for (int attempt = 0; ec && attempt < 50; ++attempt) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::filesystem::remove(path, ec);
+    }
+    if (ec) {
+        log_warning(tt::LogBuildKernels, "Failed to remove temporary file {}: {}", path, ec.message());
+    }
+#else
+    std::filesystem::remove(path);
+#endif
+}
+
 uint64_t FileRenamer::unique_id_ = []() {
     std::random_device rd;
     std::uniform_int_distribution<uint64_t> distr;
@@ -529,6 +587,15 @@ FileRenamer::~FileRenamer() {
         return;
     }
     std::filesystem::rename(temp_path_, target_path_, ec);
+#ifdef _WIN32
+    // Windows sharing violations on a freshly written file are usually transient (an
+    // antivirus scan, or a just-exited child process tree whose handles are still being
+    // reclaimed). Retry briefly before reporting.
+    for (int attempt = 0; ec && attempt < 50; ++attempt) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::filesystem::rename(temp_path_, target_path_, ec);
+    }
+#endif
     if (ec) {
         log_error(
             tt::LogBuildKernels,
