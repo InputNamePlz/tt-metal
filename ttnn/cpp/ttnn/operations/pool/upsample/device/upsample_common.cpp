@@ -95,7 +95,8 @@ tt::tt_metal::MemoryConfig compute_integer_output_mem_config(
         shard_spec.shape = {padded / shard_spec.num_cores(), input.shard_spec()->shape[1]};
     } else {
         // Nearest: output shard is input shard * scale factors
-        shard_spec.shape = {input.shard_spec()->shape[0] * scale_h * scale_w, input.shard_spec()->shape[1]};
+        shard_spec.shape = {
+            static_cast<uint32_t>(input.shard_spec()->shape[0] * scale_h * scale_w), input.shard_spec()->shape[1]};
     }
     return tt::tt_metal::MemoryConfig(output_mem_config.memory_layout(), output_mem_config.buffer_type(), shard_spec);
 }

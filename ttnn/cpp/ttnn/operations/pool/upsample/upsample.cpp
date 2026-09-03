@@ -38,8 +38,8 @@ static std::pair<Tensor, sliding_window::SlidingWindowConfig> apply_bilinear_hal
         .stride_hw = {1, 1},        // stride
         .padding = {{1, 1, 1, 1}},  // padding (all sides)
         .dilation_hw = {1, 1},      // dilation
-        .scale_h = scale_h,         // upsampling scale factor height
-        .scale_w = scale_w,         // upsampling scale factor width
+        .scale_h = static_cast<uint32_t>(scale_h),  // upsampling scale factor height
+        .scale_w = static_cast<uint32_t>(scale_w),  // upsampling scale factor width
         .num_cores_nhw = num_cores_nhw,
         .num_cores_c = num_cores_c,
         .core_range_set = input_tensor.memory_config().shard_spec().value().grid,

@@ -101,7 +101,8 @@ std::vector<ScalarInfo> get_bf16_avg_pool_config_scalars(
                 scalars.back().end = i;
             }
             // TODO: #27672: Truncation should be removed once we figure a root cause of regression without it
-            scalars.push_back({i, std::bit_cast<uint16_t>(bfloat16::truncate(value)), i});
+            scalars.push_back(
+                {static_cast<uint16_t>(i), std::bit_cast<uint16_t>(bfloat16::truncate(value)), static_cast<uint16_t>(i)});
             first_scalar = false;
         }
         last_pool_area = static_cast<uint32_t>(pool_area);
@@ -226,7 +227,8 @@ static Tensor create_scalar_config_tensor(
         config_vector.size(),
         entries_per_core);
 
-    ttnn::Shape config_shape = ttnn::Shape({tt::div_up(config_vector.size(), entries_per_core), entries_per_core});
+    ttnn::Shape config_shape = ttnn::Shape(
+        {static_cast<uint32_t>(tt::div_up(config_vector.size(), entries_per_core)), entries_per_core});
     tt::tt_metal::HostBuffer buffer(std::move(config_vector));
     return Tensor(std::move(buffer), config_shape, DataType::UINT16, Layout::ROW_MAJOR);
 }
@@ -793,10 +795,10 @@ static tt::tt_metal::ProgramDescriptor pool2d_multi_core_sharded_with_halo_v2_im
         dilation_w,                                            // 30
         static_cast<uint32_t>(zero_pages),                     // 31
         config_tensor_in_dram,                                 // 32
-        one_scalar_per_core ? 0 : config_buffer->address(),    // 33
-        one_scalar_per_core ? 0 : config_buffer->page_size(),  // 34
-        reader_indices_buffer->address(),                      // 35
-        reader_indices_buffer->page_size(),                    // 36
+        one_scalar_per_core ? 0u : static_cast<uint32_t>(config_buffer->address()),    // 33
+        one_scalar_per_core ? 0u : static_cast<uint32_t>(config_buffer->page_size()),  // 34
+        static_cast<uint32_t>(reader_indices_buffer->address()),      // 35
+        static_cast<uint32_t>(reader_indices_buffer->page_size()),    // 36
         // MPWI-only args start here (for reader_mpwi.cpp, not used by reader_pool_2d.cpp)
         in_idx_cb_id,                           // 37
         pack_tmp_cb_id,                         // 38
