@@ -431,8 +431,8 @@ AttnResGatherSoftmaxMeshWorkloadFactory::cached_program_t AttnResGatherSoftmaxMe
              tiles,
              start_tile,
              my_rank,
-             gather_physical.x,
-             gather_physical.y,
+             static_cast<uint32_t>(gather_physical.x),
+             static_cast<uint32_t>(gather_physical.y),
              total.buffer()->address()});
 
         tt::tt_metal::SetRuntimeArgs(program, compute_kernel_id, core, {rows, tiles, start_tile});

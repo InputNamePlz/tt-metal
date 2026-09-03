@@ -507,7 +507,7 @@ tt::tt_metal::ProgramDescriptor build_program_for_coord(
             .format_descriptors = {{tt::tt_metal::CBFormatDescriptor{
                 .buffer_index = static_cast<uint8_t>(tt::CBIndex::c_5),
                 .data_format = tt::DataFormat::UInt8,
-                .page_size = packet_header_size_bytes,
+                .page_size = static_cast<uint32_t>(packet_header_size_bytes),
             }}},
         });
     }
