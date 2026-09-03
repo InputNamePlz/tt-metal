@@ -45,7 +45,7 @@ AdamwWorkSplit compute_adamw_work_split(const Tensor& param_in) {
         split_work_to_cores(grid, num_units);
     return {
         num_cores,
-        grid.y,
+        static_cast<uint32_t>(grid.y),
         all_cores,
         core_group_1,
         core_group_2,
@@ -157,7 +157,9 @@ ProgramDescriptor MorehAdamWDeviceOperation::MorehAdamWProgramFactory::create_de
             .total_size = 1 * intermed_tile_size,
             .core_ranges = all_cores,
             .format_descriptors = {{CBFormatDescriptor{
-                .buffer_index = cb_idx, .data_format = intermed_cb_format, .page_size = intermed_tile_size}}},
+                .buffer_index = static_cast<uint8_t>(cb_idx),
+                .data_format = intermed_cb_format,
+                .page_size = intermed_tile_size}}},
         });
     }
 
