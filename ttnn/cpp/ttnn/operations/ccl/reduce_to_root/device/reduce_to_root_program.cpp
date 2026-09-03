@@ -715,8 +715,8 @@ ttnn::device_operation::CachedProgram<ReduceToRootOp::ReduceToRoot::shared_varia
             std::vector<uint32_t> writer_runtime_args;
 
             auto data_core_coord = device->worker_core_from_logical_core(c);
-            auto core_noc_x = data_core_coord.x;
-            auto core_noc_y = data_core_coord.y;
+            uint32_t core_noc_x = static_cast<uint32_t>(data_core_coord.x);
+            uint32_t core_noc_y = static_cast<uint32_t>(data_core_coord.y);
 
             if (is_sender_device) {
                 reader_runtime_args = {
@@ -729,7 +729,7 @@ ttnn::device_operation::CachedProgram<ReduceToRootOp::ReduceToRoot::shared_varia
 
                 writer_runtime_args = {
                     intermediate_tensor.buffer()->address(),
-                    semaphore_round1.address(),
+                    static_cast<uint32_t>(semaphore_round1.address()),
                     core_noc_x,
                     core_noc_y,
                 };
@@ -756,8 +756,8 @@ ttnn::device_operation::CachedProgram<ReduceToRootOp::ReduceToRoot::shared_varia
                     input_tensor_s.buffer()->address(),
                     input_tensor_m.buffer()->address(),
                     intermediate_tensor.buffer()->address(),
-                    semaphore_round1.address(),
-                    semaphore_round2.address(),
+                    static_cast<uint32_t>(semaphore_round1.address()),
+                    static_cast<uint32_t>(semaphore_round2.address()),
                     core_noc_x,
                     core_noc_y};
 
@@ -804,7 +804,7 @@ ttnn::device_operation::CachedProgram<ReduceToRootOp::ReduceToRoot::shared_varia
                     input_tensor_s.buffer()->address(),
                     input_tensor_m.buffer()->address(),
                     intermediate_tensor.buffer()->address(),
-                    semaphore_round1.address(),
+                    static_cast<uint32_t>(semaphore_round1.address()),
                     core_noc_x,
                     core_noc_y};
 
@@ -821,7 +821,10 @@ ttnn::device_operation::CachedProgram<ReduceToRootOp::ReduceToRoot::shared_varia
 
                 tt::tt_metal::SetRuntimeArgs(program, reader_kernel, c, reader_runtime_args);
                 writer_runtime_args = {
-                    intermediate_tensor.buffer()->address(), semaphore_round2.address(), core_noc_x, core_noc_y};
+                    intermediate_tensor.buffer()->address(),
+                    static_cast<uint32_t>(semaphore_round2.address()),
+                    core_noc_x,
+                    core_noc_y};
                 fabric_mux_rt_args(
                     c == termination_master,
                     tt::tt_fabric::FabricMuxChannelType::FULL_SIZE_CHANNEL,

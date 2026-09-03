@@ -74,7 +74,7 @@ struct tensor_slice_command_arg_field<cmd::CclCommandArgCode::SET_FULL_TENSOR_SL
             to_4d_shape(s.tensor_slice_shape),
             to_4d_offset(s.tensor_slice_offset),
             to_4d_offset(s.worker_slice_offset),
-            get_volume(s.worker_slice_shape)};
+            static_cast<uint32_t>(get_volume(s.worker_slice_shape))};
     };
 };
 
@@ -134,7 +134,7 @@ void generate_ccl_slice_sequence_commands_impl(
                 to_4d_shape(slice.tensor_slice_shape),
                 to_4d_offset(slice.tensor_slice_offset),
                 to_4d_offset(slice.worker_slice_offset),
-                get_volume(slice.worker_slice_shape)};
+                static_cast<uint32_t>(get_volume(slice.worker_slice_shape))};
             const auto num_words_for_args = ttnn::ccl::cmd::CclCommandArg<
                 ttnn::ccl::cmd::CclCommandArgCode::SET_FULL_TENSOR_SLICE_SPEC_IN_PAGES>::size_in_words();
             log_trace(tt::LogOp, "Emitting {} args for full tensor slice command", num_words_for_args);
@@ -731,7 +731,7 @@ void generate_ccl_command_stream_to_kernel_args(
             static_cast<uint32_t>(ttnn::ccl::cmd::CclCommandHeader::to_uint32(ttnn::ccl::cmd::CclCommandHeader{
                 command.command_code,
                 command.fabric_transfer_args,
-                num_ccl_command_args_added,
+                static_cast<uint8_t>(num_ccl_command_args_added),
             }));
         TT_FATAL(
             ttnn::ccl::cmd::CclCommandHeader::from_uint32(rt_args_out[command_header_rt_arg_index]).code !=
@@ -846,7 +846,8 @@ tt::tt_metal::KernelHandle generate_multi_command_stream_kernel_ct_args(
     CreateCircularBuffer(program, worker_core_range, cb_config);
 
     {  // CT ARGS
-        std::vector<uint32_t> ct_args = {my_chip_id.value_or(0xFFFF), reserved_packet_header_CB_index};
+        std::vector<uint32_t> ct_args = {
+            static_cast<uint32_t>(my_chip_id.value_or(0xFFFF)), reserved_packet_header_CB_index};
         for (const auto *tensor : tensors) {
             std::ranges::copy(
                 std::array<uint32_t, 4>{

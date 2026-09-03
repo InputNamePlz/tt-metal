@@ -346,8 +346,8 @@ tt::tt_metal::ProgramDescriptor build_dispatch_program_descriptor(
 
         src_mesh_id,
         (uint32_t)src_chip_id,
-        mesh_view.num_rows(),
-        mesh_view.num_cols(),
+        static_cast<uint32_t>(mesh_view.num_rows()),
+        static_cast<uint32_t>(mesh_view.num_cols()),
 
         aligned_input_page_size,
         aligned_indices_page_size,

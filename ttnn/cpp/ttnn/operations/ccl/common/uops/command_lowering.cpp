@@ -31,7 +31,12 @@ void generate_noc_transfer_burst_for_tensor_slice(
                 size_t pages_read = 0;
                 for (size_t x = 0; x < tensor_slice.tensor_slice_shape.x; x += pages_read) {
                     empty_last_group = false;
-                    auto offset = ttnn::ccl::Shape4D<uint32_t>{w, z, y, x} + tensor_slice.tensor_slice_offset;
+                    auto offset = ttnn::ccl::Shape4D<uint32_t>{
+                        static_cast<uint32_t>(w),
+                        static_cast<uint32_t>(z),
+                        static_cast<uint32_t>(y),
+                        static_cast<uint32_t>(x)} +
+                                  tensor_slice.tensor_slice_offset;
                     auto& transfer_burst_grouping = noc_transfer_burst_out.transfer_burst_groupings.back();
                     const size_t curr_page_idx = get_flat_index_from_shape(tensor_slice.tensor_shape, offset);
                     const auto& [noc_yx, page_index_into_shard, contig_pages_] =
