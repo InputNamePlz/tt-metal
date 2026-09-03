@@ -30,7 +30,7 @@ CclHostLowLevelWorkerCommand read_tensor_slice_to_cb_for_eventual_fabric_write(
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone(),
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::ADDRGEN,
         ttnn::ccl::cmd::CclCommandCoreDescriptorTypeAddrgen(),
         ttnn::ccl::cmd::CclCommandDestType::CHIP_UNICAST,
@@ -49,7 +49,7 @@ CclHostLowLevelWorkerCommand read_tensor_slice_to_cb(ttnn::ccl::v2::TensorSlice 
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone(),
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::ADDRGEN,
         ttnn::ccl::cmd::CclCommandCoreDescriptorTypeAddrgen(),
         ttnn::ccl::cmd::CclCommandDestType::CHIP_LOCAL_ONLY,
@@ -61,7 +61,7 @@ CclHostLowLevelWorkerCommand local_write_cb_to_tensor_slice(ttnn::ccl::v2::Tenso
         CclCommandCode::STREAM_CB_TO_TENSOR,
         ttnn::ccl::cmd::CclCommandArgs(slice),
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone(),
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::ADDRGEN,
@@ -106,7 +106,7 @@ CclHostLowLevelWorkerCommand fabric_write_cb_to_tensor_slice(
         ttnn::ccl::cmd::CclCommandStreamTensorSlice(slice),
         // src
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
 
         // dest
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
@@ -138,7 +138,7 @@ static ttnn::ccl::cmd::CclCommandAddrArgs get_semaphore_addr_val(semaphore_id_t 
             [](uint32_t id) -> CclCommandAddrArgs { return ttnn::ccl::cmd::CclCommandAddrSemaphoreId{id}; },
             [](tt::tt_metal::GlobalSemaphore const* semaphore) -> CclCommandAddrArgs {
                 TT_FATAL(semaphore != nullptr, "Internal error: GlobalSemaphore pointer is null in call to get_semaphore_addr_val");
-                return ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{semaphore->address()};
+                return ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{static_cast<uint32_t>(semaphore->address())};
             },
             [](auto&&) -> void {
                 TT_THROW(
@@ -153,7 +153,7 @@ static ttnn::ccl::cmd::CclCommandAddrArgs get_semaphore_addr_val(semaphore_id_t 
 CclHostLowLevelWorkerCommand local_semaphore_wait(semaphore_id_t const& semaphore_id, size_t value) {
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::WAIT_VALUE,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandWaitValue{value}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandWaitValue{static_cast<uint32_t>(value)}),
         get_semaphore_addr_type(semaphore_id),
         get_semaphore_addr_val(semaphore_id),
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
@@ -172,7 +172,7 @@ CclHostLowLevelWorkerCommand local_core_semaphore_set(semaphore_id_t const& sema
         std::numeric_limits<uint32_t>::max());
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::RAW_INLINE_WRITE_BYTES,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandInlineReadWrite{value}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandInlineReadWrite{static_cast<uint32_t>(value)}),
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone{},
         get_semaphore_addr_type(semaphore_id),
@@ -186,7 +186,7 @@ CclHostLowLevelWorkerCommand local_core_semaphore_set(semaphore_id_t const& sema
 CclHostLowLevelWorkerCommand local_core_semaphore_inc(semaphore_id_t const& semaphore_id, size_t value) {
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::ATOMIC_INC,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandAtomicInc{value}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandAtomicInc{static_cast<uint32_t>(value)}),
         // src
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone(),
@@ -207,7 +207,7 @@ CclHostLowLevelWorkerCommand local_chip_noc_semaphore_inc(
     size_t value) {
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::ATOMIC_INC,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandAtomicInc{value}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandAtomicInc{static_cast<uint32_t>(value)}),
         // src
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone(),
@@ -215,7 +215,8 @@ CclHostLowLevelWorkerCommand local_chip_noc_semaphore_inc(
         get_semaphore_addr_type(semaphore_id),
         get_semaphore_addr_val(semaphore_id),
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NOC_XY,
-        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{dest_noc0_x, dest_noc0_y},
+        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{
+            static_cast<uint8_t>(dest_noc0_x), static_cast<uint8_t>(dest_noc0_y)},
         ttnn::ccl::cmd::CclCommandDestType::CHIP_LOCAL_ONLY,
         ttnn::ccl::cmd::LocalOnlyCommandDestArgs());
 }
@@ -285,16 +286,17 @@ CclHostLowLevelWorkerCommand local_chip_noc_absolute_address_semaphore_inc(
     size_t dest_noc0_x, size_t dest_noc0_y, size_t bank_address, size_t value) {
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::ATOMIC_INC,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandAtomicInc{value}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::CclCommandAtomicInc{static_cast<uint32_t>(value)}),
 
         ttnn::ccl::cmd::CclCommandAddrType::NONE,
         ttnn::ccl::cmd::CclCommandAddrNone(),
 
         ttnn::ccl::cmd::CclCommandAddrType::ABSOLUTE_ADDRESS,
-        ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{bank_address},
+        ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{static_cast<uint32_t>(bank_address)},
 
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NOC_XY,
-        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{dest_noc0_x, dest_noc0_y},
+        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{
+            static_cast<uint8_t>(dest_noc0_x), static_cast<uint8_t>(dest_noc0_y)},
 
         ttnn::ccl::cmd::CclCommandDestType::CHIP_LOCAL_ONLY,
         ttnn::ccl::cmd::LocalOnlyCommandDestArgs());
@@ -319,7 +321,8 @@ CclHostLowLevelWorkerCommand fabric_multicast_semaphore_inc(
         get_semaphore_addr_val(semaphore_dest_args),
 
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NOC_XY,
-        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{dest_noc0_x, dest_noc0_y},
+        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{
+            static_cast<uint8_t>(dest_noc0_x), static_cast<uint8_t>(dest_noc0_y)},
 
         ttnn::ccl::cmd::CclCommandDestType::CHIP_MULTICAST,
         ttnn::ccl::cmd::MulticastCommandDestArgs(multicast_args));
@@ -345,7 +348,8 @@ CclHostLowLevelWorkerCommand fabric_unicast_semaphore_inc(
         get_semaphore_addr_val(semaphore_dest_args),
 
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NOC_XY,
-        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{dest_noc0_x, dest_noc0_y},
+        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{
+            static_cast<uint8_t>(dest_noc0_x), static_cast<uint8_t>(dest_noc0_y)},
 
         ttnn::ccl::cmd::CclCommandDestType::CHIP_UNICAST,
         ttnn::ccl::cmd::UnicastCommandDestArgs(unicast_args));
@@ -370,7 +374,8 @@ CclHostLowLevelWorkerCommand fabric_unicast_absolute_address_semaphore_inc(
         address_dest_args,
 
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NOC_XY,
-        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{dest_noc0_x, dest_noc0_y},
+        ttnn::ccl::cmd::CclCommandCoreDescriptorTypeNocXY{
+            static_cast<uint8_t>(dest_noc0_x), static_cast<uint8_t>(dest_noc0_y)},
 
         ttnn::ccl::cmd::CclCommandDestType::CHIP_UNICAST,
         ttnn::ccl::cmd::UnicastCommandDestArgs(unicast_args));
@@ -415,11 +420,11 @@ CclHostLowLevelWorkerCommand local_noc_read_burst_to_cb(
 
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::NOC_READ_BURST,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, transfer_infos.size(), transfer_burst_groupings}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, static_cast<uint32_t>(transfer_infos.size()), transfer_burst_groupings}),
         ttnn::ccl::cmd::CclCommandAddrType::ABSOLUTE_ADDRESS,
         ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{bank_base_address},
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id}
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)}
     );
 }
 
@@ -433,9 +438,9 @@ CclHostLowLevelWorkerCommand local_noc_write_burst_from_cb(
 
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::NOC_WRITE_BURST,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, transfer_infos.size(), transfer_burst_groupings}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, static_cast<uint32_t>(transfer_infos.size()), transfer_burst_groupings}),
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
         ttnn::ccl::cmd::CclCommandAddrType::ABSOLUTE_ADDRESS,
         ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{bank_base_address}
     );
@@ -452,9 +457,9 @@ CclHostLowLevelWorkerCommand local_noc_write_burst_from_cb(
 
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::NOC_WRITE_BURST,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, transfer_infos.size(), transfer_burst_groupings}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, static_cast<uint32_t>(transfer_infos.size()), transfer_burst_groupings}),
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
         ttnn::ccl::cmd::CclCommandAddrType::ABSOLUTE_ADDRESS,
         ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{bank_base_address},
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NONE,
@@ -475,9 +480,9 @@ CclHostLowLevelWorkerCommand fabric_multicast_noc_write_burst_from_cb(
 
     return CclHostLowLevelWorkerCommand(
         CclCommandCode::NOC_WRITE_BURST,
-        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, transfer_infos.size(), transfer_burst_groupings}),
+        ttnn::ccl::cmd::CclCommandArgs(ttnn::ccl::cmd::HostCclCommandNocTransferBurst{bank_base_address.absolute_address, static_cast<uint32_t>(transfer_infos.size()), transfer_burst_groupings}),
         ttnn::ccl::cmd::CclCommandAddrType::CIRCULAR_BUFFER_ID,
-        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{cb_id},
+        ttnn::ccl::cmd::CclCommandAddrCircularBufferId{static_cast<uint32_t>(cb_id)},
         ttnn::ccl::cmd::CclCommandAddrType::ABSOLUTE_ADDRESS,
         ttnn::ccl::cmd::CclCommandAddrAbsoluteAddress{bank_base_address},
         ttnn::ccl::cmd::CclCommandCoreDescriptorType::NONE,

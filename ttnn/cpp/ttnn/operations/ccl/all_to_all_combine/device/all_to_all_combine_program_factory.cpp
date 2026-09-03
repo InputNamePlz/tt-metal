@@ -108,24 +108,24 @@ tt::tt_metal::ProgramDescriptor build_combine_program_descriptor(
     // input sharded buffer
     constexpr auto data_cb_id = tt::CBIndex::c_0;
     desc.cbs.push_back(CBDescriptor{
-        .total_size = buffering_factor * aligned_input_page_size_bytes,
+        .total_size = static_cast<uint32_t>(buffering_factor * aligned_input_page_size_bytes),
         .core_ranges = sender_core_grid,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(data_cb_id),
             .data_format = input_data_format,
-            .page_size = aligned_input_page_size_bytes,
+            .page_size = static_cast<uint32_t>(aligned_input_page_size_bytes),
         }}},
     });
 
     // full mapping buffer
     constexpr auto mapping_tensor_cb_id = tt::CBIndex::c_1;
     desc.cbs.push_back(CBDescriptor{
-        .total_size = aligned_mapping_page_size_bytes,
+        .total_size = static_cast<uint32_t>(aligned_mapping_page_size_bytes),
         .core_ranges = sender_core_grid,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(mapping_tensor_cb_id),
             .data_format = mapping_data_format,
-            .page_size = aligned_mapping_page_size_bytes,
+            .page_size = static_cast<uint32_t>(aligned_mapping_page_size_bytes),
         }}},
     });
 
@@ -136,24 +136,24 @@ tt::tt_metal::ProgramDescriptor build_combine_program_descriptor(
         tt::align(experts_per_device * sizeof(local_experts_t), l1_alignment);
     const auto local_experts_dataformat = datatype_to_dataformat_converter(convert_to_data_type<local_experts_t>());
     desc.cbs.push_back(CBDescriptor{
-        .total_size = aligned_local_expert_page_size_bytes,
+        .total_size = static_cast<uint32_t>(aligned_local_expert_page_size_bytes),
         .core_ranges = sender_core_grid,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(local_experts_cb_id),
             .data_format = local_experts_dataformat,
-            .page_size = aligned_local_expert_page_size_bytes,
+            .page_size = static_cast<uint32_t>(aligned_local_expert_page_size_bytes),
         }}},
     });
 
     // metadata page buffer
     constexpr auto metadata_cb_id = tt::CBIndex::c_3;
     desc.cbs.push_back(CBDescriptor{
-        .total_size = aligned_metadata_page_size_bytes,
+        .total_size = static_cast<uint32_t>(aligned_metadata_page_size_bytes),
         .core_ranges = sender_core_grid,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(metadata_cb_id),
             .data_format = metadata_data_format,
-            .page_size = aligned_metadata_page_size_bytes,
+            .page_size = static_cast<uint32_t>(aligned_metadata_page_size_bytes),
         }}},
     });
 
@@ -183,10 +183,10 @@ tt::tt_metal::ProgramDescriptor build_combine_program_descriptor(
         seq_size,
         experts,  // same as num_mapping_pages
         flat_mesh_idx,
-        input_page_size_bytes,
+        static_cast<uint32_t>(input_page_size_bytes),
         selected_experts_k,
-        mapping_page_size_bytes,
-        metadata_page_size_bytes,
+        static_cast<uint32_t>(mapping_page_size_bytes),
+        static_cast<uint32_t>(metadata_page_size_bytes),
         operation_attributes.locally_reduced,
     };
     TensorAccessorArgs(input_tensor.buffer()).append_to(reader_compile_time_args);
@@ -210,10 +210,10 @@ tt::tt_metal::ProgramDescriptor build_combine_program_descriptor(
         experts_per_device,
         num_devices,
         src_chip_id,
-        input_page_size_bytes,
+        static_cast<uint32_t>(input_page_size_bytes),
         l1_alignment,
-        mesh_view.num_rows(),
-        mesh_view.num_cols(),
+        static_cast<uint32_t>(mesh_view.num_rows()),
+        static_cast<uint32_t>(mesh_view.num_cols()),
         max_packet_size_bytes,
         common::get_linearized_index(mesh_coordinate, mesh_view),
         (uint32_t)topology,

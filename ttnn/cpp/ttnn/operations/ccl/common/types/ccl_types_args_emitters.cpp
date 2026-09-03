@@ -18,8 +18,8 @@ args_list_t emit_runtime_args(WorkerEdmInterfaceArgs const& edm_interface_args) 
     return {
         edm_interface_args.edm_noc_x,
         edm_interface_args.edm_noc_y,
-        reinterpret_cast<uint32_t>(edm_interface_args.edm_buffer_base_address),
-        reinterpret_cast<uint32_t>(edm_interface_args.edm_semaphore_address),
+        static_cast<uint32_t>(edm_interface_args.edm_buffer_base_address),
+        static_cast<uint32_t>(edm_interface_args.edm_semaphore_address),
         edm_interface_args.num_buffers_per_channel};
 }
 

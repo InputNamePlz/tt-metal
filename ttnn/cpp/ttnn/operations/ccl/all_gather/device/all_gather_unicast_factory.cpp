@@ -570,8 +570,8 @@ AllGatherUnicastFactory::cached_program_t AllGatherUnicastFactory::create_at(
                     final_count,               // last-iteration slice length (even-ring split)
                     input_tile_id_start,       // local data: input page start
                     input_tile_id_end,         // local data: input page end
-                    barrier_sem.address(),     // barrier_sem L1 address
-                    data_valid_sem.address(),  // data_valid_sem L1 address
+                    static_cast<uint32_t>(barrier_sem.address()),     // barrier_sem L1 address
+                    static_cast<uint32_t>(data_valid_sem.address()),  // data_valid_sem L1 address
                 };
                 tt::tt_metal::SetRuntimeArgs(program, reader_kernel_id, {core}, reader_rt_args);
 
@@ -588,8 +588,8 @@ AllGatherUnicastFactory::cached_program_t AllGatherUnicastFactory::create_at(
                     final_start,                      // last-iteration slice start (even-ring split)
                     final_count,                      // last-iteration slice length (even-ring split)
                     do_local_write ? 1u : 0u,         // write local data into local output on iteration 0
-                    barrier_sem.address(),            // barrier_sem L1 address
-                    data_valid_sem.address(),         // data_valid_sem L1 address
+                    static_cast<uint32_t>(barrier_sem.address()),     // barrier_sem L1 address
+                    static_cast<uint32_t>(data_valid_sem.address()),  // data_valid_sem L1 address
                     (uint32_t)partner_core.x,         // barrier_sem target (neighbor partner core x)
                     (uint32_t)partner_core.y,         // barrier_sem target (neighbor partner core y)
                     (uint32_t)mirror_core.x,          // data_valid_sem target (neighbor mirror core x)
