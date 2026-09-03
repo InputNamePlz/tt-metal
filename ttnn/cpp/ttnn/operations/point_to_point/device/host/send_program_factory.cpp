@@ -64,12 +64,12 @@ tt::tt_metal::ProgramDescriptor send_program_factory(
     constexpr auto num_packet_headers_storable = 2;
     const auto packet_header_size_bytes = tt::tt_fabric::get_tt_fabric_packet_header_size_bytes();
     desc.cbs.push_back(tt::tt_metal::CBDescriptor{
-        .total_size = num_packet_headers_storable * packet_header_size_bytes * buffering_factor,
+        .total_size = static_cast<uint32_t>(num_packet_headers_storable * packet_header_size_bytes * buffering_factor),
         .core_ranges = all_cores,
         .format_descriptors = {{tt::tt_metal::CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(packet_header_cb_id),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 
@@ -152,7 +152,8 @@ tt::tt_metal::ProgramDescriptor send_program_factory(
         // index 8 (semaphore address) become a Buffer* binding and an
         // absolute semaphore address, respectively.
         std::vector<uint32_t> writer_runtime_args = {
-            output_tensors.at(0).buffer()->address(),  // placeholder, replaced via Buffer* below
+            static_cast<uint32_t>(
+                output_tensors.at(0).buffer()->address()),  // placeholder, replaced via Buffer* below
             page_idx_start,
             page_idx_end,
             num_hops,
@@ -160,7 +161,7 @@ tt::tt_metal::ProgramDescriptor send_program_factory(
             packet_size_bytes,
             num_pages_per_packet,
             num_page_segments,
-            semaphore.address(),
+            static_cast<uint32_t>(semaphore.address()),
             dst_is_forward,
         };
 
