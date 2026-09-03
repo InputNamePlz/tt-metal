@@ -495,7 +495,7 @@ PaddedSliceTileProgramFactory::cached_program_t PaddedSliceTileProgramFactory::c
         cb_output_index,
         cb_padding_index,
         (std::uint32_t)is_non_aligned,
-        input_padded_shape.rank() /* == 4*/,
+        static_cast<std::uint32_t>(input_padded_shape.rank()) /* == 4*/,
         output.element_size(),
         output_row_size_bytes};
 
