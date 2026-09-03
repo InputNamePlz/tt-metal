@@ -4,7 +4,11 @@
 
 #pragma once
 
+#if defined(__GNUC__) || defined(__clang__)
 #define ALWI inline __attribute__((always_inline))
+#else
+#define ALWI __forceinline
+#endif
 
 namespace fixed_point_arithmetic {
 
