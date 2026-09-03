@@ -666,8 +666,8 @@ RMSAllGatherMeshWorkloadFactory::cached_program_t RMSAllGatherMeshWorkloadFactor
         reserved_packet_header_CB_index,  // reserved_packet_header_cb_id
         num_pages_per_packet,             // packet_size_in_pages
         stats_page_size,                  // tensor0_page_size
-        num_targets_forward,              // num_targets_forward_direction
-        num_targets_backward,             // num_targets_backward_direction
+        static_cast<uint32_t>(num_targets_forward),              // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),             // num_targets_backward_direction
         num_links,
         (std::uint32_t)gamma.has_value(),
         (std::uint32_t)block_wt,
@@ -998,9 +998,9 @@ RMSAllGatherMeshWorkloadFactory::cached_program_t RMSAllGatherMeshWorkloadFactor
         uint32_t out_ready_sem_wait_value = ring_size * num_links;
         // all_gather_rts Start at RT index 3 of writer
         std::vector<uint32_t> all_gather_rts = {
-            semaphore.address(),               // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(semaphore.address()),               // out_ready_sem_bank_addr (absolute address)
             out_ready_sem_wait_value,          // out_ready_sem_wait_value
-            stats.value().buffer()->address()  // tensor_address0
+            static_cast<uint32_t>(stats.value().buffer()->address())  // tensor_address0
         };
 
         if (i == 0) {
@@ -1028,9 +1028,9 @@ RMSAllGatherMeshWorkloadFactory::cached_program_t RMSAllGatherMeshWorkloadFactor
 
             std::vector<uint32_t> base_rt_args = {
                 stats_first_core_tile_start_offset,  // first_core_tile_start_offset
-                stats_tensor_cores_x.size(),         // num_cores
-                drain_sync_core.x,                   // out_ready_sem_noc0_x
-                drain_sync_core.y                    // out_ready_sem_noc0_y
+                static_cast<uint32_t>(stats_tensor_cores_x.size()),         // num_cores
+                static_cast<uint32_t>(drain_sync_core.x),                   // out_ready_sem_noc0_x
+                static_cast<uint32_t>(drain_sync_core.y)                    // out_ready_sem_noc0_y
             };
             all_gather_rts.insert(all_gather_rts.end(), base_rt_args.begin(), base_rt_args.end());
             all_gather_rts.insert(all_gather_rts.end(), stats_tensor_cores_x.begin(), stats_tensor_cores_x.end());
