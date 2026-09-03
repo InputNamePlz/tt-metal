@@ -364,12 +364,12 @@ ProgramDescriptor AllReduceCreateQkvHeadsMeshWorkloadFactory::create_descriptor(
     static constexpr auto num_packet_headers_storable = 8;
     auto packet_header_size_bytes = tt::tt_fabric::get_tt_fabric_packet_header_size_bytes();
     desc.cbs.push_back(CBDescriptor{
-        .total_size = num_packet_headers_storable * packet_header_size_bytes * 2,
+        .total_size = static_cast<uint32_t>(num_packet_headers_storable * packet_header_size_bytes * 2),
         .core_ranges = sender_worker_core_range,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_CB_index),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 
@@ -664,8 +664,8 @@ ProgramDescriptor AllReduceCreateQkvHeadsMeshWorkloadFactory::create_descriptor(
         src0_cb_index,                    // cb0_id
         num_pages_per_packet,             // packet_size_in_pages
         op_config.get_page_size(),        // tensor0_page_size
-        num_targets_forward,              // num_targets_forward_direction
-        num_targets_backward,             // num_targets_backward_direction
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_targets_backward_direction
     };
     log_trace(tt::LogOp, "Writer Compile Args:");
     KernelDescriptor worker_sender_writer_kernel_desc;
@@ -769,14 +769,14 @@ ProgramDescriptor AllReduceCreateQkvHeadsMeshWorkloadFactory::create_descriptor(
         // fabric helper appends into a vector.
         std::vector<uint32_t> writer_rt_args = {
             reduction_cb_index,                                   // tensor_address0
-            operation_attributes.semaphore.address(),             // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(operation_attributes.semaphore.address()),  // out_ready_sem_bank_addr
             output_tensor_shard_num_pages,                        // num_tiles_per_core
             worker_num_tiles_to_read,                             // num_tiles_to_read
             output_first_core_tile_start_offset,                  // first_core_tile_start_offset
             static_cast<uint32_t>(output_tensor_cores_x.size()),  // num_cores
             num_mcast_cores,                                      // num_mcast_cores
-            drain_sync_core.x,                                    // out_ready_sem_noc0_x
-            drain_sync_core.y,                                    // out_ready_sem_noc0_y
+            static_cast<uint32_t>(drain_sync_core.x),             // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),             // out_ready_sem_noc0_y
             out_ready_sem_wait_value,                             // out_ready_sem_wait_value
             reduction_semaphore_ids[link],                        // reduction_semaphore_id
             static_cast<uint32_t>(mcast_start_x.size()),          // num_mcast_ranges

@@ -129,7 +129,12 @@ NlpKVCacheLoadSliceProgramFactory::cached_program_t NlpKVCacheLoadSliceProgramFa
     }
 
     return {
-        std::move(program), {unary_reader_kernel_id, unary_writer_kernel_id, cb_src0, num_cores_total, num_cores_x}};
+        std::move(program),
+        {unary_reader_kernel_id,
+         unary_writer_kernel_id,
+         cb_src0,
+         static_cast<uint32_t>(num_cores_total),
+         static_cast<uint32_t>(num_cores_x)}};
 }
 
 void NlpKVCacheLoadSliceProgramFactory::override_runtime_arguments(
