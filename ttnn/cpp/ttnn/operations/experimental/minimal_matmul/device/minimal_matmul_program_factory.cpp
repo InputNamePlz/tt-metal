@@ -929,7 +929,7 @@ MinimalMatmulProgramFactory::shared_variables_t minimal_matmul_factory_helper_co
     }
 
     return MinimalMatmulProgramFactory::shared_variables_t{
-        num_cores,
+        static_cast<uint32_t>(num_cores),
         cores,
         in0_sender_kernels_id,
         in0_receiver_kernels_id,
