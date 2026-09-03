@@ -526,7 +526,7 @@ tt::tt_metal::ProgramDescriptor build_exp_ring_joint_sdpa_program_descriptor(
         num_local_k_chunks,
         num_joint_k_chunks,
         num_q_chunks,
-        args.ring_size,
+        static_cast<uint32_t>(args.ring_size),
         qk_out_subblock_h};
 
     TensorAccessorArgs(input_tensor_q.buffer()).append_to(reader_compile_time_args);
@@ -625,7 +625,7 @@ tt::tt_metal::ProgramDescriptor build_exp_ring_joint_sdpa_program_descriptor(
         Sk_chunk_t,
         local_padded_N,
         local_padded_Nt,
-        args.logical_n,
+        static_cast<uint32_t>(args.logical_n),
         logical_nt,
         Lt,
         L,
@@ -636,7 +636,7 @@ tt::tt_metal::ProgramDescriptor build_exp_ring_joint_sdpa_program_descriptor(
         num_q_chunks,
         packed_identity_scalar,
         scale_packed,
-        args.ring_size,
+        static_cast<uint32_t>(args.ring_size),
         global_n_partial_col,
         joint_l_partial_col,
         static_cast<std::uint32_t>(use_streaming_compute),
@@ -655,13 +655,13 @@ tt::tt_metal::ProgramDescriptor build_exp_ring_joint_sdpa_program_descriptor(
         Sk_chunk_t,
         local_padded_N,
         local_padded_Nt,
-        args.logical_n,
+        static_cast<uint32_t>(args.logical_n),
         logical_nt,
         Lt,
         L,
         num_local_k_chunks,
         num_joint_k_chunks,
-        args.ring_size,
+        static_cast<uint32_t>(args.ring_size),
         qk_out_subblock_w,
         qk_out_subblock_h,
         out_out_subblock_w,
@@ -1117,7 +1117,7 @@ tt::tt_metal::ProgramDescriptor build_exp_ring_joint_sdpa_program_descriptor(
             work.head_work.push_back(CoreHeadWork{
                 .batch = head_id / NH,
                 .head = head_id % NH,
-                .q_chunk_start = (seg_id % segs_per_head) * sdpa_grid.x + core.x,
+                .q_chunk_start = static_cast<uint32_t>((seg_id % segs_per_head) * sdpa_grid.x + core.x),
                 .q_chunk_count = 1,
             });
         }
