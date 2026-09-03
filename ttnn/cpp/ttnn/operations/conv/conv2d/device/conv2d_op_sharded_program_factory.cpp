@@ -1230,7 +1230,8 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_sharded(
             // NOTE: using same var for x as well, this is intentional
             act_mcast_noc_y.reserve(in_num_cores_x);
             for (int32_t core_idx_x = 0; core_idx_x < in_num_cores_x; ++core_idx_x) {
-                act_mcast_noc_y.push_back(device->worker_core_from_logical_core({core_idx_x, 0}).x);
+                act_mcast_noc_y.push_back(
+                    device->worker_core_from_logical_core({static_cast<std::size_t>(core_idx_x), 0}).x);
             }
         }
 
@@ -1442,8 +1443,8 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_sharded(
                     bool is_no_op_core = !input_cores.contains(core);
                     receiver_args = std::vector<uint32_t>{
                         static_cast<uint32_t>(is_no_op_core),
-                        top_left_core_physical.x,
-                        top_left_core_physical.y,
+                        static_cast<uint32_t>(top_left_core_physical.x),
+                        static_cast<uint32_t>(top_left_core_physical.y),
                         weights_mcast_sender_semaphore_id,
                         weights_mcast_receiver_semaphore_id};
                     if (enable_activation_reuse) {

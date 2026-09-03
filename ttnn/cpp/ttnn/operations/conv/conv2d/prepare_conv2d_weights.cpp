@@ -674,13 +674,23 @@ static Tensor conv_group_weight_zero_pad_helper(
                     for (int m = 0; m < original_weight_shape[3]; m++) {
                         // Get value from original weight tensor
                         auto value_flat_input_index = tt::tt_metal::compute_flat_indices(
-                            ttsl::SmallVector<uint32_t>{curr_batch_idx, j, k, m}, original_strides);
+                            ttsl::SmallVector<uint32_t>{
+                                static_cast<uint32_t>(curr_batch_idx),
+                                static_cast<uint32_t>(j),
+                                static_cast<uint32_t>(k),
+                                static_cast<uint32_t>(m)},
+                            original_strides);
                         auto value = conv_weight_tensor_buffer[value_flat_input_index];
 
                         // Copy value to output tensor at the adjusted position
                         auto new_channel_idx = new_channel_start_idx + j;
                         auto output_flat_input_index = tt::tt_metal::compute_flat_indices(
-                            ttsl::SmallVector<uint32_t>{new_batch_idx, new_channel_idx, k, m}, output_strides);
+                            ttsl::SmallVector<uint32_t>{
+                                static_cast<uint32_t>(new_batch_idx),
+                                static_cast<uint32_t>(new_channel_idx),
+                                static_cast<uint32_t>(k),
+                                static_cast<uint32_t>(m)},
+                            output_strides);
                         output_buffer[output_flat_input_index] = value;
                     }
                 }
@@ -845,12 +855,22 @@ static Tensor conv_transpose2d_group_weight_zero_pad_helper(
                     for (int w = 0; w < original_weight_shape[3]; w++) {
                         // Get value from original weight tensor
                         auto value_flat_input_index = tt::tt_metal::compute_flat_indices(
-                            ttsl::SmallVector<uint32_t>{i, c, h, w}, original_weight_strides);
+                            ttsl::SmallVector<uint32_t>{
+                                static_cast<uint32_t>(i),
+                                static_cast<uint32_t>(c),
+                                static_cast<uint32_t>(h),
+                                static_cast<uint32_t>(w)},
+                            original_weight_strides);
                         auto value = conv_weight_tensor_buffer[value_flat_input_index];
 
                         // Copy value to output tensor at the adjusted position
                         auto output_flat_input_index = tt::tt_metal::compute_flat_indices(
-                            ttsl::SmallVector<uint32_t>{i, global_out_channel, h, w}, output_weight_strides);
+                            ttsl::SmallVector<uint32_t>{
+                                static_cast<uint32_t>(i),
+                                static_cast<uint32_t>(global_out_channel),
+                                static_cast<uint32_t>(h),
+                                static_cast<uint32_t>(w)},
+                            output_weight_strides);
                         output_buffer[output_flat_input_index] = value;
                     }
                 }

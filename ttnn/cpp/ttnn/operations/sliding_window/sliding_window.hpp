@@ -23,8 +23,8 @@ enum class PaddingMode : uint8_t {
 
 struct ParallelConfig {
     CoreRangeSet grid;
-    tt::tt_metal::TensorMemoryLayout shard_scheme{0};
-    tt::tt_metal::ShardOrientation shard_orientation{0};
+    tt::tt_metal::TensorMemoryLayout shard_scheme{static_cast<tt::tt_metal::TensorMemoryLayout>(0)};
+    tt::tt_metal::ShardOrientation shard_orientation{static_cast<tt::tt_metal::ShardOrientation>(0)};
 
     bool operator==(const ParallelConfig& other) const {
         return (
