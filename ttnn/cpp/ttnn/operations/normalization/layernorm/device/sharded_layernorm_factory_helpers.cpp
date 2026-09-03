@@ -1584,7 +1584,13 @@ std::vector<uint32_t> reader_sender_named_values(
     } else {
         start_y = core.y - ctx.core_ranges.start_core.y;
     }
-    return {mcast_start.x, mcast_start.y, mcast_end.x, mcast_end.y, start_x, start_y};
+    return {
+        static_cast<uint32_t>(mcast_start.x),
+        static_cast<uint32_t>(mcast_start.y),
+        static_cast<uint32_t>(mcast_end.x),
+        static_cast<uint32_t>(mcast_end.y),
+        start_x,
+        start_y};
 }
 
 // The coordinate block an all-to-all worker walks to reach its remote peers: every X coordinate of
