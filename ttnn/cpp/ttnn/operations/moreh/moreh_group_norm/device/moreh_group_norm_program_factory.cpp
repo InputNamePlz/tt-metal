@@ -41,7 +41,7 @@ static void push_cb_if_nonzero(
             .total_size = num_tiles * tile_size,
             .core_ranges = cores,
             .format_descriptors = {{CBFormatDescriptor{
-                .buffer_index = cb_index,
+                .buffer_index = static_cast<uint8_t>(cb_index),
                 .data_format = data_format,
                 .page_size = tile_size,
             }}},
