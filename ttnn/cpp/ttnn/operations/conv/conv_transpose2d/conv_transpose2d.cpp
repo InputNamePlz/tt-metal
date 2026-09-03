@@ -527,9 +527,11 @@ public:
         int input_slice_width_end = ((expanded_input_width_end - 1) / stride[1]) + 1;
 
         int pad_top = std::max<int>({0, actual_pad_top - output_slice_height_start, pad_top_offset});
-        int pad_bottom = std::max<int>({0, expanded_input_height_end - output_height, pad_bottom_offset});
+        int pad_bottom = std::max<int>(
+            {0, expanded_input_height_end - static_cast<int>(output_height), pad_bottom_offset});
         int pad_left = std::max<int>({0, actual_pad_left - output_slice_width_start, pad_left_offset});
-        int pad_right = std::max<int>({0, expanded_input_width_end - output_width, pad_right_offset});
+        int pad_right = std::max<int>(
+            {0, expanded_input_width_end - static_cast<int>(output_width), pad_right_offset});
 
         input_slice_height_start = std::max<int>(0, input_slice_height_start);
         input_slice_height_end = std::min<int>(std::get<0>(input_shape), input_slice_height_end);
@@ -596,10 +598,10 @@ public:
             output_slice_width += additional_padded_width;
         }
         auto this_op_padding = std::array<uint32_t, 4>(
-            {base_pad_height - pad_top,
-             base_pad_height - pad_bottom,
-             base_pad_width - pad_left,
-             base_pad_width - pad_right});
+            {static_cast<uint32_t>(base_pad_height - pad_top),
+             static_cast<uint32_t>(base_pad_height - pad_bottom),
+             static_cast<uint32_t>(base_pad_width - pad_left),
+             static_cast<uint32_t>(base_pad_width - pad_right)});
         log_debug(tt::LogOp, "Final Padding = {},{},{},{}", pad_top, pad_bottom, pad_left, pad_right);
         log_debug(tt::LogOp, "Padding args = {}", this_op_padding);
         return {

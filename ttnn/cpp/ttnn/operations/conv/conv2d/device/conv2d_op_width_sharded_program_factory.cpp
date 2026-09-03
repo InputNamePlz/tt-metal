@@ -636,7 +636,7 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor(
         std::vector<uint32_t> rt_args = {
             core_x,
             core_y,
-            full_core_grid.x,  // num_cores_x
+            static_cast<uint32_t>(full_core_grid.x),  // num_cores_x
         };
 
         // Mcast X Lookup table
