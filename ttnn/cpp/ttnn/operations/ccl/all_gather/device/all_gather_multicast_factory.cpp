@@ -363,7 +363,7 @@ AllGatherMulticastFactory::cached_program_t AllGatherMulticastFactory::create_at
         cb_page_size,                    // cb entry size
         packet_size,                     // packet_size
         load_balance_across_alt_routes,  // load_balance_across_alt_routes
-        (e_hops > 0) + (s_hops > 0),     // num_connections
+        static_cast<uint32_t>((e_hops > 0) + (s_hops > 0)),  // num_connections
         do_init_barrier,                 // do_init_barrier
     };
     tt::tt_metal::TensorAccessorArgs(input_tensor.buffer()).append_to(reader_compile_args);
@@ -379,7 +379,7 @@ AllGatherMulticastFactory::cached_program_t AllGatherMulticastFactory::create_at
         cb_page_size,                    // cb entry size
         packet_size,                     // packet_size
         load_balance_across_alt_routes,  // load_balance_across_alt_routes
-        (w_hops > 0) + (n_hops > 0),     // num_connections
+        static_cast<uint32_t>((w_hops > 0) + (n_hops > 0)),  // num_connections
         do_init_barrier,                 // do_init_barrier
     };
     tt::tt_metal::TensorAccessorArgs(output_tensor.buffer()).append_to(writer_compile_args);
@@ -446,9 +446,9 @@ AllGatherMulticastFactory::cached_program_t AllGatherMulticastFactory::create_at
             output_page_byte_offset_start,      // worker's initial byte offset within output page
             num_worker_output_chunks,           // number of output chunks for this worker
             device_idx,                         // this device's index
-            barrier_sem.address(),              // barrier_sem L1 address
-            virtual_core.x,                     // barrier_sem location (core.x)
-            virtual_core.y,                     // barrier_sem location (core.y)
+            static_cast<uint32_t>(barrier_sem.address()),  // barrier_sem L1 address
+            static_cast<uint32_t>(virtual_core.x),  // barrier_sem location (core.x)
+            static_cast<uint32_t>(virtual_core.y),  // barrier_sem location (core.y)
             barrier_wait_value,                 // barrier counter to wait for
             e_hops,                             // line_hops
             e_hops,                             // rect_e_hops
@@ -491,9 +491,9 @@ AllGatherMulticastFactory::cached_program_t AllGatherMulticastFactory::create_at
             output_page_byte_offset_start,      // worker's initial byte offset within output page
             num_worker_output_chunks,           // number of output chunks for this worker
             device_idx,                         // this device's index
-            barrier_sem.address(),              // barrier_sem L1 address
-            virtual_core.x,                     // barrier_sem location (core.x)
-            virtual_core.y,                     // barrier_sem location (core.y)
+            static_cast<uint32_t>(barrier_sem.address()),  // barrier_sem L1 address
+            static_cast<uint32_t>(virtual_core.x),  // barrier_sem location (core.x)
+            static_cast<uint32_t>(virtual_core.y),  // barrier_sem location (core.y)
             w_hops,                             // line_hops
             e_hops,                             // rect_e_hops
             w_hops,                             // rect_w_hops

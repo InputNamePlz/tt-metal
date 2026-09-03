@@ -134,20 +134,20 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
     // KERNEL CREATION
     // Reader
     std::vector<uint32_t> reader_compile_args = {
-        src0_cb_index,                               // cb0_id
-        num_pages_per_packet,                        // packet_size_in_pages
-        input_tensor.buffer()->aligned_page_size(),  // tensor0_page_size
-        true,                                        // is_sender
+        src0_cb_index,                                                      // cb0_id
+        num_pages_per_packet,                                               // packet_size_in_pages
+        static_cast<uint32_t>(input_tensor.buffer()->aligned_page_size()),  // tensor0_page_size
+        true,                                                               // is_sender
     };
 
     if (!tilized) {
         reader_compile_args = {
-            src0_cb_index,                                      // cb0_id
-            buffer_page_size,                                   // page_size
-            row_size,                                           // row_size
-            (max_packet_size / buffer_page_size >= 2) ? 2 : 1,  // num_rows_per_packet
-            num_packets_per_page,                               // num_packets_per_page
-            max_packet_size,
+            src0_cb_index,                                                          // cb0_id
+            buffer_page_size,                                                       // page_size
+            row_size,                                                               // row_size
+            static_cast<uint32_t>(max_packet_size / buffer_page_size >= 2 ? 2 : 1),  // num_rows_per_packet
+            num_packets_per_page,                                                   // num_packets_per_page
+            static_cast<uint32_t>(max_packet_size),
             true,  // is_sender
         };
     }
@@ -156,7 +156,7 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
     std::vector<uint32_t> writer_compile_args = {
         src0_cb_index,                               // cb0_id
         num_pages_per_packet,                        // packet_size_in_pages
-        input_tensor.buffer()->aligned_page_size(),  // tensor0_page_size
+        static_cast<uint32_t>(input_tensor.buffer()->aligned_page_size()),  // tensor0_page_size
         num_targets_forward,                         // num_targets_forward_direction
         num_targets_backward,                        // num_targets_backward_direction
         true,                                        // is_sender
@@ -167,8 +167,8 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
             src0_cb_index,  // cb0_id
             buffer_page_size,
             row_size,
-            max_packet_size,
-            (max_packet_size / buffer_page_size >= 2) ? 2 : 1,  // num_rows_per_packet
+            static_cast<uint32_t>(max_packet_size),
+            static_cast<uint32_t>(max_packet_size / buffer_page_size >= 2 ? 2 : 1),  // num_rows_per_packet
             num_packets_per_page,                               // num_packets_per_row
             num_targets_forward,                                // num_targets_forward_direction
             num_targets_backward,                               // num_targets_backward_direction
@@ -282,17 +282,17 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
             output_tensors[ring_index]
                 .buffer()
                 ->address(),                          // tensor_address0 (placeholder; replaced via Buffer* below)
-            semaphore.address(),                      // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(semaphore.address()),  // out_ready_sem_bank_addr (absolute address)
             output_tile_id_start * num_width_shards,  // tile_id_start
             output_tile_id_end * num_width_shards,    // tile_id_end
             wait_output_semaphore,                    // wait_output_semaphore
             reset_global_semaphore,                   // reset_global_semaphore
-            drain_sync_core.x,                        // out_ready_sem_noc0_x
-            drain_sync_core.y,                        // out_ready_sem_noc0_y
+            static_cast<uint32_t>(drain_sync_core.x),  // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),  // out_ready_sem_noc0_y
             out_ready_sem_wait_value,                 // out_ready_sem_wait_value
-            barrier_semaphore.address(),              // barrier_sem
-            barrier_core.x,                           // barrier_sem_noc0_x
-            barrier_core.y                            // barrier_sem_noc0_y
+            static_cast<uint32_t>(barrier_semaphore.address()),  // barrier_sem
+            static_cast<uint32_t>(barrier_core.x),                // barrier_sem_noc0_x
+            static_cast<uint32_t>(barrier_core.y)                 // barrier_sem_noc0_y
         };
         auto num_connections = (int)forward_coord.has_value() + (int)backward_coord.has_value();
         writer_rt_args.push_back(num_connections);
