@@ -236,7 +236,8 @@ ProgramDescriptor SdpaDecodeDeviceOperation::create_descriptor(
 
     // ========== Tree Reduction Setup ==========
     // For n cores, need ceil(log2(n)) rounds
-    const uint32_t num_tree_reduction_rounds = num_cores_per_head > 1 ? 32 - __builtin_clz(num_cores_per_head - 1) : 0;
+    const uint32_t num_tree_reduction_rounds =
+        num_cores_per_head > 1 ? 32 - tt::compiler::count_leading_zeros32(num_cores_per_head - 1) : 0;
     TT_FATAL(
         num_tree_reduction_rounds <= MAX_TREE_REDUCTION_ROUNDS,
         "Tree reduction max {} rounds ({} cores/head), got {} cores/head",

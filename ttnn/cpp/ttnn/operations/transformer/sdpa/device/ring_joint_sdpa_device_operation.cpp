@@ -1239,7 +1239,7 @@ RingJointSDPAResult ring_joint_scaled_dot_product_attention(
         {},
         gather_dim,
         num_links,
-        num_devices,
+        static_cast<uint32_t>(num_devices),
         persistent_output_buffer_k.memory_config(),
         topology,
         multi_device_global_semaphore,

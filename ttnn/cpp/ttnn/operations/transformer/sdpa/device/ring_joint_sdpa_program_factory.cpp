@@ -2180,7 +2180,7 @@ tt::tt_metal::ProgramDescriptor build_ring_joint_sdpa_program_descriptor(
             .row = row,
             .injector_idx = injector_idx,
             .max_q = row_max_q,
-            .num_receivers = grid_size.x - 1,
+            .num_receivers = static_cast<uint32_t>(grid_size.x - 1),
             .injector_physical = injector_physical,
             .phys_start = device->worker_core_from_logical_core(CoreCoord{0, row}),
             .phys_end = device->worker_core_from_logical_core(CoreCoord{grid_size.x - 1, row}),
