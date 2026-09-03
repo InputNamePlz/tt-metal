@@ -580,7 +580,7 @@ tt::tt_metal::ProgramDescriptor create_dispatch_program(
             .format_descriptors = {{tt::tt_metal::CBFormatDescriptor{
                 .buffer_index = static_cast<uint8_t>(tt::CBIndex::c_8),
                 .data_format = tt::DataFormat::UInt8,
-                .page_size = packet_header_size_bytes,
+                .page_size = static_cast<uint32_t>(packet_header_size_bytes),
             }}},
         });
     }
@@ -633,7 +633,7 @@ tt::tt_metal::ProgramDescriptor create_dispatch_program(
         detail::get_page_size(dispatch_table_tensor),
 
         // Operation parameters (7)
-        mesh_view.num_devices(),  // num_devices
+        static_cast<uint32_t>(mesh_view.num_devices()),  // num_devices
         (uint32_t)hidden_size,
         operation_attributes.experts_per_chip,
         operation_attributes.num_routed_experts,
@@ -644,8 +644,8 @@ tt::tt_metal::ProgramDescriptor create_dispatch_program(
         // Mesh information (5)
         src_mesh_id,
         src_chip_id,
-        mesh_view.num_rows(),
-        mesh_view.num_cols(),
+        static_cast<uint32_t>(mesh_view.num_rows()),
+        static_cast<uint32_t>(mesh_view.num_cols()),
         linearized_mesh_coord,
 
         // Aligned page sizes (6)
@@ -809,9 +809,9 @@ tt::tt_metal::ProgramDescriptor create_dispatch_program(
             operation_attributes.max_dispatch_buffer_token_size,   // 19
             s,                                                     // 20: dispatch_core_idx
             num_cores,                                             // 21: num_dispatch_cores
-            mesh_view.num_devices(),                               // 22: num_devices
-            mesh_view.num_rows(),                                  // 23
-            mesh_view.num_cols(),                                  // 24
+            static_cast<uint32_t>(mesh_view.num_devices()),        // 22: num_devices
+            static_cast<uint32_t>(mesh_view.num_rows()),           // 23
+            static_cast<uint32_t>(mesh_view.num_cols()),           // 24
             linearized_mesh_coord,                                 // 25
             static_cast<uint32_t>(topology),                       // 26
             block_ct_dim_dispatch,                                 // 27: must match the compute kernel
