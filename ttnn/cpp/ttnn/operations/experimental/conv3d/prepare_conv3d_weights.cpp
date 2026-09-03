@@ -193,7 +193,7 @@ Tensor prepare_conv3d_weights(
         ttnn::reshape(prepare_weights, ttnn::Shape{kD, kH, kW, num_C_in_blocks, C_in_block, out_channels});
     ttsl::SmallVector<int64_t> dims_2 = {3, 0, 1, 2, 4, 5};
     prepare_weights = ttnn::permute(prepare_weights, dims_2);
-    prepare_weights = ttnn::reshape(prepare_weights, ttnn::Shape{-1, out_channels});
+    prepare_weights = ttnn::reshape(prepare_weights, ttnn::Shape{static_cast<uint32_t>(-1), out_channels});
     return prepare_weights;
 }
 
