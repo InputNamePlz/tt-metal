@@ -70,7 +70,7 @@ inline void create_circular_buffer(
         .total_size = num_tiles * single_tile_size,
         .core_ranges = core_ranges,
         .format_descriptors = {{CBFormatDescriptor{
-            .buffer_index = cb_index,
+            .buffer_index = static_cast<uint8_t>(cb_index),
             .data_format = data_format,
             .page_size = single_tile_size,
         }}},
@@ -155,7 +155,7 @@ DropoutCoreSplit dropout_core_split(const Tensor& input) {
         tt::tt_metal::split_work_to_cores(grid, num_tiles);
     return {
         num_cores,
-        grid.y,
+        static_cast<uint32_t>(grid.y),
         all_cores,
         core_group_1,
         core_group_2,
