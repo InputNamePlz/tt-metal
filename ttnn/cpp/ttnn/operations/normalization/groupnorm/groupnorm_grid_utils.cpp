@@ -130,7 +130,7 @@ GroupNormShardedConfigAndGridSize determine_expected_group_norm_sharded_config_a
         shard_shape = {gn_in_channels_per_core, gn_nhw_per_core};
     }
 
-    const CoreCoord grid_end{static_cast<int>(grid_x) - 1, static_cast<int>(grid_y) - 1};
+    const CoreCoord grid_end{static_cast<size_t>(grid_x) - 1, static_cast<size_t>(grid_y) - 1};
     const CoreRangeSet shard_grid(CoreRange(CoreCoord{0, 0}, grid_end));
 
     const TensorMemoryLayout tensor_memory_layout =

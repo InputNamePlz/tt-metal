@@ -155,7 +155,7 @@ SoftmaxDeviceOperation::SoftmaxShardedProgramFactoryAttentionOptimized::create_p
     dfbs.push_back(DataflowBufferSpec{
         .unique_id = IN0,
         .entry_size = in0_tile_size,
-        .num_entries = program_config.block_w * program_config.block_h,
+        .num_entries = static_cast<uint32_t>(program_config.block_w * program_config.block_h),
         .data_format_metadata = in0_cb_data_format,
         .borrowed_from = SRC});
     dfbs.push_back(DataflowBufferSpec{
@@ -172,7 +172,7 @@ SoftmaxDeviceOperation::SoftmaxShardedProgramFactoryAttentionOptimized::create_p
         dfbs.push_back(DataflowBufferSpec{
             .unique_id = SCALE_MASK,
             .entry_size = im_tile_size,
-            .num_entries = program_config.block_w,
+            .num_entries = static_cast<uint32_t>(program_config.block_w),
             .data_format_metadata = im_cb_data_format});
         dfbs.push_back(DataflowBufferSpec{
             .unique_id = FUSED_SCALE,
@@ -192,13 +192,13 @@ SoftmaxDeviceOperation::SoftmaxShardedProgramFactoryAttentionOptimized::create_p
     dfbs.push_back(DataflowBufferSpec{
         .unique_id = OUT0,
         .entry_size = out0_tile_size,
-        .num_entries = program_config.block_w * program_config.block_h,
+        .num_entries = static_cast<uint32_t>(program_config.block_w * program_config.block_h),
         .data_format_metadata = out0_cb_data_format,
         .borrowed_from = DST});
     dfbs.push_back(DataflowBufferSpec{
         .unique_id = EXPS,
         .entry_size = im_tile_size,
-        .num_entries = program_config.block_w,
+        .num_entries = static_cast<uint32_t>(program_config.block_w),
         .data_format_metadata = im_cb_data_format});
     dfbs.push_back(DataflowBufferSpec{
         .unique_id = RECIP_SUM_EXPS,
@@ -211,7 +211,7 @@ SoftmaxDeviceOperation::SoftmaxShardedProgramFactoryAttentionOptimized::create_p
         dfbs.push_back(DataflowBufferSpec{
             .unique_id = X,
             .entry_size = im_tile_size,
-            .num_entries = program_config.block_w,
+            .num_entries = static_cast<uint32_t>(program_config.block_w),
             .data_format_metadata = im_cb_data_format});
     }
 

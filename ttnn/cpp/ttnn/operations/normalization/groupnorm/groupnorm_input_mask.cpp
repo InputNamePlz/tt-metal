@@ -108,7 +108,11 @@ ttnn::Tensor create_group_norm_input_mask_impl(
         }
     }
     // create ttnn::Tensor from mask_vec
-    const ttnn::Shape tensor_shape{1, out_num_groups, out_tile_height, out_mask_width};
+    const ttnn::Shape tensor_shape{
+        1,
+        static_cast<uint32_t>(out_num_groups),
+        static_cast<uint32_t>(out_tile_height),
+        static_cast<uint32_t>(out_mask_width)};
     const tt::tt_metal::TensorLayout tensor_layout(data_type, Layout::TILE, ttnn::DRAM_MEMORY_CONFIG);
     const tt::tt_metal::TensorSpec tensor_spec(tensor_shape, tensor_layout);
     ttnn::Tensor mask = ttnn::Tensor::from_vector(
