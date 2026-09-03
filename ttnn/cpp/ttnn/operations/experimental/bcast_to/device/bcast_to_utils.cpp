@@ -6,6 +6,7 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <tt_stl/unreachable.hpp>
 
 namespace ttnn::operations::experimental::broadcast_to {
 
@@ -58,7 +59,7 @@ std::string get_kernel_file_path(KernelName kernel_name) {
         case KernelName::ComputeColBcast: return fmt::format(compute, root, "compute_interleaved_col_bcast_to.cpp");
         case KernelName::ComputeScalarBcast:
             return fmt::format(compute, root, "compute_interleaved_scalar_bcast_to.cpp");
-        default: __builtin_unreachable();  // GCC 12 doesn't compile even though we exhaustively match
+        default: ttsl::unreachable();  // GCC 12 doesn't compile even though we exhaustively match
     }
 }
 
