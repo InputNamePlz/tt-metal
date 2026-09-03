@@ -362,7 +362,9 @@ tt::tt_metal::ProgramDescriptor ZeroPaddedKvCacheDeviceOperation::ProgramFactory
         desc.cbs.push_back(CBDescriptor{
             .total_size = npages * page,
             .core_ranges = all_cores,
-            .format_descriptors = {{CBFormatDescriptor{.buffer_index = index, .data_format = fmt, .page_size = page}}},
+            .format_descriptors = {
+                {CBFormatDescriptor{
+                    .buffer_index = static_cast<uint8_t>(index), .data_format = fmt, .page_size = page}}},
         });
     };
     add_cb(kSrcCbIndex, cache_format, cache_tile_size, Wt);
