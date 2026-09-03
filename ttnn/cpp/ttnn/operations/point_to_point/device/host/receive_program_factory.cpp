@@ -50,24 +50,24 @@ tt::tt_metal::ProgramDescriptor receive_program_factory(
     constexpr auto num_packet_headers_storable = 2;
     const auto packet_header_size_bytes = tt::tt_fabric::get_tt_fabric_packet_header_size_bytes();
     desc.cbs.push_back(tt::tt_metal::CBDescriptor{
-        .total_size = num_packet_headers_storable * packet_header_size_bytes * buffering_factor,
+        .total_size = static_cast<uint32_t>(num_packet_headers_storable * packet_header_size_bytes * buffering_factor),
         .core_ranges = all_cores,
         .format_descriptors = {{tt::tt_metal::CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(packet_header_cb_id),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 
     // Scratch CB for loading up pages that are collected into packets
     constexpr auto packet_cb_id = tt::CBIndex::c_1;
     desc.cbs.push_back(tt::tt_metal::CBDescriptor{
-        .total_size = packet_size_bytes,
+        .total_size = static_cast<uint32_t>(packet_size_bytes),
         .core_ranges = all_cores,
         .format_descriptors = {{tt::tt_metal::CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(packet_cb_id),
             .data_format = inter_dataformat,
-            .page_size = packet_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_size_bytes),
         }}},
     });
 
@@ -142,11 +142,12 @@ tt::tt_metal::ProgramDescriptor receive_program_factory(
             page_idx_start,
             page_idx_end,
             num_pages_per_packet,
-            intermediate_tensor.buffer()->address(),  // placeholder, replaced via Buffer* below
+            static_cast<uint32_t>(
+                intermediate_tensor.buffer()->address()),  // placeholder, replaced via Buffer* below
             packet_size_bytes,
             output_page_size_bytes,
             num_page_segments,
-            semaphore.address(),
+            static_cast<uint32_t>(semaphore.address()),
             num_hops,
             sender_is_forward};
 

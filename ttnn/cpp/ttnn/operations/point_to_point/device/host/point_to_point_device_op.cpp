@@ -90,11 +90,11 @@ Fabric1DRoute fabric_1d_routing(
             bool ring_is_forward = (ring_hops > 0);
 
             const auto next_fabric_id = get_neighbor_id(ring_is_forward, MeshCoordinate::BoundaryMode::WRAP);
-            return {std::abs(ring_hops), !ring_is_forward, next_fabric_id};
+            return {static_cast<uint32_t>(std::abs(ring_hops)), !ring_is_forward, next_fabric_id};
         }
     }
     const auto next_fabric_id = get_neighbor_id(line_is_forward, MeshCoordinate::BoundaryMode::NONE);
-    return {line_hops, !line_is_forward, next_fabric_id};
+    return {static_cast<uint32_t>(line_hops), !line_is_forward, next_fabric_id};
 }
 }  // namespace detail
 
