@@ -131,7 +131,12 @@ MoEGateMMProgramFactory::cached_program_t MoEGateMMProgramFactory::create(
         const auto& core_next1 = device->worker_core_from_logical_core(dram_bank2core_coords[bank_id_next1]);
         const auto& core_next2 = device->worker_core_from_logical_core(dram_bank2core_coords[bank_id_next2]);
 
-        dram_bank2neighbors[bank_id] = {1, core_next1.x, core_next1.y, core_next2.x, core_next2.y};
+        dram_bank2neighbors[bank_id] = {
+            1,
+            static_cast<uint32_t>(core_next1.x),
+            static_cast<uint32_t>(core_next1.y),
+            static_cast<uint32_t>(core_next2.x),
+            static_cast<uint32_t>(core_next2.y)};
     }
 
     // We also need the reverse mapping for bank_id to N tile_id
