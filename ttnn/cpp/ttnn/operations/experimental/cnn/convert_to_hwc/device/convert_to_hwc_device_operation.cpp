@@ -47,7 +47,7 @@ tt::tt_metal::TensorSpec ConvertToHWCDeviceOperation::compute_output_specs(
     const auto output_channels = tt::round_up(C, alignment_elements);
 
     return tt::tt_metal::TensorSpec(
-        Shape({1, 1, B * HW, output_channels}),
+        Shape({1, 1, static_cast<uint32_t>(B * HW), static_cast<uint32_t>(output_channels)}),
         TensorLayout(args.dtype, PageConfig(Layout::ROW_MAJOR), args.memory_config));
 }
 
