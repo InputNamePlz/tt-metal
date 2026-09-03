@@ -737,7 +737,10 @@ static GatherConfig quantize_transfers_along_block_boundaries(const GatherConfig
                 const uint32_t remaining_in_block = block_size - offset_in_block;
                 const uint32_t transfer_size = (length <= remaining_in_block) ? length : remaining_in_block;
 
-                new_route.transfers.push_back(GatherTransfer{src_offset, dst_offset, transfer_size});
+                new_route.transfers.push_back(GatherTransfer{
+                    static_cast<uint16_t>(src_offset),
+                    static_cast<uint16_t>(dst_offset),
+                    static_cast<uint16_t>(transfer_size)});
 
                 src_offset += transfer_size;
                 dst_offset += transfer_size;

@@ -369,7 +369,7 @@ ProgramDescriptor build_halo_program(
                 reader_0_desc.runtime_args.emplace_back(core, std::vector<uint32_t>{0});
                 reader_1_desc.runtime_args.emplace_back(core, std::vector<uint32_t>{0});
             } else if (is_block_sharded) {
-                const auto nhw_index = is_rm_orientation ? core.y : core.x;
+                const auto nhw_index = static_cast<uint32_t>(is_rm_orientation ? core.y : core.x);
                 reader_0_desc.runtime_args.emplace_back(core, std::vector<uint32_t>{nhw_index});
                 reader_1_desc.runtime_args.emplace_back(core, std::vector<uint32_t>{nhw_index});
             }
