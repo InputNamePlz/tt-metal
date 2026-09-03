@@ -205,7 +205,8 @@ Tensor create_config_tensor(
         config_vector.size(),
         elems_per_core);
 
-    ttnn::Shape config_shape({tt::div_up(config_vector.size(), elems_per_core), elems_per_core});
+    ttnn::Shape config_shape(
+        {static_cast<uint32_t>(tt::div_up(config_vector.size(), elems_per_core)), elems_per_core});
     auto config_buffer = HostBuffer(std::move(config_vector));
     return Tensor(std::move(config_buffer), config_shape, DataType::UINT16, Layout::ROW_MAJOR);
 }
