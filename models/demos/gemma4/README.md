@@ -143,6 +143,30 @@ pytest models/demos/gemma4/demo/text_demo_v2.py -k "long-context-256k" -s --time
 
 E2B/E4B: unbounded multi-chunk through 256k. 12B: bounded sliding + chunked prefill through 256k (required for DRAM).
 
+### P100 (1×1) — harvested single-chip Blackhole
+
+A P100 is a single Blackhole chip with one Tensix column harvested (120 Tensix, ~27.9 GB
+GDDR, no ethernet). Its worker grid is the same 11×10 the P150 path is tuned for, but it has
+**7 DRAM banks instead of 8**, and `tt/dram_sharded.py` hardcodes the P150 count. Set
+`GEMMA4_DRAM_CORES=7` or the first DRAM-width-sharded weight aborts with
+`Invalid shard grid: shard core (7, 0) has no DRAM bank on this device`. Nothing else differs:
+
+```bash
+export HF_HUB_OFFLINE=1 \
+       HF_HOME=/path/to/huggingface \
+       HF_MODEL=google/gemma-4-E4B-it \
+       TT_CACHE_PATH=/path/to/huggingface/tt_cache/google--gemma-4-E4B-it \
+       MESH_DEVICE=P100 \
+       GEMMA4_DRAM_CORES=7
+pytest models/demos/gemma4/demo/text_demo_v2.py -k "batch-1" -sv
+```
+
+Measured on a P100A (E4B, batch-1, 83-token prompt, 200 generated): TTFT 2664 ms,
+12.90 tok/s/user — versus 13.97 tok/s on a full P150 at ISL 4k.
+
+Because the weight cache stores the width-sharded layout, a cache built at one bank count
+must not be reused at another — give the P100 its own `TT_CACHE_PATH` if you also run P150s.
+
 ### 12B / 26B-A4B / 31B on QB2 (P150x4) or LoudBox (P150x8)
 
 Set `MESH_DEVICE` to the board mesh. Prefer **`text_demo_v2.py`** for long-context (TTFT + decode tok/s). Short CI demo and batch-32 stay on `text_demo.py`. Long-context rows are **not** gated by `--max-prefill`:
