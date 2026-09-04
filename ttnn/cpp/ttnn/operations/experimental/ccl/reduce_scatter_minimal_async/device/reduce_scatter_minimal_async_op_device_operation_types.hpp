@@ -17,6 +17,11 @@
 #include "ttnn/global_semaphore.hpp"
 #include "ttnn/operations/core/compute_kernel/compute_kernel_config.hpp"
 
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. This header (or a struct it
+// defines) stores a GlobalSemaphore by value (directly, in std::optional, or in std::vector), and
+// MSVC's aggregate/attribute reflection machinery (device_operation.hpp, tt_stl/reflection.hpp)
+// needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 namespace ttnn::experimental::prim {
 
 // Shared struct for program artifacts - used for caching kernel handles and core info

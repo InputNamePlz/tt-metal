@@ -16,6 +16,10 @@
 #include "ttnn/operations/ccl/ccl_common.hpp"
 #include "ttnn/operations/ccl/ccl_op_fusion.hpp"
 #include "ttnn/global_semaphore.hpp"
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. AllGatherAsyncParams stores a
+// std::optional<GlobalSemaphore> by value, and MSVC's aggregate/attribute reflection machinery (used
+// by device_operation.hpp and tt_stl/reflection.hpp) needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 namespace ttnn::experimental::prim {
 

@@ -707,9 +707,9 @@ AllGatherProgramArtifacts build_all_gather_async_minimal_default_program_artifac
                 }
 
                 std::vector<uint32_t> reader_rt_args = {
-                    input_tensor.buffer()->address(),   // input_tensor_address
-                    output_tensor.buffer()->address(),  // output_tensor_address
-                    semaphore.at(dir).address(),        // out_ready_sem
+                    static_cast<uint32_t>(input_tensor.buffer()->address()),   // input_tensor_address
+                    static_cast<uint32_t>(output_tensor.buffer()->address()),  // output_tensor_address
+                    static_cast<uint32_t>(semaphore.at(dir).address()),        // out_ready_sem
                     dir,                                // direction RT ARG
                     input_tile_id_start,                // input_tile_id_start RT ARG
                     input_tile_id_end,                  // input_tile_id_end RT ARG
@@ -745,16 +745,16 @@ AllGatherProgramArtifacts build_all_gather_async_minimal_default_program_artifac
                     mesh_device->worker_core_from_logical_core(termination_master_logical_core);
 
                 std::vector<uint32_t> writer_rt_args = {
-                    output_tensor.buffer()->address(),                           // output_tensor_address
-                    virtual_core.x,                                              // out_ready_sem_noc0_x
-                    virtual_core.y,                                              // out_ready_sem_noc0_y
-                    semaphore.at(dir).address(),                                 // out_ready_sem
+                    static_cast<uint32_t>(output_tensor.buffer()->address()),    // output_tensor_address
+                    static_cast<uint32_t>(virtual_core.x),                       // out_ready_sem_noc0_x
+                    static_cast<uint32_t>(virtual_core.y),                       // out_ready_sem_noc0_y
+                    static_cast<uint32_t>(semaphore.at(dir).address()),          // out_ready_sem
                     barrier_semaphore.has_value() && !using_persistent_buffers,  // use synchronize barrier semaphore
                     barrier_semaphore.has_value()                                // synchronize barrier semaphore
-                        ? barrier_semaphore.value().address()
+                        ? static_cast<uint32_t>(barrier_semaphore.value().address())
                         : 0,
-                    opposite_core_coord.x,    // opposite_core_sem_noc0_x
-                    opposite_core_coord.y,    // opposite_core_sem_noc0_y
+                    static_cast<uint32_t>(opposite_core_coord.x),  // opposite_core_sem_noc0_x
+                    static_cast<uint32_t>(opposite_core_coord.y),  // opposite_core_sem_noc0_y
                     dir,                      // direction
                     input_tile_id_start,      // input_tile_id_start
                     input_tile_id_end,        // input_tile_id_end

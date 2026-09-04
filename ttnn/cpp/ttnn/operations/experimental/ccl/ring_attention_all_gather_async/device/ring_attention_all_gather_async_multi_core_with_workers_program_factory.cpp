@@ -777,7 +777,7 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_forward_CB_index),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 
@@ -788,7 +788,7 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_backward_CB_index),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 

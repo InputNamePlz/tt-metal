@@ -943,8 +943,8 @@ AllToAllAsyncGenericProgram::create_at(
         const uint32_t link = core_id / num_senders_per_link;
         const auto& stream_device_offsets = device_offsets[sender_stream];
         std::vector<uint32_t> sender_reader_rt_args = {
-            tensor_args.input_tensor.buffer()->address(),
-            stream_device_offsets.size(),
+            static_cast<uint32_t>(tensor_args.input_tensor.buffer()->address()),
+            static_cast<uint32_t>(stream_device_offsets.size()),
         };
         for (uint32_t i = 0; i < stream_device_offsets.size(); ++i) {
             sender_reader_rt_args.push_back(stream_device_offsets[i]);
@@ -955,19 +955,19 @@ AllToAllAsyncGenericProgram::create_at(
         tt::tt_metal::SetRuntimeArgs(program, sender_reader_kernel_id, {core}, sender_reader_rt_args);
 
         std::vector<uint32_t> sender_writer_rt_args = {
-            tensor_return_value.buffer()->address(),
-            init_barrier_semaphore.address(),
-            final_barrier_semaphore.address(),
-            sender_stream,
+            static_cast<uint32_t>(tensor_return_value.buffer()->address()),
+            static_cast<uint32_t>(init_barrier_semaphore.address()),
+            static_cast<uint32_t>(final_barrier_semaphore.address()),
+            static_cast<uint32_t>(sender_stream),
             link,
             mcast_dest_noc_start_x,
             mcast_dest_noc_start_y,
             mcast_dest_noc_end_x,
             mcast_dest_noc_end_y,
             mcast_size,
-            drain_sync_core.x,
-            drain_sync_core.y,
-            stream_device_offsets.size(),
+            static_cast<uint32_t>(drain_sync_core.x),
+            static_cast<uint32_t>(drain_sync_core.y),
+            static_cast<uint32_t>(stream_device_offsets.size()),
         };
 
         for (uint32_t i = 0; i < stream_device_offsets.size(); ++i) {

@@ -438,7 +438,9 @@ NeighborPadAsyncMeshWorkloadFactory::cached_program_t NeighborPadAsyncMeshWorklo
     SetCommonRuntimeArgs(
         program,
         h_reader_kernel_id,
-        {input_buffer->address(), output_buffer->address(), operation_attributes.h_neighbor_semaphore.address()});
+        {static_cast<uint32_t>(input_buffer->address()),
+         static_cast<uint32_t>(output_buffer->address()),
+         static_cast<uint32_t>(operation_attributes.h_neighbor_semaphore.address())});
 
     // Create consolidated H fabric writer kernel (uniform compile args across all H cores)
     auto h_writer_kernel_config = WriterDataMovementConfig{};
@@ -461,10 +463,10 @@ NeighborPadAsyncMeshWorkloadFactory::cached_program_t NeighborPadAsyncMeshWorklo
     SetCommonRuntimeArgs(
         program,
         h_writer_kernel_id,
-        {input_buffer->address(),
-         output_buffer->address(),
-         operation_attributes.h_neighbor_semaphore.address(),
-         operation_attributes.barrier_semaphore.address()});
+        {static_cast<uint32_t>(input_buffer->address()),
+         static_cast<uint32_t>(output_buffer->address()),
+         static_cast<uint32_t>(operation_attributes.h_neighbor_semaphore.address()),
+         static_cast<uint32_t>(operation_attributes.barrier_semaphore.address())});
 
     // Set per-core runtime args for H fabric cores
     uint32_t link_offset_start_id = 0;
@@ -520,13 +522,13 @@ NeighborPadAsyncMeshWorkloadFactory::cached_program_t NeighborPadAsyncMeshWorklo
                 (operation_attributes.dim > 0) ? link_dims_to_read : outer_dim_size,  // outer_dim_size
                 direction ? operation_attributes.padding_right : operation_attributes.padding_left,  // padding
                 operation_attributes.padding_left,                                                   // padding left
-                h_writer_num_sticks_to_read,       // num_sticks_to_read
-                h_writer_num_sticks_per_halo_dim,  // num_sticks_per_halo_dim
-                virtual_core.x,                    // neighbor_sem_noc0_x
-                virtual_core.y,                    // neighbor_sem_noc0_y
-                true,                              // use_barrier_semaphore
-                virtual_opposite_core.x,           // barrier_sem_noc0_x
-                virtual_opposite_core.y};          // barrier_sem_noc0_y
+                h_writer_num_sticks_to_read,             // num_sticks_to_read
+                h_writer_num_sticks_per_halo_dim,        // num_sticks_per_halo_dim
+                static_cast<uint32_t>(virtual_core.x),   // neighbor_sem_noc0_x
+                static_cast<uint32_t>(virtual_core.y),   // neighbor_sem_noc0_y
+                true,                                    // use_barrier_semaphore
+                static_cast<uint32_t>(virtual_opposite_core.x),   // barrier_sem_noc0_x
+                static_cast<uint32_t>(virtual_opposite_core.y)};  // barrier_sem_noc0_y
             // Phase 2 signal targets (W fabric reader cores for 2D padding)
             // Max targets = pad2_num_links * 2 directions (up to 8 W fabric cores)
             // sem_addr omitted — kernel reads barrier_sem from CRTA[3]
@@ -747,10 +749,10 @@ NeighborPadAsyncMeshWorkloadFactory::cached_program_t NeighborPadAsyncMeshWorklo
         SetCommonRuntimeArgs(
             program,
             w_reader_kernel_id,
-            {output_buffer->address(),
-             operation_attributes.barrier_semaphore.address(),
-             operation_attributes.w_neighbor_semaphore.address(),
-             input_buffer->address()});
+            {static_cast<uint32_t>(output_buffer->address()),
+             static_cast<uint32_t>(operation_attributes.barrier_semaphore.address()),
+             static_cast<uint32_t>(operation_attributes.w_neighbor_semaphore.address()),
+             static_cast<uint32_t>(input_buffer->address())});
 
         // Create consolidated W fabric writer kernel (uniform compile args across all W cores)
         auto w_writer_kernel_config = WriterDataMovementConfig{};
@@ -773,12 +775,12 @@ NeighborPadAsyncMeshWorkloadFactory::cached_program_t NeighborPadAsyncMeshWorklo
         SetCommonRuntimeArgs(
             program,
             w_writer_kernel_id,
-            {output_buffer->address(),
-             output_buffer->address(),
-             operation_attributes.w_neighbor_semaphore.address(),
+            {static_cast<uint32_t>(output_buffer->address()),
+             static_cast<uint32_t>(output_buffer->address()),
+             static_cast<uint32_t>(operation_attributes.w_neighbor_semaphore.address()),
              // Use h_neighbor_semaphore (not barrier_semaphore) for W startup barrier:
              // W reader (NCRISC) on the same core uses barrier_semaphore for Phase 2 barrier.
-             operation_attributes.h_neighbor_semaphore.address()});
+             static_cast<uint32_t>(operation_attributes.h_neighbor_semaphore.address())});
 
         // Set per-core runtime args for W fabric cores
         // w_rows_per_link/w_extra_rows now hold T batches per link (T-batch-aligned distribution).
@@ -836,11 +838,13 @@ NeighborPadAsyncMeshWorkloadFactory::cached_program_t NeighborPadAsyncMeshWorklo
                     operation_attributes.pad2_left,  // padding_left
                     1,                               // num_sticks_to_read
                     1,                               // num_sticks_per_halo_dim
-                    w_virtual_core.x,                // neighbor_sem_noc0_x
-                    w_virtual_core.y,                // neighbor_sem_noc0_y
+                    static_cast<uint32_t>(w_virtual_core.x),  // neighbor_sem_noc0_x
+                    static_cast<uint32_t>(w_virtual_core.y),  // neighbor_sem_noc0_y
                     true,                            // use_barrier_semaphore (W-axis startup barrier)
-                    w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].x,   // barrier_sem_noc0_x (opp dir)
-                    w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].y};  // barrier_sem_noc0_y
+                    static_cast<uint32_t>(
+                        w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].x),  // barrier_sem_noc0_x (opp dir)
+                    static_cast<uint32_t>(
+                        w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].y)};  // barrier_sem_noc0_y
                 // No Phase 2 signal targets (W writers don't signal further)
                 constexpr uint32_t MAX_PHASE2_SIGNAL_TARGETS = 8;
                 w_writer_rt_args.push_back(0);

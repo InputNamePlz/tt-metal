@@ -246,11 +246,11 @@ LlamaShardedMeshWorkloadFactory::cached_program_t LlamaShardedMeshWorkloadFactor
         }
         // Set reader runtime args
         std::vector<uint32_t> reader_rt_args = {
-            input_tensor.buffer()->address(),    // tensor_address0
-            input_tensor_shard_num_pages,        // num_tiles_per_core
-            worker_num_tiles_to_read,            // num_tiles_to_read
-            input_first_core_tile_start_offset,  // first_core_tile_start_offset
-            input_tensor_cores_x.size(),         // num_cores
+            static_cast<uint32_t>(input_tensor.buffer()->address()),  // tensor_address0
+            input_tensor_shard_num_pages,                             // num_tiles_per_core
+            worker_num_tiles_to_read,                                 // num_tiles_to_read
+            input_first_core_tile_start_offset,                       // first_core_tile_start_offset
+            static_cast<uint32_t>(input_tensor_cores_x.size()),       // num_cores
         };
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_x.begin(), input_tensor_cores_x.end());
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_y.begin(), input_tensor_cores_y.end());
@@ -265,22 +265,22 @@ LlamaShardedMeshWorkloadFactory::cached_program_t LlamaShardedMeshWorkloadFactor
         bool reset_global_semaphore = (link == 0) && !enable_async_output_tensor;
         uint32_t out_ready_sem_wait_value = ring_size * num_links;
         std::vector<uint32_t> writer_rt_args = {
-            output_tensor.buffer()->address(),    // tensor_address0
-            semaphore.address(),                  // out_ready_sem_bank_addr (absolute address)
-            output_tensor_shard_num_pages,        // num_tiles_per_core
-            worker_num_tiles_to_read,             // num_tiles_to_read
-            output_first_core_tile_start_offset,  // first_core_tile_start_offset
-            output_tensor_cores_x.size(),         // num_cores
-            wait_output_semaphore,                // wait_output_semaphore
-            reset_global_semaphore,               // reset_global_semaphore
-            drain_sync_core.x,                    // out_ready_sem_noc0_x
-            drain_sync_core.y,                    // out_ready_sem_noc0_y
-            out_ready_sem_wait_value,             // out_ready_sem_wait_value
-            barrier_semaphore.has_value()         // barrier_sem
-                ? barrier_semaphore.value().address()
+            static_cast<uint32_t>(output_tensor.buffer()->address()),  // tensor_address0
+            static_cast<uint32_t>(semaphore.address()),                // out_ready_sem_bank_addr (absolute address)
+            output_tensor_shard_num_pages,                             // num_tiles_per_core
+            worker_num_tiles_to_read,                                  // num_tiles_to_read
+            output_first_core_tile_start_offset,                       // first_core_tile_start_offset
+            static_cast<uint32_t>(output_tensor_cores_x.size()),       // num_cores
+            wait_output_semaphore,                                     // wait_output_semaphore
+            reset_global_semaphore,                                    // reset_global_semaphore
+            static_cast<uint32_t>(drain_sync_core.x),                  // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),                  // out_ready_sem_noc0_y
+            out_ready_sem_wait_value,                                  // out_ready_sem_wait_value
+            barrier_semaphore.has_value()                              // barrier_sem
+                ? static_cast<uint32_t>(barrier_semaphore.value().address())
                 : 0,
-            barrier_core.x,  // barrier_sem_noc0_x
-            barrier_core.y   // barrier_sem_noc0_y
+            static_cast<uint32_t>(barrier_core.x),  // barrier_sem_noc0_x
+            static_cast<uint32_t>(barrier_core.y)   // barrier_sem_noc0_y
         };
         writer_rt_args.insert(writer_rt_args.end(), output_tensor_cores_x.begin(), output_tensor_cores_x.end());
         writer_rt_args.insert(writer_rt_args.end(), output_tensor_cores_y.begin(), output_tensor_cores_y.end());

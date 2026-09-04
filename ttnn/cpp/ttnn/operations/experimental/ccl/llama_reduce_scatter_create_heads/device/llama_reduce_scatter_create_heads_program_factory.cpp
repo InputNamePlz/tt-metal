@@ -629,11 +629,11 @@ LlamaReduceScatterCreateHeadsDeviceOperation::LlamaReduceScatterCreateHeads::cre
         num_devices,
         input_block_size,
         output_cores_per_device,
-        packet_start_worker_core.at(0).x,
-        packet_start_worker_core.at(0).y,
-        packet_end_worker_core.at(0).x,
-        packet_end_worker_core.at(0).y,
-        sender_cores.size(),
+        static_cast<uint32_t>(packet_start_worker_core.at(0).x),
+        static_cast<uint32_t>(packet_start_worker_core.at(0).y),
+        static_cast<uint32_t>(packet_end_worker_core.at(0).x),
+        static_cast<uint32_t>(packet_end_worker_core.at(0).y),
+        static_cast<uint32_t>(sender_cores.size()),
         total_num_read_txns};
 
     if (packet_worker_cores_grid.num_cores() == 1) {
@@ -683,10 +683,10 @@ LlamaReduceScatterCreateHeadsDeviceOperation::LlamaReduceScatterCreateHeads::cre
         num_devices,
         input_block_size,
         output_cores_per_device,
-        packet_receiver_worker_core.x,
-        packet_receiver_worker_core.y,
-        num_packet_worker_cores,
-        operation_attributes.topology == ttnn::ccl::Topology::Linear ? 0 : 1};
+        static_cast<uint32_t>(packet_receiver_worker_core.x),
+        static_cast<uint32_t>(packet_receiver_worker_core.y),
+        static_cast<uint32_t>(num_packet_worker_cores),
+        static_cast<uint32_t>(operation_attributes.topology == ttnn::ccl::Topology::Linear ? 0 : 1)};
 
     auto writer_defines = reader_defines;
     tt::tt_metal::KernelHandle unary_writer_kernel_id = tt::tt_metal::CreateKernel(
@@ -720,7 +720,19 @@ LlamaReduceScatterCreateHeadsDeviceOperation::LlamaReduceScatterCreateHeads::cre
     uint32_t local_page = 0;
 
     std::vector<uint32_t> reader_runtime_args = {
-        cross_device_semaphore->address(), local_semaphore, false, false, 0, 0, false, 0, 0, 0, 0, 0, 0};
+        static_cast<uint32_t>(cross_device_semaphore->address()),
+        local_semaphore,
+        false,
+        false,
+        0,
+        0,
+        false,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0};
     uint32_t is_reader_sender_core_idx = 2;
     uint32_t is_reader_worker_core_idx = 3;
     uint32_t is_linear_output_page_start_idx = 4;
@@ -760,7 +772,17 @@ LlamaReduceScatterCreateHeadsDeviceOperation::LlamaReduceScatterCreateHeads::cre
 
     for (auto core : all_cores) {
         std::vector<uint32_t> writer_runtime_args = {
-            cross_device_semaphore->address(), local_semaphore, false, false, 0, 0, 0, 0, 0, 0, 0};
+            static_cast<uint32_t>(cross_device_semaphore->address()),
+            local_semaphore,
+            false,
+            false,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0};
 
         uint32_t num_shards_to_read_per_worker = schedule[sender_core_idx].size();
 

@@ -360,8 +360,8 @@ AllGatherConcatMeshWorkloadFactory::cached_program_t AllGatherConcatMeshWorkload
         src0_cb_index,                    // cb0_id
         num_pages_per_packet,             // packet_size_in_pages
         op_config.get_page_size(),        // tensor0_page_size
-        num_targets_forward,              // num_targets_forward_direction
-        num_targets_backward,             // num_targets_backward_direction
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_targets_backward_direction
         dynamic_alternate,                // alternate
         llama_configuration.num_semaphore_ranges,
         out_ready_sem_wait_value};
@@ -459,12 +459,12 @@ AllGatherConcatMeshWorkloadFactory::cached_program_t AllGatherConcatMeshWorkload
 
         // Set reader runtime args
         std::vector<uint32_t> reader_rt_args = {
-            input_tensor.buffer()->address(),  // tensor_address0
-            operation_attributes.semaphore.address(),
+            static_cast<uint32_t>(input_tensor.buffer()->address()),  // tensor_address0
+            static_cast<uint32_t>(operation_attributes.semaphore.address()),
             input_tensor_shard_num_pages,
-            worker_num_tiles_to_read,            // num_tiles_to_read
-            input_first_core_tile_start_offset,  // first_core_tile_start_offset
-            input_tensor_cores_x.size(),         // num_cores
+            worker_num_tiles_to_read,                            // num_tiles_to_read
+            input_first_core_tile_start_offset,                  // first_core_tile_start_offset
+            static_cast<uint32_t>(input_tensor_cores_x.size()),  // num_cores
         };
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_x.begin(), input_tensor_cores_x.end());
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_y.begin(), input_tensor_cores_y.end());
@@ -479,16 +479,17 @@ AllGatherConcatMeshWorkloadFactory::cached_program_t AllGatherConcatMeshWorkload
         bool wait_output_semaphore = (link == 0) && !enable_async_output_tensor;
         bool reset_global_semaphore = (link == 0) && !enable_async_output_tensor;
         std::vector<uint32_t> writer_rt_args = {
-            temp_tensor.buffer()->address(),           // tensor_address0
-            operation_attributes.semaphore.address(),  // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(temp_tensor.buffer()->address()),  // tensor_address0
+            static_cast<uint32_t>(
+                operation_attributes.semaphore.address()),  // out_ready_sem_bank_addr (absolute address)
             input_tensor_shard_num_pages,
-            worker_num_tiles_to_read,             // num_tiles_to_read
-            output_first_core_tile_start_offset,  // first_core_tile_start_offset
-            output_tensor_cores_x.size(),         // num_cores
-            wait_output_semaphore,                // wait_output_semaphore
-            reset_global_semaphore,               // reset_global_semaphore
-            drain_sync_core.x,
-            drain_sync_core.y,
+            worker_num_tiles_to_read,                             // num_tiles_to_read
+            output_first_core_tile_start_offset,                  // first_core_tile_start_offset
+            static_cast<uint32_t>(output_tensor_cores_x.size()),  // num_cores
+            wait_output_semaphore,                                // wait_output_semaphore
+            reset_global_semaphore,                               // reset_global_semaphore
+            static_cast<uint32_t>(drain_sync_core.x),
+            static_cast<uint32_t>(drain_sync_core.y),
             concat_semaphore_id,
             concat_semaphore_id2,
         };

@@ -17,6 +17,10 @@
 #include <tt-metalium/experimental/fabric/fabric_edm_types.hpp>
 #include <vector>
 #include "ttnn/operations/experimental/ccl/all_to_all_dispatch_metadata/all_to_all_dispatch_metadata.hpp"
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. operation_attributes_t stores
+// std::optional<GlobalSemaphore> members by value, and MSVC's aggregate/attribute reflection machinery
+// (used by device_operation.hpp and tt_stl/reflection.hpp) needs the pimpl type to be complete here.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 namespace ttnn::operations::experimental::ccl {
 
