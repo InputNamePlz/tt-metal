@@ -6,6 +6,7 @@
 #include "ttnn/operations/eltwise/unary/common/unary_op_utils.hpp"
 #include <tt-metalium/hal.hpp>
 #include <tt_stl/assert.hpp>
+#include <tt_stl/unreachable.hpp>
 // log_info / log_warning in native_tuning(). Included explicitly rather than left to arrive
 // transitively: this target is a unity build, so a missing include here still compiles.
 #include <tt-logger/tt-logger.hpp>
@@ -148,7 +149,7 @@ std::string get_kernel_file_path(KernelName kernel_name, bool is_sfpu, bool is_w
                 root_ng,
                 is_where_op ? "eltwise_where_sfpu_row_col_bcast.cpp"
                             : (is_sfpu ? "eltwise_binary_sfpu_row_col_bcast.cpp" : "eltwise_binary_row_col_bcast.cpp"));
-        default: __builtin_unreachable();  // GCC 12 doesn't compile even though we exhaustively match
+        default: ttsl::unreachable();  // GCC 12 doesn't compile even though we exhaustively match
     }
 }
 

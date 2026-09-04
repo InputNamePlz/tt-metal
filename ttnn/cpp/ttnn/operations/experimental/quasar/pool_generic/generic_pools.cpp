@@ -577,7 +577,10 @@ public:
         }
         return {
             {{input_slice_height_start, input_slice_width_start}, {input_slice_height_end, input_slice_width_end}},
-            {pad_top, pad_bottom, pad_left, pad_right},
+            {static_cast<uint32_t>(pad_top),
+             static_cast<uint32_t>(pad_bottom),
+             static_cast<uint32_t>(pad_left),
+             static_cast<uint32_t>(pad_right)},
             this_ceil_pad,
             output_slice_width};
     }

@@ -160,8 +160,8 @@ ProgramDescriptor ReshapeViewRMProgramFactory::create_descriptor(
     });
 
     std::vector<uint32_t> compile_time_args = {
-        (std::uint32_t)(source_page_size_bytes % 64 == 0) ? 1 : 0,
-        (std::uint32_t)(source_page_size_bytes % 16 == 0) ? 1 : 0,
+        static_cast<uint32_t>((source_page_size_bytes % 64 == 0) ? 1 : 0),
+        static_cast<uint32_t>((source_page_size_bytes % 16 == 0) ? 1 : 0),
         src0_cb_index,
         src1_cb_index,
         source_page_size_bytes,

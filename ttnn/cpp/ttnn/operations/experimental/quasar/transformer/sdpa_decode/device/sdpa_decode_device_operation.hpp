@@ -10,6 +10,7 @@
 #include <optional>
 #include <variant>
 
+#include <hostdevcommon/tt_compiler.h>
 #include <tt-metalium/program_descriptors.hpp>
 
 #include "ttnn/device_operation.hpp"
@@ -48,7 +49,7 @@ inline TreeReductionParams get_tree_reduction_params(uint32_t core_id, uint32_t 
     }
 
     uint32_t vid = (N - 1) - core_id;
-    p.num_rounds = 32 - __builtin_clz(N - 1);  // ceil(log2(N))
+    p.num_rounds = 32 - tt::compiler::count_leading_zeros32(N - 1);  // ceil(log2(N))
     p.is_root = (core_id == 0);
 
     // Find children: at round r, vid receives from (vid - 2^r) if vid's low (r+1) bits are all 1
@@ -66,7 +67,7 @@ inline TreeReductionParams get_tree_reduction_params(uint32_t core_id, uint32_t 
 
     // Find parent: send at round = trailing 1s in vid; parent_vid = vid + 2^round
     if (!p.is_root) {
-        uint32_t trailing_ones = __builtin_ctz(~vid);
+        uint32_t trailing_ones = tt::compiler::count_trailing_zeros32(~vid);
         uint32_t parent_vid = vid + (1u << trailing_ones);
         // If parent_vid >= N (non-power-of-2), orphan sends to root (core 0)
         p.parent_core_in_group = (parent_vid < N) ? (N - 1) - parent_vid : 0;
@@ -77,7 +78,7 @@ inline TreeReductionParams get_tree_reduction_params(uint32_t core_id, uint32_t 
     if (p.is_root) {
         for (uint32_t c = 1; c < N; c++) {
             uint32_t cv = (N - 1) - c;
-            uint32_t t = __builtin_ctz(~cv);
+            uint32_t t = tt::compiler::count_trailing_zeros32(~cv);
             if (cv + (1u << t) >= N && p.children_per_round[t] == UINT32_MAX) {
                 p.children_per_round[t] = c;
                 p.num_children++;
