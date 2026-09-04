@@ -161,13 +161,13 @@ SendAsyncMeshWorkloadFactory::create_at(
     const auto input_accessor_args = tt::tt_metal::TensorAccessorArgs(*input_tensor.buffer());
     auto compile_time_args = input_accessor_args.get_compile_time_args();
     std::vector<uint32_t> reader_compile_args = {
-        src0_cb_index,               // cb0_id
-        input_page_size,             // input_page_size
-        socket_aligned_page_size,    // socket_page_size
-        num_pages_per_packet,        // num_pages_per_packet
-        num_whole_packets_per_page,  // num_whole_packets_per_page
-        partial_packet_size,         // partial_packet_size
-        fabric_max_payload_size,     // fabric_max_payload_size
+        src0_cb_index,                                       // cb0_id
+        static_cast<uint32_t>(input_page_size),              // input_page_size
+        static_cast<uint32_t>(socket_aligned_page_size),     // socket_page_size
+        static_cast<uint32_t>(num_pages_per_packet),         // num_pages_per_packet
+        static_cast<uint32_t>(num_whole_packets_per_page),   // num_whole_packets_per_page
+        static_cast<uint32_t>(partial_packet_size),          // partial_packet_size
+        static_cast<uint32_t>(fabric_max_payload_size),      // fabric_max_payload_size
     };
     reader_compile_args.insert(reader_compile_args.end(), compile_time_args.begin(), compile_time_args.end());
 
@@ -178,15 +178,15 @@ SendAsyncMeshWorkloadFactory::create_at(
         tt::tt_metal::ReaderDataMovementConfig(reader_compile_args));
 
     std::vector<uint32_t> writer_compile_args = {
-        src0_cb_index,               // cb0_id
-        packet_header_cb_index,      // fabric_packet_header_cb_id
-        socket_block_size,           // socket_block_size
-        socket_aligned_page_size,    // socket_page_size
-        num_pages_per_packet,        // num_pages_per_packet
-        num_whole_packets_per_page,  // num_whole_packets_per_page
-        partial_packet_size,         // partial_packet_size
-        fabric_max_payload_size,     // whole_packet_size (fabric_max_payload_size)
-        socket_storage_in_dram,      // is_dram
+        src0_cb_index,                                       // cb0_id
+        packet_header_cb_index,                              // fabric_packet_header_cb_id
+        socket_block_size,                                   // socket_block_size
+        static_cast<uint32_t>(socket_aligned_page_size),     // socket_page_size
+        static_cast<uint32_t>(num_pages_per_packet),         // num_pages_per_packet
+        static_cast<uint32_t>(num_whole_packets_per_page),   // num_whole_packets_per_page
+        static_cast<uint32_t>(partial_packet_size),          // partial_packet_size
+        static_cast<uint32_t>(fabric_max_payload_size),      // whole_packet_size (fabric_max_payload_size)
+        socket_storage_in_dram,                              // is_dram
     };
 
     auto writer_kernel_id = tt::tt_metal::CreateKernel(
@@ -207,7 +207,7 @@ SendAsyncMeshWorkloadFactory::create_at(
             num_pages_remainder = pages_for_this_core % num_pages_per_packet;
         }
         std::vector<uint32_t> reader_rt_args = {
-            input_tensor.buffer()->address(),  // input_base_addr
+            static_cast<uint32_t>(input_tensor.buffer()->address()),  // input_base_addr
             pages_for_this_core,               // num_pages
             page_start_offset,                 // page_start_offset
             num_whole_packets,                 // num_whole_packets
@@ -228,8 +228,8 @@ SendAsyncMeshWorkloadFactory::create_at(
             bank_id = core_idx % num_dram_banks;
         }
         std::vector<uint32_t> writer_rt_args = {
-            mesh_socket.get_config_buffer()->address(),  // socket_config_addr
-            bank_id,                                     // bank_id
+            static_cast<uint32_t>(mesh_socket.get_config_buffer()->address()),  // socket_config_addr
+            bank_id,                                                           // bank_id
             pages_for_this_core,                         // num_pages
             page_start_offset,                           // page_start_offset
             num_whole_packets,                           // num_whole_packets

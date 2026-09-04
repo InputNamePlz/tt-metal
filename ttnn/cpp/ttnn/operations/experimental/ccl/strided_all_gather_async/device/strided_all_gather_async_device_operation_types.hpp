@@ -10,6 +10,11 @@
 #include "ttnn/operations/ccl/ccl_common.hpp"
 #include "ttnn/types.hpp"
 
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. This header (or a struct it
+// defines) stores a GlobalSemaphore by value (directly, in std::optional, or in std::vector), and
+// MSVC's aggregate/attribute reflection machinery (device_operation.hpp, tt_stl/reflection.hpp)
+// needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 namespace ttnn::experimental::prim {
 
 // Matmul-signal aggregators (fused all-gather only) need one extra worker core per direction on top of the

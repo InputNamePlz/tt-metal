@@ -1170,8 +1170,8 @@ all_gather_minimal_matmul_async_factory_helper(
             in0_addr,
             in2_addr,
             in3_addr,
-            semaphore.at(0).address(),
-            semaphore.at(1).address(),
+            static_cast<uint32_t>(semaphore.at(0).address()),
+            static_cast<uint32_t>(semaphore.at(1).address()),
         };
         if (use_fused_ternary) {
             in0_common_args.push_back(fused_ternary_input_a.value().buffer()->address());
@@ -1303,12 +1303,12 @@ all_gather_minimal_matmul_async_factory_helper(
             N_start_tile,
             N_end_tile,
             defer_write_k_block,
-            virtual_core.x,
-            virtual_core.y,
-            in0_injector_virtual_core.x,
-            in0_injector_virtual_core.y,
+            static_cast<uint32_t>(virtual_core.x),
+            static_cast<uint32_t>(virtual_core.y),
+            static_cast<uint32_t>(in0_injector_virtual_core.x),
+            static_cast<uint32_t>(in0_injector_virtual_core.y),
             in0_core_order_index,
-            in0_core_order.size(),
+            static_cast<uint32_t>(in0_core_order.size()),
             in0_fwd_idx,
             in0_bwd_idx};
         if (in0_is_fabric_core) {
@@ -1555,7 +1555,7 @@ all_gather_minimal_matmul_async_factory_helper(
     }
 
     return {
-        num_cores,
+        static_cast<uint32_t>(num_cores),
         cores,
         in0_sender_kernels_id,
         in0_receiver_fabric_kernels_id,
@@ -1564,7 +1564,7 @@ all_gather_minimal_matmul_async_factory_helper(
         in1_receiver_kernels_id,
         compute_kernels_id,
         transpose_core_grid,
-        transpose_core_grid ? grid_size.y : grid_size.x};
+        static_cast<uint32_t>(transpose_core_grid ? grid_size.y : grid_size.x)};
 }
 
 }  // namespace detail
@@ -1601,11 +1601,12 @@ void AllGatherMinimalMatmulAsyncProgramFactory::override_runtime_arguments(
 
     // Build in0 common args: [in0_addr, in2_addr, in3_addr, sem_backward, sem_forward, [ternary], output_addrs...]
     std::vector<uint32_t> in0_common = {
-        output_tensor.at(0).buffer()->address(),
-        tensor_args.bias_tensor.has_value() ? tensor_args.bias_tensor.value().buffer()->address() : 0,
-        tensor_args.input_tensor.buffer()->address(),
-        attributes.semaphore.at(0).address(),
-        attributes.semaphore.at(1).address(),
+        static_cast<uint32_t>(output_tensor.at(0).buffer()->address()),
+        static_cast<uint32_t>(
+            tensor_args.bias_tensor.has_value() ? tensor_args.bias_tensor.value().buffer()->address() : 0),
+        static_cast<uint32_t>(tensor_args.input_tensor.buffer()->address()),
+        static_cast<uint32_t>(attributes.semaphore.at(0).address()),
+        static_cast<uint32_t>(attributes.semaphore.at(1).address()),
     };
     if (has_fused_ternary) {
         in0_common.push_back(tensor_args.fused_ternary_input_a.value().buffer()->address());

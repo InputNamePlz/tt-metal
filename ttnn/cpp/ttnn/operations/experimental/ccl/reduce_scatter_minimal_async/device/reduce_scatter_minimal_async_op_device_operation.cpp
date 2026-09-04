@@ -8,6 +8,10 @@
 #include "ttnn/operations/ccl/ccl_common.hpp"
 #include "ttnn/operations/data_movement/common/common.hpp"  // for roofline calculation
 #include "ttnn/operations/experimental/ccl/reduce_scatter_common/reduce_scatter_program_utils.hpp"
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. operation_attributes_t stores a
+// std::optional<GlobalSemaphore> by value, and MSVC's aggregate-arity probing (used by the reflection
+// utilities in device_operation.hpp) needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 using namespace tt::tt_metal;
 

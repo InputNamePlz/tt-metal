@@ -228,18 +228,19 @@ tt::tt_metal::ProgramDescriptor build_descriptor_at(
         // (semaphores live on workload_descriptor.semaphores), so they may
         // remain embedded plain uint32 values.
         std::vector<uint32_t> writer_rt_args = {
-            output_tensor.buffer()->address(),  // tensor_address0  (replaced with Buffer* below)
-            semaphore.address(),                // out_ready_sem_bank_addr (absolute address)
-            barrier_semaphore.address(),        // barrier_sem
+            static_cast<uint32_t>(output_tensor.buffer()->address()),  // tensor_address0  (replaced with Buffer*
+                                                                        // below)
+            static_cast<uint32_t>(semaphore.address()),         // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(barrier_semaphore.address()),  // barrier_sem
             output_tile_id_start,
             output_tile_id_end,
-            wait_output_semaphore,     // wait_output_semaphore
-            reset_global_semaphore,    // reset_global_semaphore
-            drain_sync_core.x,         // out_ready_sem_noc0_x
-            drain_sync_core.y,         // out_ready_sem_noc0_y
-            out_ready_sem_wait_value,  // out_ready_sem_wait_value
-            barrier_core.x,            // barrier_sem_noc0_x
-            barrier_core.y             // barrier_sem_noc0_y
+            wait_output_semaphore,                    // wait_output_semaphore
+            reset_global_semaphore,                    // reset_global_semaphore
+            static_cast<uint32_t>(drain_sync_core.x),  // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),  // out_ready_sem_noc0_y
+            out_ready_sem_wait_value,                  // out_ready_sem_wait_value
+            static_cast<uint32_t>(barrier_core.x),     // barrier_sem_noc0_x
+            static_cast<uint32_t>(barrier_core.y)      // barrier_sem_noc0_y
         };
         auto num_connections = (int)forward_coord.has_value() + (int)backward_coord.has_value();
         writer_rt_args.push_back(num_connections);

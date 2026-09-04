@@ -308,9 +308,9 @@ ttnn::device_operation::CachedProgram<AllToAllAsyncProgram::shared_variables_t> 
         operation_attributes.ring_size,  // num_chips
         tt::CB::c_in0,                   // cb0_id
         pages_per_packet,                // packet_size_in_pages
-        op_config.get_page_size(),       // tensor0_page_size
-        num_targets_forward,             // num_targets_forward_direction
-        num_targets_backward             // num_targets_backward_direction
+        op_config.get_page_size(),                    // tensor0_page_size
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward)   // num_targets_backward_direction
     };
     tt::tt_metal::TensorAccessorArgs(tensor_args.input_tensor.buffer()).append_to(reader_kernel_config.compile_args);
     log_trace(tt::LogOp, "Reader Compile Args:");
@@ -333,9 +333,9 @@ ttnn::device_operation::CachedProgram<AllToAllAsyncProgram::shared_variables_t> 
         PACKET_HEADER_BUFFER_SIZE,       // num_packet_headers_storable
         tt::CB::c_in0,                   // cb0_id
         pages_per_packet,                // packet_size_in_pages
-        op_config.get_page_size(),       // tensor0_page_size
-        num_targets_forward,             // num_targets_forward_direction
-        num_targets_backward,            // num_targets_backward_direction
+        op_config.get_page_size(),                    // tensor0_page_size
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_targets_backward_direction
         dynamic_alternate,               // alternate
         chunk_granularity,               // granularity of signaling to receiver
         contig_pages_advanced,           // contig_pages_advanced
@@ -453,7 +453,7 @@ ttnn::device_operation::CachedProgram<AllToAllAsyncProgram::shared_variables_t> 
 
         // Set reader runtime args
         std::vector<uint32_t> reader_rt_args = {
-            tensor_args.input_tensor.buffer()->address(),  // tensor_address0
+            static_cast<uint32_t>(tensor_args.input_tensor.buffer()->address()),  // tensor_address0
             in_row_tiles,
             in_col_tiles,
             input_row_device_stride,
@@ -473,9 +473,9 @@ ttnn::device_operation::CachedProgram<AllToAllAsyncProgram::shared_variables_t> 
         bool wait_output_semaphore = (link == 0) && !enable_async_output;
         bool reset_global_semaphore = (link == 0) && !enable_async_output;
         std::vector<uint32_t> writer_rt_args = {
-            tensor_args.persistent_intermediate_buffer.buffer()->address(),
-            tensor_args.persistent_output_buffer.buffer()->address(),
-            semaphore.address(),
+            static_cast<uint32_t>(tensor_args.persistent_intermediate_buffer.buffer()->address()),
+            static_cast<uint32_t>(tensor_args.persistent_output_buffer.buffer()->address()),
+            static_cast<uint32_t>(semaphore.address()),
             out_row_tiles,
             out_col_tiles,
             out_row_start,
@@ -522,9 +522,9 @@ ttnn::device_operation::CachedProgram<AllToAllAsyncProgram::shared_variables_t> 
 
             // Set receiver runtime args
             std::vector<uint32_t> receiver_reader_rt_args = {
-                tensor_args.persistent_intermediate_buffer.buffer()->address(),
-                tensor_args.input_tensor.buffer()->address(),
-                semaphore.address(),  // Global semaphore for sender i
+                static_cast<uint32_t>(tensor_args.persistent_intermediate_buffer.buffer()->address()),
+                static_cast<uint32_t>(tensor_args.input_tensor.buffer()->address()),
+                static_cast<uint32_t>(semaphore.address()),  // Global semaphore for sender i
                 in_row_tiles,
                 in_col_tiles,
                 receiver_input_row_device_stride,

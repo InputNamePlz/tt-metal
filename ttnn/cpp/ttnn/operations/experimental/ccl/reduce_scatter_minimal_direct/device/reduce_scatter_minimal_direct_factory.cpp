@@ -563,7 +563,7 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
             chunk_count,
             tile_start,
             tile_count,
-            reader_gen_sem.address()};
+            static_cast<uint32_t>(reader_gen_sem.address())};
         for (uint32_t s = 0; s < num_devices; ++s) {
             if (s != device_idx) {
                 reader_rt.push_back(arrival_sems[SemaphoreIndex::arrival_base + s].address());
@@ -581,7 +581,8 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
         }
         desc.kernels[reader_kernel_id].emplace_runtime_args(core, reader_rt_args);
 
-        const std::vector<uint32_t> compute_rt = {chunk_count, tile_count, compute_gen_sem.address()};
+        const std::vector<uint32_t> compute_rt = {
+            chunk_count, tile_count, static_cast<uint32_t>(compute_gen_sem.address())};
         desc.kernels[compute_kernel_id].emplace_runtime_args(core, {compute_rt[0], compute_rt[1], compute_rt[2]});
 
         std::vector<uint32_t> writer_rt = {
@@ -592,13 +593,13 @@ tt::tt_metal::ProgramDescriptor build_program_descriptor_at(
             chunk_count,
             tile_start,
             tile_count,
-            writer_gen_sem.address(),
+            static_cast<uint32_t>(writer_gen_sem.address()),
             // our source slot's counter, same address on every peer
-            arrival_sems[SemaphoreIndex::arrival_base + device_idx].address(),
+            static_cast<uint32_t>(arrival_sems[SemaphoreIndex::arrival_base + device_idx].address()),
             (uint32_t)peer_core.x,
             (uint32_t)peer_core.y,
             num_connections,
-            init_sync_sem.address(),  // same address on every peer's mirror core
+            static_cast<uint32_t>(init_sync_sem.address()),  // same address on every peer's mirror core
             mcast_range[0],
             mcast_range[1]};
         for (const auto& d : dests) {

@@ -188,7 +188,7 @@ SliceReshardAsyncProgramFactory::cached_program_t SliceReshardAsyncProgramFactor
             reader_kernel_ids.push_back(worker_reader_kernel_id);
 
             std::vector<uint32_t> reader_rt_args = {
-                input_tensor.buffer()->address(),                            // input_tensor_address
+                static_cast<uint32_t>(input_tensor.buffer()->address()),    // input_tensor_address
                 stick_start_id,                                              // stick_start_id
                 num_sticks_to_read,                                          // num_sticks_to_read
                 input_outer_dim_size,                                        // input_outer_dim_size
@@ -197,7 +197,7 @@ SliceReshardAsyncProgramFactory::cached_program_t SliceReshardAsyncProgramFactor
                 outer_dims_to_keep_start,                                    // outer_dims_to_keep
                 outer_dims_to_keep_end,                                      // outer_dims_to_keep
                 num_sticks_per_outer_dim,                                    // num_sticks_per_outer_dim
-                args.final_semaphore.address()  // out_ready_sem_bank_addr (absolute address)
+                static_cast<uint32_t>(args.final_semaphore.address())  // out_ready_sem_bank_addr (absolute address)
             };
             tt::tt_metal::SetRuntimeArgs(program, worker_reader_kernel_id, {core}, reader_rt_args);
 
@@ -219,8 +219,8 @@ SliceReshardAsyncProgramFactory::cached_program_t SliceReshardAsyncProgramFactor
             writer_kernel_ids.push_back(worker_writer_kernel_id);
 
             std::vector<uint32_t> writer_rt_args = {
-                input_tensor.buffer()->address(),                                // input_tensor_address
-                output_tensor.buffer()->address(),                               // output_tensor_address
+                static_cast<uint32_t>(input_tensor.buffer()->address()),        // input_tensor_address
+                static_cast<uint32_t>(output_tensor.buffer()->address()),       // output_tensor_address
                 page_size,                                                       // stick_size
                 stick_start_id,                                                  // stick_start_id
                 num_sticks_to_read,                                              // num_sticks_to_read
@@ -231,13 +231,13 @@ SliceReshardAsyncProgramFactory::cached_program_t SliceReshardAsyncProgramFactor
                 direction ? outer_dims_from_backward : outer_dims_from_forward,  // outer_dims_to_receive
                 outer_dims_from_forward,                                         // outer_dims_from_forward
                 num_sticks_per_outer_dim,                                        // num_sticks_per_outer_dim
-                virtual_core.x,                                                  // out_ready_sem_noc0_x
-                virtual_core.y,                                                  // out_ready_sem_noc0_y
-                args.final_semaphore.address(),  // out_ready_sem_bank_addr (absolute address)
+                static_cast<uint32_t>(virtual_core.x),                          // out_ready_sem_noc0_x
+                static_cast<uint32_t>(virtual_core.y),                          // out_ready_sem_noc0_y
+                static_cast<uint32_t>(args.final_semaphore.address()),  // out_ready_sem_bank_addr (absolute address)
                 true,                            // use_barrier_semaphore
-                virtual_opposite_core.x,         // barrier_sem_noc0_x
-                virtual_opposite_core.y,         // barrier_sem_noc0_y
-                args.barrier_semaphore.address(),
+                static_cast<uint32_t>(virtual_opposite_core.x),  // barrier_sem_noc0_x
+                static_cast<uint32_t>(virtual_opposite_core.y),  // barrier_sem_noc0_y
+                static_cast<uint32_t>(args.barrier_semaphore.address()),
             };
             if (direction) {
                 writer_rt_args.push_back(forward_fabric_node_id.has_value());

@@ -12,6 +12,11 @@
 #include <tt-metalium/experimental/fabric/fabric_edm_types.hpp>
 
 #include "ttnn/tensor/tensor.hpp"
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. SelectiveReduceCombineParams stores
+// a std::optional<GlobalSemaphore> by value, and MSVC's aggregate/attribute reflection machinery (used
+// by device_operation.hpp and tt_stl/reflection.hpp, including transitively through moe_compute) needs
+// the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 namespace ttnn::experimental::prim {
 

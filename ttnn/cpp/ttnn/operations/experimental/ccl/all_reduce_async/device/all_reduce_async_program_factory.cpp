@@ -501,11 +501,11 @@ AllReduceAsyncMeshWorkloadFactory::cached_program_t AllReduceAsyncMeshWorkloadFa
 
         // Set reader runtime args
         std::vector<uint32_t> reader_rt_args = {
-            input_tensor.buffer()->address(),    // tensor_address0
-            input_tensor_shard_num_pages,        // num_tiles_per_core
-            worker_num_tiles_to_read,            // num_tiles_to_read
-            input_first_core_tile_start_offset,  // first_core_tile_start_offset
-            input_tensor_cores_x.size(),         // num_cores
+            static_cast<uint32_t>(input_tensor.buffer()->address()),  // tensor_address0
+            input_tensor_shard_num_pages,                             // num_tiles_per_core
+            worker_num_tiles_to_read,                                 // num_tiles_to_read
+            input_first_core_tile_start_offset,                       // first_core_tile_start_offset
+            static_cast<uint32_t>(input_tensor_cores_x.size()),       // num_cores
         };
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_x.begin(), input_tensor_cores_x.end());
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_y.begin(), input_tensor_cores_y.end());
@@ -547,19 +547,19 @@ AllReduceAsyncMeshWorkloadFactory::cached_program_t AllReduceAsyncMeshWorkloadFa
 
         uint32_t out_ready_sem_wait_value = ring_size;
         std::vector<uint32_t> writer_rt_args = {
-            reduction_cb_index,                   // tensor_address0
-            semaphore.address(),                  // out_ready_sem_bank_addr (absolute address)
-            output_tensor_shard_num_pages,        // num_tiles_per_core
-            worker_num_tiles_to_read,             // num_tiles_to_read
-            output_first_core_tile_start_offset,  // first_core_tile_start_offset
-            output_tensor_cores_x.size(),         // num_cores
-            num_mcast_cores,                      // num_mcast_cores
-            drain_sync_core.x,                    // out_ready_sem_noc0_x
-            drain_sync_core.y,                    // out_ready_sem_noc0_y
-            out_ready_sem_wait_value,             // out_ready_sem_wait_value
-            reduction_semaphore_ids[link],        // reduction_semaphore_id
-            mcast_start_x.size(),                 // num_mcast_ranges
-            link,                                 // link
+            reduction_cb_index,                                     // tensor_address0
+            static_cast<uint32_t>(semaphore.address()),             // out_ready_sem_bank_addr (absolute address)
+            output_tensor_shard_num_pages,                          // num_tiles_per_core
+            worker_num_tiles_to_read,                                // num_tiles_to_read
+            output_first_core_tile_start_offset,                     // first_core_tile_start_offset
+            static_cast<uint32_t>(output_tensor_cores_x.size()),     // num_cores
+            num_mcast_cores,                                         // num_mcast_cores
+            static_cast<uint32_t>(drain_sync_core.x),                // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),                // out_ready_sem_noc0_y
+            out_ready_sem_wait_value,                                // out_ready_sem_wait_value
+            reduction_semaphore_ids[link],                           // reduction_semaphore_id
+            static_cast<uint32_t>(mcast_start_x.size()),             // num_mcast_ranges
+            link,                                                    // link
         };
         writer_rt_args.insert(writer_rt_args.end(), output_tensor_cores_x.begin(), output_tensor_cores_x.end());
         writer_rt_args.insert(writer_rt_args.end(), output_tensor_cores_y.begin(), output_tensor_cores_y.end());
@@ -595,9 +595,9 @@ AllReduceAsyncMeshWorkloadFactory::cached_program_t AllReduceAsyncMeshWorkloadFa
         // Set reduction worker runtime args
         std::vector<uint32_t> reduction_reader_rt_args = {
             has_work,
-            reduction_semaphore_ids[link],  // reduction_semaphore_id
-            semaphore.address(),            // global semaphore_address
-            out_ready_sem_wait_value,       // out_ready_sem_wait_value
+            reduction_semaphore_ids[link],                // reduction_semaphore_id
+            static_cast<uint32_t>(semaphore.address()),   // global semaphore_address
+            out_ready_sem_wait_value,                     // out_ready_sem_wait_value
         };
         tt::tt_metal::SetRuntimeArgs(
             program, reduction_reader_kernel_id, output_corerangeset_per_link[link], reduction_reader_rt_args);

@@ -169,11 +169,11 @@ RecvAsyncMeshWorkloadFactory::create_at(
 
     if (!socket_storage_in_dram) {
         std::vector<uint32_t> writer_compile_args = {
-            packet_header_cb_index,    // fabric_packet_header_cb_id
-            output_page_size,          // output_page_size
-            socket_block_size,         // socket_block_size
-            socket_aligned_page_size,  // socket_page_size
-            num_pages_per_packet,      // num_pages_per_packet
+            packet_header_cb_index,                                // fabric_packet_header_cb_id
+            static_cast<uint32_t>(output_page_size),               // output_page_size
+            socket_block_size,                                     // socket_block_size
+            static_cast<uint32_t>(socket_aligned_page_size),       // socket_page_size
+            static_cast<uint32_t>(num_pages_per_packet),           // num_pages_per_packet
         };
         writer_compile_args.insert(
             writer_compile_args.end(),
@@ -207,8 +207,8 @@ RecvAsyncMeshWorkloadFactory::create_at(
             }
 
             std::vector<uint32_t> writer_rt_args = {
-                mesh_socket.get_config_buffer()->address(),  // socket_config_addr
-                output_tensor.buffer()->address(),           // output_base_addr
+                static_cast<uint32_t>(mesh_socket.get_config_buffer()->address()),  // socket_config_addr
+                static_cast<uint32_t>(output_tensor.buffer()->address()),           // output_base_addr
                 pages_for_this_core,                         // num_pages
                 page_start_offset,                           // page_start_offset
                 num_whole_packets,                           // num_whole_packets
@@ -232,11 +232,11 @@ RecvAsyncMeshWorkloadFactory::create_at(
         }
     } else {
         std::vector<uint32_t> reader_compile_args = {
-            packet_header_cb_index,    // fabric_packet_header_cb_id
-            scratch_buffer_cb_index,   // scratch_buffer_cb_id
-            socket_block_size,         // socket_block_size
-            socket_aligned_page_size,  // socket_page_size
-            socket_storage_in_dram,    // socket_storage_in_dram
+            packet_header_cb_index,                            // fabric_packet_header_cb_id
+            scratch_buffer_cb_index,                           // scratch_buffer_cb_id
+            socket_block_size,                                 // socket_block_size
+            static_cast<uint32_t>(socket_aligned_page_size),   // socket_page_size
+            socket_storage_in_dram,                            // socket_storage_in_dram
         };
         reader_kernel = tt::tt_metal::CreateKernel(
             program,
@@ -245,8 +245,8 @@ RecvAsyncMeshWorkloadFactory::create_at(
             tt::tt_metal::ReaderDataMovementConfig(reader_compile_args));
 
         std::vector<uint32_t> writer_compile_args = {
-            scratch_buffer_cb_index,  // scratch_buffer_cb_id
-            output_page_size,         // page_size
+            scratch_buffer_cb_index,                   // scratch_buffer_cb_id
+            static_cast<uint32_t>(output_page_size),   // page_size
         };
         writer_compile_args.insert(
             writer_compile_args.end(),
@@ -298,8 +298,8 @@ RecvAsyncMeshWorkloadFactory::create_at(
             }
 
             std::vector<uint32_t> reader_rt_args = {
-                mesh_socket.get_config_buffer()->address(),  // socket_config_addr
-                bank_id,                                     // bank_id
+                static_cast<uint32_t>(mesh_socket.get_config_buffer()->address()),  // socket_config_addr
+                bank_id,                                                            // bank_id
                 num_blocks,                                  // num_blocks
                 num_pages_per_block,                         // num_pages_per_block
                 block_remainder_pages,                       // block_remainder_pages

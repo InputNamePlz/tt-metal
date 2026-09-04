@@ -10,6 +10,10 @@
 #include "ttnn/operations/data_movement/common/common.hpp"
 #include "ttnn/tensor/tensor_ops.hpp"
 #include <tt-metalium/work_split.hpp>
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. operation_attributes_t stores a
+// std::optional<GlobalSemaphore> by value, and MSVC's aggregate-arity probing (used by the reflection
+// utilities in device_operation.hpp) needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 namespace ttnn::operations::experimental::ccl {
 void LlamaReduceScatterCreateHeadsDeviceOperation::validate_on_program_cache_miss(
