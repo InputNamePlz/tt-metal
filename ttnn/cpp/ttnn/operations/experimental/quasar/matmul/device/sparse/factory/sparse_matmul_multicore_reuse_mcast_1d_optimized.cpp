@@ -339,7 +339,7 @@ SparseMatmulMultiCoreReuseMcast1DProgramFactory::create(
         // in1 block args
         (std::uint32_t)in1_block_w,                // in1_block_w
         (std::uint32_t)in0_block_w,                // in1_block_h
-        (std::uint32_t)in1_block_w * in0_block_w,  // in1_block_num_tiles
+        (std::uint32_t)(in1_block_w * in0_block_w),  // in1_block_num_tiles
         // in0/in1 common args
         (std::uint32_t)num_blocks,        // num_blocks
         (std::uint32_t)out_num_blocks_x,  // out_num_blocks_x
@@ -484,10 +484,10 @@ SparseMatmulMultiCoreReuseMcast1DProgramFactory::create(
     uint32_t out_subblock_num_tiles = out_subblock_h * out_subblock_w;
 
     std::vector<uint32_t> compute_kernel_args = {
-        in0_block_w,             // in0_block_w
-        in0_num_subblocks,       // in0_num_subblocks
-        in0_block_num_tiles,     // in0_block_num_tiles
-        in0_subblock_num_tiles,  // in0_subblock_num_tiles
+        static_cast<uint32_t>(in0_block_w),  // in0_block_w
+        in0_num_subblocks,                   // in0_num_subblocks
+        in0_block_num_tiles,                 // in0_block_num_tiles
+        in0_subblock_num_tiles,              // in0_subblock_num_tiles
 
         in1_num_subblocks,    // in1_num_subblocks
         in1_block_num_tiles,  // in1_block_num_tiles
@@ -497,11 +497,11 @@ SparseMatmulMultiCoreReuseMcast1DProgramFactory::create(
         out_num_blocks_x,  // out_num_blocks_x
         out_num_blocks_y,  // out_num_blocks_y
 
-        out_subblock_h,          // out_subblock_h
-        out_subblock_w,          // out_subblock_w
-        out_subblock_num_tiles,  // out_subblock_num_tiles
-        num_batch_compute,       // batch_nnz
-        out_block_tiles,         // out_block_num_tiles
+        static_cast<uint32_t>(out_subblock_h),  // out_subblock_h
+        static_cast<uint32_t>(out_subblock_w),  // out_subblock_w
+        out_subblock_num_tiles,                 // out_subblock_num_tiles
+        num_batch_compute,                      // batch_nnz
+        out_block_tiles,                        // out_block_num_tiles
 
         false,             // untilize_out
         !nnz.has_value(),  // get_batch_from_reader
@@ -661,7 +661,7 @@ SparseMatmulMultiCoreReuseMcast1DProgramFactory::create(
             std::vector<uint32_t> mm_in0_sender_args = {
                 // in0 tensor args
                 (std::uint32_t)in0_buffer->address(),
-                (std::uint32_t)Kt * per_core_M * output_idx_y,  // in0_tensor_start_tile_id
+                (std::uint32_t)(Kt * per_core_M * output_idx_y),  // in0_tensor_start_tile_id
                 // in0 mcast args
                 (std::uint32_t)start_core_noc.x,  // in0_mcast_dest_noc_start_x
                 (std::uint32_t)start_core_noc.y,  // in0_mcast_dest_noc_start_y
@@ -707,8 +707,8 @@ SparseMatmulMultiCoreReuseMcast1DProgramFactory::create(
                 // WRITER
                 // out tensor args
                 (std::uint32_t)out_buffer->address(),
-                ((std::uint32_t)output_idx_x * per_core_N) +
-                    (output_idx_y * per_core_M * Nt)  // out_tensor_start_tile_id
+                static_cast<uint32_t>(
+                    (output_idx_x * per_core_N) + (output_idx_y * per_core_M * Nt))  // out_tensor_start_tile_id
             };
 
             if (output_idx_x == num_blocks_x - 1) {

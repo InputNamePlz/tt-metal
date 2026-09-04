@@ -834,8 +834,8 @@ ttnn::device_operation::ProgramArtifacts ReshardGenericFactory::create_program_a
 
     DataflowBufferSpec shard_dfb{
         .unique_id = DFBSpecName{kGenDfbName},
-        .entry_size = output_buffer->page_size(),
-        .num_entries = dfb_total_size / output_buffer->page_size(),
+        .entry_size = static_cast<uint32_t>(output_buffer->page_size()),
+        .num_entries = static_cast<uint32_t>(dfb_total_size / output_buffer->page_size()),
         .data_format_metadata = data_format,
         .borrowed_from = TensorParamName{kGenOutputTensorParam},
     };
