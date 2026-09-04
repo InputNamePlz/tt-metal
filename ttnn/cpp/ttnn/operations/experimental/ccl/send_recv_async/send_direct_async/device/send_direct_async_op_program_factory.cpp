@@ -185,15 +185,15 @@ ProgramDescriptor SendDirectAsyncProgramFactory::create_descriptor(
     auto compile_time_args = input_accessor_args.get_compile_time_args();
 
     std::vector<uint32_t> reader_compile_args = {
-        src0_cb_index,               // cb0_id
-        input_page_size,             // input_page_size
-        socket_aligned_page_size,    // socket_page_size
-        num_pages_per_packet,        // num_pages_per_packet
-        num_whole_packets_per_page,  // num_whole_packets_per_page
-        partial_packet_size,         // partial_packet_size
-        fabric_max_payload_size,     // fabric_max_payload_size
-        num_banks,                   // num_banks
-        enable_bank_packing,         // enable_bank_packing
+        src0_cb_index,                                       // cb0_id
+        static_cast<uint32_t>(input_page_size),              // input_page_size
+        static_cast<uint32_t>(socket_aligned_page_size),     // socket_page_size
+        static_cast<uint32_t>(num_pages_per_packet),         // num_pages_per_packet
+        static_cast<uint32_t>(num_whole_packets_per_page),   // num_whole_packets_per_page
+        static_cast<uint32_t>(partial_packet_size),          // partial_packet_size
+        static_cast<uint32_t>(fabric_max_payload_size),      // fabric_max_payload_size
+        num_banks,                                           // num_banks
+        enable_bank_packing,                                 // enable_bank_packing
     };
     reader_compile_args.insert(reader_compile_args.end(), compile_time_args.begin(), compile_time_args.end());
 
@@ -208,18 +208,18 @@ ProgramDescriptor SendDirectAsyncProgramFactory::create_descriptor(
 
     // The writer addresses the receiver's output tensor, whose layout matches the input tensor.
     std::vector<uint32_t> writer_compile_args = {
-        src0_cb_index,               // cb0_id
-        packet_header_cb_index,      // fabric_packet_header_cb_id
-        handshake_cb_index,          // handshake_cb_id
-        handshake_page_size,         // handshake_page_size (socket page size)
-        input_page_size,             // output_page_size
-        socket_aligned_page_size,    // socket_page_size
-        num_pages_per_packet,        // num_pages_per_packet
-        num_whole_packets_per_page,  // num_whole_packets_per_page
-        partial_packet_size,         // partial_packet_size
-        fabric_max_payload_size,     // whole_packet_size (fabric_max_payload_size)
-        num_banks,                   // num_banks
-        enable_bank_packing,         // enable_bank_packing
+        src0_cb_index,                                       // cb0_id
+        packet_header_cb_index,                              // fabric_packet_header_cb_id
+        handshake_cb_index,                                  // handshake_cb_id
+        handshake_page_size,                                 // handshake_page_size (socket page size)
+        static_cast<uint32_t>(input_page_size),              // output_page_size
+        static_cast<uint32_t>(socket_aligned_page_size),     // socket_page_size
+        static_cast<uint32_t>(num_pages_per_packet),         // num_pages_per_packet
+        static_cast<uint32_t>(num_whole_packets_per_page),   // num_whole_packets_per_page
+        static_cast<uint32_t>(partial_packet_size),          // partial_packet_size
+        static_cast<uint32_t>(fabric_max_payload_size),      // whole_packet_size (fabric_max_payload_size)
+        num_banks,                                           // num_banks
+        enable_bank_packing,                                 // enable_bank_packing
     };
     writer_compile_args.insert(writer_compile_args.end(), compile_time_args.begin(), compile_time_args.end());
 
@@ -257,7 +257,7 @@ ProgramDescriptor SendDirectAsyncProgramFactory::create_descriptor(
             });
 
         std::vector<uint32_t> writer_rt_args = {
-            mesh_socket.get_config_buffer()->address(),  // socket_config_addr
+            static_cast<uint32_t>(mesh_socket.get_config_buffer()->address()),  // socket_config_addr
             pages_for_this_core,                         // num_pages
             page_start_offset,                           // page_start_offset
             num_whole_packets,                           // num_whole_packets

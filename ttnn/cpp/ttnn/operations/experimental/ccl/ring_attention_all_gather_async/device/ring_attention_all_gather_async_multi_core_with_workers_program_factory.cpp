@@ -597,23 +597,23 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
     static constexpr auto num_packet_headers_storable = 8;
     const auto packet_header_size_bytes = tt::tt_fabric::get_tt_fabric_packet_header_size_bytes();
     desc.cbs.push_back(CBDescriptor{
-        .total_size = num_packet_headers_storable * packet_header_size_bytes * 2,
+        .total_size = static_cast<uint32_t>(num_packet_headers_storable * packet_header_size_bytes * 2),
         .core_ranges = sender_forward_core_ranges,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_forward_CB_index),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 
     const auto reserved_packet_header_backward_CB_index = tt::CB::c_in1;
     desc.cbs.push_back(CBDescriptor{
-        .total_size = num_packet_headers_storable * packet_header_size_bytes * 2,
+        .total_size = static_cast<uint32_t>(num_packet_headers_storable * packet_header_size_bytes * 2),
         .core_ranges = sender_backward_core_ranges,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_backward_CB_index),
             .data_format = tt::DataFormat::RawUInt32,
-            .page_size = packet_header_size_bytes,
+            .page_size = static_cast<uint32_t>(packet_header_size_bytes),
         }}},
     });
 
@@ -662,8 +662,8 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
         sender_forward_cb_index,          // cb_forward_id
         num_pages_per_packet,             // packet_size_in_pages
         op_config.get_page_size(),        // tensor0_page_size
-        num_targets_forward,              // num_slices_forward_direction
-        num_targets_backward,             // num_slices_backward_direction
+        static_cast<uint32_t>(num_targets_forward),   // num_slices_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_slices_backward_direction
         static_cast<uint32_t>(topology),  // topology
         tiles_to_write_per_packet,        // contig_pages_advanced
         num_inputs,                       // num_inputs
@@ -712,8 +712,8 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
         sender_forward_cb_index,                  // cb_forward_id
         num_pages_per_packet,                     // packet_size_in_pages
         op_config.get_page_size(),                // tensor0_page_size
-        num_targets_forward,                      // num_targets_forward_direction
-        num_targets_backward,                     // num_targets_backward_direction
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_targets_backward_direction
         dynamic_alternate,                        // alternate
         fuse_op,                                  // fused op
         static_cast<uint32_t>(topology),          // topology
@@ -761,8 +761,8 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
         sender_backward_cb_index,         // cb_backward_id
         num_pages_per_packet,             // packet_size_in_pages
         op_config.get_page_size(),        // tensor0_page_size
-        num_targets_forward,              // num_slices_forward_direction
-        num_targets_backward,             // num_slices_backward_direction
+        static_cast<uint32_t>(num_targets_forward),   // num_slices_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_slices_backward_direction
         static_cast<uint32_t>(topology),  // topology
         tiles_to_write_per_packet,        // contig_pages_advanced
         num_inputs,                       // num_inputs
@@ -811,8 +811,8 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
         sender_backward_cb_index,                  // cb_backward_id
         num_pages_per_packet,                      // packet_size_in_pages
         op_config.get_page_size(),                 // tensor0_page_size
-        num_targets_forward,                       // num_targets_forward_direction
-        num_targets_backward,                      // num_targets_backward_direction
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_targets_backward_direction
         dynamic_alternate,                         // alternate
         fuse_op,                                   // fused op
         static_cast<uint32_t>(topology),           // topology

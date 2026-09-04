@@ -383,8 +383,8 @@ process_agmm_fusion_program_and_create_override_variables(
 
         out_subblock_h,          // out_subblock_h
         out_subblock_w,          // out_subblock_w
-        out_subblock_num_tiles,  // out_subblock_num_tiles
-        batch,                   // batch
+        out_subblock_num_tiles,             // out_subblock_num_tiles
+        static_cast<std::uint32_t>(batch),  // batch
         out_block_tiles,         // out_block_num_tiles
 
         untilize_out,             // untilize_out

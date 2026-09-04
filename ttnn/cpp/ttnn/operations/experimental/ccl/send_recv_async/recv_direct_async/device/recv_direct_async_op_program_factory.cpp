@@ -138,8 +138,8 @@ ProgramDescriptor RecvDirectAsyncProgramFactory::create_descriptor(
         // Buffer* bindings: the socket config buffer is not tensor-backed, so the binding fast path
         // would patch the output address and leave the socket address frozen at first miss.
         std::vector<uint32_t> handshake_rt_args = {
-            mesh_socket.get_config_buffer()->address(),  // socket_config_addr
-            output_tensor.buffer()->address(),           // output_base_addr
+            static_cast<uint32_t>(mesh_socket.get_config_buffer()->address()),  // socket_config_addr
+            static_cast<uint32_t>(output_tensor.buffer()->address()),           // output_base_addr
         };
 
         auto link_indices = tt::tt_fabric::get_forwarding_link_indices(receiver_fabric_node_id, sender_fabric_node_id);

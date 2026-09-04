@@ -256,10 +256,10 @@ LlamaAllGatherMatmulAsyncProgramFactory::cached_program_t LlamaAllGatherMatmulAs
         num_packet_headers_storable,      // num_packet_headers_storable
         src0_cb_index,                    // cb0_id
         num_pages_per_packet,             // packet_size_in_pages
-        op_config.get_page_size(),        // tensor0_page_size
-        num_targets_forward,              // num_targets_forward_direction
-        num_targets_backward,             // num_targets_backward_direction
-        dynamic_alternate                 // dynamic_alternate
+        op_config.get_page_size(),                    // tensor0_page_size
+        static_cast<uint32_t>(num_targets_forward),   // num_targets_forward_direction
+        static_cast<uint32_t>(num_targets_backward),  // num_targets_backward_direction
+        dynamic_alternate                             // dynamic_alternate
     };
     log_trace(tt::LogOp, "Writer Compile Args:");
     for ([[maybe_unused]] const auto& arg : writer_kernel_config.compile_args) {
@@ -296,10 +296,10 @@ LlamaAllGatherMatmulAsyncProgramFactory::cached_program_t LlamaAllGatherMatmulAs
         program,
         worker_receiver_kernel_id,
         intermediate_tensor_cores,
-        {args.semaphore.address(),  // sem_address
+        {static_cast<uint32_t>(args.semaphore.address()),  // sem_address
          0,           // core id, corresponds to the id of which device it expect data from, will be reset later
          ring_index,  // device id
-         aggregated_tensor.buffer()->address(),
+         static_cast<uint32_t>(aggregated_tensor.buffer()->address()),
          static_cast<uint32_t>(bbox_physical_start_core.x),
          static_cast<uint32_t>(bbox_physical_start_core.y),
          static_cast<uint32_t>(bbox_physical_end_core.x),
@@ -326,10 +326,10 @@ LlamaAllGatherMatmulAsyncProgramFactory::cached_program_t LlamaAllGatherMatmulAs
             program,
             worker_receiver_kernel_id,
             {intermediate_cores_vec[i]},
-            {args.semaphore.address(),
+            {static_cast<uint32_t>(args.semaphore.address()),
              i,
              ring_index,
-             aggregated_tensor.buffer()->address(),
+             static_cast<uint32_t>(aggregated_tensor.buffer()->address()),
              static_cast<uint32_t>(bbox_physical_start_core.x),
              static_cast<uint32_t>(bbox_physical_start_core.y),
              static_cast<uint32_t>(bbox_physical_end_core.x),
@@ -403,21 +403,21 @@ LlamaAllGatherMatmulAsyncProgramFactory::cached_program_t LlamaAllGatherMatmulAs
 
         // Set reader runtime args
         std::vector<uint32_t> reader_rt_args = {
-            input0.buffer()->address(),                 // input tensor_address0
-            intermediate_tensor.buffer()->address(),    // output tensor_address0
+            static_cast<uint32_t>(input0.buffer()->address()),                 // input tensor_address0
+            static_cast<uint32_t>(intermediate_tensor.buffer()->address()),    // output tensor_address0
             input_tensor_shard_num_pages,               // num_tiles_per_core
             worker_num_tiles_to_read,                   // num_tiles_to_read
             input_first_core_tile_start_offset,         // first_core_tile_start_offset
             intermediate_first_core_tile_start_offset,  // intermediate_first_core_tile_start_offset
-            input_tensor_cores_x.size(),                // num_cores it reads from
+            static_cast<uint32_t>(input_tensor_cores_x.size()),  // num_cores it reads from
             ring_index,                                 // ring_index
-            args.semaphore.address(),                   // out_ready_sem_bank_addr (absolute address)
-            drain_sync_core.x,                          // out_ready_sem_noc0_x
-            drain_sync_core.y,                          // out_ready_sem_noc0_y
+            static_cast<uint32_t>(args.semaphore.address()),    // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(drain_sync_core.x),   // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),   // out_ready_sem_noc0_y
         };
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_x.begin(), input_tensor_cores_x.end());
         reader_rt_args.insert(reader_rt_args.end(), input_tensor_cores_y.begin(), input_tensor_cores_y.end());
-        reader_rt_args.push_back(intermediate_tensor_cores_x.size());
+        reader_rt_args.push_back(static_cast<uint32_t>(intermediate_tensor_cores_x.size()));
         reader_rt_args.insert(
             reader_rt_args.end(), intermediate_tensor_cores_x.begin(), intermediate_tensor_cores_x.end());
         reader_rt_args.insert(
@@ -430,14 +430,14 @@ LlamaAllGatherMatmulAsyncProgramFactory::cached_program_t LlamaAllGatherMatmulAs
 
         // Set writer runtime args
         std::vector<uint32_t> writer_rt_args = {
-            intermediate_tensor.buffer()->address(),    // tensor_address0
-            args.semaphore.address(),                   // out_ready_sem_bank_addr (absolute address)
+            static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // tensor_address0
+            static_cast<uint32_t>(args.semaphore.address()),  // out_ready_sem_bank_addr (absolute address)
             intermediate_tensor_shard_num_pages,        // num_tiles_per_core
             worker_num_tiles_to_read,                   // num_tiles_to_read
             intermediate_first_core_tile_start_offset,  // first_core_tile_start_offset
-            intermediate_tensor_cores_x.size(),         // num_cores it writes to
-            drain_sync_core.x,                          // out_ready_sem_noc0_x
-            drain_sync_core.y,                          // out_ready_sem_noc0_y
+            static_cast<uint32_t>(intermediate_tensor_cores_x.size()),  // num_cores it writes to
+            static_cast<uint32_t>(drain_sync_core.x),   // out_ready_sem_noc0_x
+            static_cast<uint32_t>(drain_sync_core.y),   // out_ready_sem_noc0_y
         };
         writer_rt_args.insert(
             writer_rt_args.end(), intermediate_tensor_cores_x.begin(), intermediate_tensor_cores_x.end());

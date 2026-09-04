@@ -404,14 +404,16 @@ NpHaloWSetup setup_w_fabric(Program& program, const NpHaloWPlan& p) {
         SetCommonRuntimeArgs(
             program,
             w_reader_kernel_id,
-            {halo_buffer->address(), op.barrier_semaphore.address(), op.w_neighbor_semaphore.address()});
+            {static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(op.barrier_semaphore.address()),
+             static_cast<uint32_t>(op.w_neighbor_semaphore.address())});
         SetCommonRuntimeArgs(
             program,
             w_writer_kernel_id,
-            {halo_buffer->address(),
-             halo_buffer->address(),
-             op.w_neighbor_semaphore.address(),
-             op.barrier_semaphore.address(),
+            {static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(op.w_neighbor_semaphore.address()),
+             static_cast<uint32_t>(op.barrier_semaphore.address()),
              input_halo_dim_size,
              static_cast<uint32_t>(op.np_padding_h)});
 
@@ -485,10 +487,10 @@ NpHaloWSetup setup_w_fabric(Program& program, const NpHaloWPlan& p) {
                     std::vector<uint32_t> w_rt = {
                         section_base + wk_start * pw,
                         wk_count,
-                        wc_vc.x,
-                        wc_vc.y,
-                        wc_vc.x,
-                        wc_vc.y,
+                        static_cast<uint32_t>(wc_vc.x),
+                        static_cast<uint32_t>(wc_vc.y),
+                        static_cast<uint32_t>(wc_vc.x),
+                        static_cast<uint32_t>(wc_vc.y),
                         static_cast<uint32_t>(is_first_w_device),
                         static_cast<uint32_t>(is_last_w_device),
                         w_dir,
@@ -530,9 +532,9 @@ NpHaloWSetup setup_w_fabric(Program& program, const NpHaloWPlan& p) {
             w_reader_kernel_config);
         {
             std::vector<uint32_t> w_reader_crta = {
-                halo_buffer->address(),
-                op.barrier_semaphore.address(),
-                op.w_neighbor_semaphore.address(),
+                static_cast<uint32_t>(halo_buffer->address()),
+                static_cast<uint32_t>(op.barrier_semaphore.address()),
+                static_cast<uint32_t>(op.w_neighbor_semaphore.address()),
             };
             // No per-batch H-region sems (progress_t_batch_size == 0)
             SetCommonRuntimeArgs(program, w_reader_kernel_id, w_reader_crta);
@@ -563,10 +565,10 @@ NpHaloWSetup setup_w_fabric(Program& program, const NpHaloWPlan& p) {
         SetCommonRuntimeArgs(
             program,
             w_writer_kernel_id,
-            {halo_buffer->address(),
-             halo_buffer->address(),
-             op.w_neighbor_semaphore.address(),
-             op.h_neighbor_semaphore.address(),
+            {static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(op.w_neighbor_semaphore.address()),
+             static_cast<uint32_t>(op.h_neighbor_semaphore.address()),
              input_halo_dim_size,
              static_cast<uint32_t>(op.np_padding_h)});  // [4],[5]: W-writer per-batch two-pass reorder dims
 
@@ -635,11 +637,11 @@ NpHaloWSetup setup_w_fabric(Program& program, const NpHaloWPlan& p) {
                     0,
                     1,
                     1,
-                    w_virtual_core.x,
-                    w_virtual_core.y,
+                    static_cast<uint32_t>(w_virtual_core.x),
+                    static_cast<uint32_t>(w_virtual_core.y),
                     true,
-                    w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].x,
-                    w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].y};
+                    static_cast<uint32_t>(w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].x),
+                    static_cast<uint32_t>(w_fabric_virtual_cores[(w_link * 2) + (1 - w_direction)].y)};
                 // No Phase 2 signal targets
                 constexpr uint32_t MAX_PHASE2_SIGNAL_TARGETS = 8;
                 w_writer_rt_args.push_back(0);
@@ -1050,7 +1052,9 @@ NpHaloMeshWorkloadFactory::cached_program_t NpHaloMeshWorkloadFactory::create_at
         SetCommonRuntimeArgs(
             program,
             h_reader_kernel_id,
-            {input_buffer->address(), halo_buffer->address(), op.h_neighbor_semaphore.address()});
+            {static_cast<uint32_t>(input_buffer->address()),
+             static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(op.h_neighbor_semaphore.address())});
 
         // ------------------------------------------------------------------------- NP H-fabric writer kernel
         auto h_writer_kernel_config = WriterDataMovementConfig{};
@@ -1078,10 +1082,10 @@ NpHaloMeshWorkloadFactory::cached_program_t NpHaloMeshWorkloadFactory::create_at
             h_writer_kernel_config);
         {
             std::vector<uint32_t> h_writer_crta = {
-                input_buffer->address(),
-                halo_buffer->address(),
-                op.h_neighbor_semaphore.address(),
-                op.barrier_semaphore.address(),
+                static_cast<uint32_t>(input_buffer->address()),
+                static_cast<uint32_t>(halo_buffer->address()),
+                static_cast<uint32_t>(op.h_neighbor_semaphore.address()),
+                static_cast<uint32_t>(op.barrier_semaphore.address()),
                 // CRTA[4]: number of conv3d reader cores to signal
                 static_cast<uint32_t>(reader_noc_coords.size()),
                 // CRTA[5+]: interleaved (x, y) NOC coords for each reader core
@@ -1149,11 +1153,11 @@ NpHaloMeshWorkloadFactory::cached_program_t NpHaloMeshWorkloadFactory::create_at
                     op.np_pad2_left,                   // padding_left (W-axis, for L1 corner detection)
                     h_writer_num_sticks_to_read,       // num_sticks_to_read
                     h_writer_num_sticks_per_halo_dim,  // num_sticks_per_halo_dim
-                    virtual_core.x,                    // neighbor_sem_noc0_x
-                    virtual_core.y,                    // neighbor_sem_noc0_y
-                    true,                              // use_barrier_semaphore
-                    virtual_opposite_core.x,           // barrier_sem_noc0_x
-                    virtual_opposite_core.y};          // barrier_sem_noc0_y
+                    static_cast<uint32_t>(virtual_core.x),   // neighbor_sem_noc0_x
+                    static_cast<uint32_t>(virtual_core.y),   // neighbor_sem_noc0_y
+                    true,                                    // use_barrier_semaphore
+                    static_cast<uint32_t>(virtual_opposite_core.x),   // barrier_sem_noc0_x
+                    static_cast<uint32_t>(virtual_opposite_core.y)};  // barrier_sem_noc0_y
                 // Phase 2 signal targets (W fabric reader cores)
                 constexpr uint32_t MAX_PHASE2_SIGNAL_TARGETS = 8;
                 const std::vector<CoreCoord>& w_sig_cores = use_w_mux ? mux_worker_virtual : w_fabric_virtual_cores;
@@ -1268,10 +1272,10 @@ NpHaloMeshWorkloadFactory::cached_program_t NpHaloMeshWorkloadFactory::create_at
         SetCommonRuntimeArgs(
             program,
             h_reader_kernel_id,
-            {input_buffer->address(),
-             halo_buffer->address(),
-             op.h_neighbor_semaphore.address(),
-             op.barrier_semaphore.address()});
+            {static_cast<uint32_t>(input_buffer->address()),
+             static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(op.h_neighbor_semaphore.address()),
+             static_cast<uint32_t>(op.barrier_semaphore.address())});
 
         // H-mux writer on worker cores. CT: is_padding_zeros, c_in0 (is_first local pad), hsend, stick.
         std::vector<uint32_t> hw_ct = {is_padding_zeros, sender_cb_index, hsend_cb_index, page_size};
@@ -1285,10 +1289,10 @@ NpHaloMeshWorkloadFactory::cached_program_t NpHaloMeshWorkloadFactory::create_at
         SetCommonRuntimeArgs(
             program,
             h_writer_kernel_id,
-            {input_buffer->address(),
-             halo_buffer->address(),
-             op.h_neighbor_semaphore.address(),
-             op.barrier_semaphore.address()});
+            {static_cast<uint32_t>(input_buffer->address()),
+             static_cast<uint32_t>(halo_buffer->address()),
+             static_cast<uint32_t>(op.h_neighbor_semaphore.address()),
+             static_cast<uint32_t>(op.barrier_semaphore.address())});
 
         auto hmux_kernel_id = CreateKernel(
             program,
@@ -1363,8 +1367,8 @@ NpHaloMeshWorkloadFactory::cached_program_t NpHaloMeshWorkloadFactory::create_at
                         op.np_padding_h,
                         num_sticks_per_halo_dim,  // num_sticks_to_read (W_dev)
                         num_sticks_per_halo_dim,  // num_sticks_per_halo_dim
-                        wc_vc.x,
-                        wc_vc.y,  // recv-sem target = same-dir worker
+                        static_cast<uint32_t>(wc_vc.x),
+                        static_cast<uint32_t>(wc_vc.y),  // recv-sem target = same-dir worker
                         // is_first/is_last direction-adjusted (match np_h_reader + np_writer).
                         static_cast<uint32_t>(dir ? is_last_device : is_first_device),
                         static_cast<uint32_t>(dir ? is_first_device : is_last_device),

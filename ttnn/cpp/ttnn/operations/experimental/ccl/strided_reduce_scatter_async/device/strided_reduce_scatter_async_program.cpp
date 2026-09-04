@@ -801,9 +801,9 @@ StridedReduceScatterProgramArtifacts build_ring_strided_reduce_scatter_async_pro
                 uint32_t num_workers = num_links * num_workers_per_direction;
 
                 std::vector<uint32_t> reader_rt_args = {
-                    input_tensor.buffer()->address(),         // input_tensor_address
-                    intermediate_tensor.buffer()->address(),  // intermediate_tensor_address
-                    semaphore.at(dir).address(),              // out_ready_semaphore
+                    static_cast<uint32_t>(input_tensor.buffer()->address()),         // input_tensor_address
+                    static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                    static_cast<uint32_t>(semaphore.at(dir).address()),              // out_ready_semaphore
                     dir,                                      // direction
                     worker_id,                                // worker_id
                     num_workers,                              // num_workers
@@ -843,15 +843,16 @@ StridedReduceScatterProgramArtifacts build_ring_strided_reduce_scatter_async_pro
 
                 // Writer RT args
                 std::vector<uint32_t> writer_rt_args = {
-                    intermediate_tensor.buffer()->address(),                     // intermediate_tensor_address
-                    output_tensor.buffer()->address(),                           // output_tensor_address
-                    virtual_core.x,                                              // out_ready_sem_noc0_x
-                    virtual_core.y,                                              // out_ready_sem_noc0_y
-                    semaphore.at(dir).address(),                                 // out_ready_fwd_semaphore
-                    semaphore.at(num_directions_per_link).address(),             // batch_ready_semaphore
+                    static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                    static_cast<uint32_t>(output_tensor.buffer()->address()),        // output_tensor_address
+                    static_cast<uint32_t>(virtual_core.x),                           // out_ready_sem_noc0_x
+                    static_cast<uint32_t>(virtual_core.y),                           // out_ready_sem_noc0_y
+                    static_cast<uint32_t>(semaphore.at(dir).address()),              // out_ready_fwd_semaphore
+                    static_cast<uint32_t>(
+                        semaphore.at(num_directions_per_link).address()),  // batch_ready_semaphore
                     barrier_semaphore.has_value() && !using_persistent_buffers,  // use_barrier_sem
                     barrier_semaphore.has_value()                                // barrier_sem
-                        ? barrier_semaphore.value().address()
+                        ? static_cast<uint32_t>(barrier_semaphore.value().address())
                         : 0,
                     dir,          // direction
                     worker_id,    // worker_id

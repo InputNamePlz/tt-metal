@@ -7,6 +7,10 @@
 #include "ttnn/operations/experimental/ccl/minimal_matmul_strided_reduce_scatter_async/device/minimal_matmul_strided_reduce_scatter_async_op.hpp"
 #include "ttnn/operations/experimental/minimal_matmul/device/minimal_matmul_device_operation.hpp"
 #include "ttnn/operations/experimental/ccl/composite_common.hpp"
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. operation_attributes_t stores a
+// std::optional<GlobalSemaphore> by value, and MSVC's aggregate-arity probing (used by the reflection
+// utilities in device_operation.hpp) needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 using matmul_device_operation_t = ttnn::experimental::prim::MinimalMatmulDeviceOperation;
 

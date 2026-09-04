@@ -808,9 +808,9 @@ ReduceScatterProgramArtifacts build_ring_reduce_scatter_minimal_async_program_ar
                 std::vector<uint32_t> reader_rt_args;
                 if (normalized_dim == 0) {
                     reader_rt_args = {
-                        input_tensor.buffer()->address(),         // input_tensor_address
-                        intermediate_tensor.buffer()->address(),  // intermediate_tensor_address
-                        semaphore.at(dir).address(),              // out_ready_semaphore for this dir
+                        static_cast<uint32_t>(input_tensor.buffer()->address()),         // input_tensor_address
+                        static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                        static_cast<uint32_t>(semaphore.at(dir).address()),  // out_ready_semaphore for this dir
                         dir,                                      // direction
                         chunks_per_sync_val,                      // chunks_per_sync
                         start_tiles_read,                         // start_tiles_read
@@ -818,11 +818,11 @@ ReduceScatterProgramArtifacts build_ring_reduce_scatter_minimal_async_program_ar
                     };
                 } else {
                     reader_rt_args = {
-                        input_tensor.buffer()->address(),         // input_tensor_address
-                        intermediate_tensor.buffer()->address(),  // intermediate_tensor_address
-                        output_tensor.buffer()->address(),        // output_tensor_address
-                        semaphore.at(dir).address(),              // out_ready_semaphore for this dir
-                        semaphore.at(!dir).address(),             // out_ready_semaphore for opposite dir
+                        static_cast<uint32_t>(input_tensor.buffer()->address()),         // input_tensor_address
+                        static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                        static_cast<uint32_t>(output_tensor.buffer()->address()),        // output_tensor_address
+                        static_cast<uint32_t>(semaphore.at(dir).address()),   // out_ready_semaphore for this dir
+                        static_cast<uint32_t>(semaphore.at(!dir).address()),  // out_ready_semaphore for opposite dir
                         dir,                                      // direction
                         chunks_per_sync_val,                      // chunks_per_sync
                         start_tiles_read,                         // start_tiles_read
@@ -830,7 +830,8 @@ ReduceScatterProgramArtifacts build_ring_reduce_scatter_minimal_async_program_ar
                         start_pages_read_in_row,                  // start_pages_read_in_row
                         start_row_offset,                         // start_row_offset
                         // penult_intermediate_tensor_address; 0 (unread) on the tiled staging layout
-                        use_contiguous_interm ? penult_intermediate_tensor->buffer()->address() : 0,
+                        static_cast<uint32_t>(
+                            use_contiguous_interm ? penult_intermediate_tensor->buffer()->address() : 0),
                     };
                 }
                 if (fuse_op) {
@@ -843,17 +844,20 @@ ReduceScatterProgramArtifacts build_ring_reduce_scatter_minimal_async_program_ar
                 std::vector<uint32_t> writer_rt_args;
                 if (normalized_dim == 0) {
                     writer_rt_args = {
-                        intermediate_tensor.buffer()->address(),                     // intermediate_tensor_address
-                        output_tensor.buffer()->address(),                           // output_tensor_address
-                        virtual_core.x,                                              // this core.x
-                        virtual_core.y,                                              // this core.y
-                        opposite_core_coord.x,                                       // opposite direction core.x
-                        opposite_core_coord.y,                                       // opposite direction core.y
-                        semaphore.at(dir).address(),                                 // out_ready_semaphore for this dir
-                        semaphore.at(num_directions_per_link).address(),             // batch_ready_semaphore
+                        static_cast<uint32_t>(
+                            intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                        static_cast<uint32_t>(output_tensor.buffer()->address()),    // output_tensor_address
+                        static_cast<uint32_t>(virtual_core.x),                       // this core.x
+                        static_cast<uint32_t>(virtual_core.y),                       // this core.y
+                        static_cast<uint32_t>(opposite_core_coord.x),                // opposite direction core.x
+                        static_cast<uint32_t>(opposite_core_coord.y),                // opposite direction core.y
+                        static_cast<uint32_t>(
+                            semaphore.at(dir).address()),  // out_ready_semaphore for this dir
+                        static_cast<uint32_t>(
+                            semaphore.at(num_directions_per_link).address()),  // batch_ready_semaphore
                         barrier_semaphore.has_value() && !using_persistent_buffers,  // use_barrier_sem
                         barrier_semaphore.has_value()                                // barrier_sem
-                            ? barrier_semaphore.value().address()
+                            ? static_cast<uint32_t>(barrier_semaphore.value().address())
                             : 0,
                         dir,                  // direction
                         chunks_per_sync_val,  // chunks_per_sync
@@ -862,17 +866,20 @@ ReduceScatterProgramArtifacts build_ring_reduce_scatter_minimal_async_program_ar
                     };
                 } else {
                     writer_rt_args = {
-                        intermediate_tensor.buffer()->address(),                     // intermediate_tensor_address
-                        output_tensor.buffer()->address(),                           // output_tensor_address
-                        virtual_core.x,                                              // this core.x
-                        virtual_core.y,                                              // this core.y
-                        opposite_core_coord.x,                                       // opposite direction core.x
-                        opposite_core_coord.y,                                       // opposite direction core.y
-                        semaphore.at(dir).address(),                                 // out_ready_semaphore for this dir
-                        semaphore.at(num_directions_per_link).address(),             // batch_ready_semaphore
+                        static_cast<uint32_t>(
+                            intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                        static_cast<uint32_t>(output_tensor.buffer()->address()),    // output_tensor_address
+                        static_cast<uint32_t>(virtual_core.x),                       // this core.x
+                        static_cast<uint32_t>(virtual_core.y),                       // this core.y
+                        static_cast<uint32_t>(opposite_core_coord.x),                // opposite direction core.x
+                        static_cast<uint32_t>(opposite_core_coord.y),                // opposite direction core.y
+                        static_cast<uint32_t>(
+                            semaphore.at(dir).address()),  // out_ready_semaphore for this dir
+                        static_cast<uint32_t>(
+                            semaphore.at(num_directions_per_link).address()),  // batch_ready_semaphore
                         barrier_semaphore.has_value() && !using_persistent_buffers,  // use_barrier_sem
                         barrier_semaphore.has_value()                                // barrier_sem
-                            ? barrier_semaphore.value().address()
+                            ? static_cast<uint32_t>(barrier_semaphore.value().address())
                             : 0,
                         dir,                      // direction
                         chunks_per_sync_val,      // chunks_per_sync
@@ -882,7 +889,8 @@ ReduceScatterProgramArtifacts build_ring_reduce_scatter_minimal_async_program_ar
                         start_tiles_to_read,      // tiles_to_read
                         // penult_intermediate_tensor_address; 0 (unread) on the tiled staging layout. Precedes
                         // the mux/fabric-connection args appended after this block.
-                        use_contiguous_interm ? penult_intermediate_tensor->buffer()->address() : 0,
+                        static_cast<uint32_t>(
+                            use_contiguous_interm ? penult_intermediate_tensor->buffer()->address() : 0),
                     };
                 }
                 if (num_mux_cores_per_direction_per_link) {
@@ -1530,14 +1538,14 @@ ReduceScatterProgramArtifacts build_line_reduce_scatter_minimal_async_program_ar
 
                 // Reader RT args
                 std::vector<uint32_t> reader_rt_args = {
-                    input_tensor.buffer()->address(),         // input_tensor_address
-                    intermediate_tensor.buffer()->address(),  // intermediate_tensor_address
-                    output_tensor.buffer()->address(),        // output_tensor_address
-                    semaphore.at(0).address(),                // remote transfer sync semaphore
+                    static_cast<uint32_t>(input_tensor.buffer()->address()),         // input_tensor_address
+                    static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                    static_cast<uint32_t>(output_tensor.buffer()->address()),        // output_tensor_address
+                    static_cast<uint32_t>(semaphore.at(0).address()),                // remote transfer sync semaphore
                     fwd_bwd_semaphore_address,
                     is_forward,                    // is_forward
                     is_first_device_in_direction,  // is_first_device_in_direction
-                    num_targets_in_direction,      // num_targets_in_direction
+                    static_cast<uint32_t>(num_targets_in_direction),  // num_targets_in_direction
                     do_final_reduction,            // do_final_reduction
                     chunks_per_sync_val,           // chunks_per_sync
                     start_tiles_read,              // start_tiles_read
@@ -1564,21 +1572,21 @@ ReduceScatterProgramArtifacts build_line_reduce_scatter_minimal_async_program_ar
                     mesh_device->worker_core_from_logical_core(termination_master_logical_core);
 
                 std::vector<uint32_t> writer_rt_args = {
-                    intermediate_tensor.buffer()->address(),  // intermediate_tensor_address
-                    output_tensor.buffer()->address(),        // output_tensor_address
-                    virtual_core.x,                           // out_ready_sem_noc0_x
-                    virtual_core.y,                           // out_ready_sem_noc0_y
-                    semaphore.at(0).address(),                // remote transfer sync semaphore
+                    static_cast<uint32_t>(intermediate_tensor.buffer()->address()),  // intermediate_tensor_address
+                    static_cast<uint32_t>(output_tensor.buffer()->address()),        // output_tensor_address
+                    static_cast<uint32_t>(virtual_core.x),                           // out_ready_sem_noc0_x
+                    static_cast<uint32_t>(virtual_core.y),                           // out_ready_sem_noc0_y
+                    static_cast<uint32_t>(semaphore.at(0).address()),                // remote transfer sync semaphore
                     fwd_bwd_semaphore_address,
-                    opposite_core_coord.x,
-                    opposite_core_coord.y,
+                    static_cast<uint32_t>(opposite_core_coord.x),
+                    static_cast<uint32_t>(opposite_core_coord.y),
                     barrier_semaphore.has_value() && !using_persistent_buffers,  // use_barrier_sem
                     barrier_semaphore.has_value()                                // synchronize barrier semaphore
-                        ? barrier_semaphore.value().address()
+                        ? static_cast<uint32_t>(barrier_semaphore.value().address())
                         : 0,
                     is_forward,                    // is_forward
                     is_first_device_in_direction,  // is_first_device_in_direction
-                    num_targets_in_direction,      // num_targets_in_direction
+                    static_cast<uint32_t>(num_targets_in_direction),  // num_targets_in_direction
                     do_final_reduction,            // do_final_reduction
                     chunks_per_sync_val,           // chunks_per_sync
                     start_pages_read_in_row,       // start_pages_read_in_row
@@ -1607,7 +1615,7 @@ ReduceScatterProgramArtifacts build_line_reduce_scatter_minimal_async_program_ar
                 tt::tt_metal::SetRuntimeArgs(program, writer_kernel_id, {core}, writer_rt_args);
 
                 std::vector<uint32_t> reduce_rt_args = {
-                    num_total_reduction_steps,
+                    static_cast<uint32_t>(num_total_reduction_steps),
                     start_tiles_read,
                     start_tiles_to_read,
                 };

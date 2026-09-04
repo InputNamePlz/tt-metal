@@ -529,7 +529,7 @@ AllToAllDispatchMetadataDeviceOperation::AllToAllDispatchMetadataSparse::create_
         batch_size,          // 17
         selected_experts_k,  // 18
         experts,             // 19
-        num_shared_experts,  // 20
+        static_cast<uint32_t>(num_shared_experts),  // 20
         tokens_per_device,   // 21
 
         num_links,           // 22
@@ -537,8 +537,8 @@ AllToAllDispatchMetadataDeviceOperation::AllToAllDispatchMetadataSparse::create_
 
         src_mesh_id,            // 24
         (uint32_t)src_chip_id,  // 25
-        mesh_view.num_rows(),   // 26
-        mesh_view.num_cols(),   // 27
+        static_cast<uint32_t>(mesh_view.num_rows()),   // 26
+        static_cast<uint32_t>(mesh_view.num_cols()),   // 27
 
         aligned_input_page_size,     // 28
         aligned_indices_page_size,   // 29

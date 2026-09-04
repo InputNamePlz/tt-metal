@@ -13,6 +13,10 @@
 #include "ttnn/operations/ccl/ccl_common.hpp"
 #include "ttnn/operations/ccl/sharding_addrgen_helper.hpp"
 #include "ttnn/operations/matmul/device/utilities/matmul_utilities.hpp"
+// Pulls in the full definition of tt::tt_metal::GlobalSemaphoreImpl. operation_attributes_t stores a
+// std::optional<GlobalSemaphore> by value, and MSVC's aggregate-arity probing (used by the reflection
+// utilities in device_operation.hpp) needs the pimpl type to be complete at this point.
+#include <tt_metal/impl/buffers/global_semaphore_impl.hpp>
 
 namespace ttnn::operations::experimental::ccl {
 

@@ -424,31 +424,31 @@ DeepseekMoEReduceScatterProgramArtifacts build_deepseek_moe_reduce_scatter_progr
 
             // reader
             std::vector<uint32_t> reader_rt_args = {
-                op_semaphore.address(),  // op_semaphore
-                direction,               // direction
-                start_tiles_read,        // start_tiles_read
-                start_tiles_to_read,     // start_tiles_to_read
+                static_cast<uint32_t>(op_semaphore.address()),  // op_semaphore
+                direction,                                      // direction
+                start_tiles_read,                                // start_tiles_read
+                start_tiles_to_read,                             // start_tiles_to_read
             };
 
             tt::tt_metal::SetRuntimeArgs(program, reader_kernel_id, {core}, reader_rt_args);
 
             // writer
             std::vector<uint32_t> writer_rt_args = {
-                intermediate_slice_tensors.at(0).buffer()->address(),  // intermediate_slice_0_address
-                intermediate_slice_tensors.at(1).buffer()->address(),  // intermediate_slice_1_address
-                intermediate_slice_tensors.at(2).buffer()->address(),  // intermediate_slice_2_address
-                intermediate_slice_tensors.at(3).buffer()->address(),  // intermediate_slice_3_address
-                intermediate_slice_tensors.at(4).buffer()->address(),  // intermediate_slice_4_address
-                intermediate_slice_tensors.at(5).buffer()->address(),  // intermediate_slice_5_address
-                intermediate_slice_tensors.at(6).buffer()->address(),  // intermediate_slice_6_address
-                intermediate_slice_tensors.at(7).buffer()->address(),  // intermediate_slice_7_address
-                output_tensor.buffer()->address(),                     // output_address
-                virtual_core.x,                                        // op_semaphore_noc0_x
-                virtual_core.y,                                        // op_semaphore_noc0_y
-                op_semaphore.address(),                                // op_semaphore
-                opposition_direction_virtual_core.x,                   // pre_op_barrier_semaphore_noc0_x
-                opposition_direction_virtual_core.y,                   // pre_op_barrier_semaphore_noc0_y
-                pre_op_barrier_semaphore.address(),                    // pre_op_barrier_semaphore
+                static_cast<uint32_t>(intermediate_slice_tensors.at(0).buffer()->address()),  // intermediate_slice_0_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(1).buffer()->address()),  // intermediate_slice_1_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(2).buffer()->address()),  // intermediate_slice_2_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(3).buffer()->address()),  // intermediate_slice_3_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(4).buffer()->address()),  // intermediate_slice_4_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(5).buffer()->address()),  // intermediate_slice_5_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(6).buffer()->address()),  // intermediate_slice_6_address
+                static_cast<uint32_t>(intermediate_slice_tensors.at(7).buffer()->address()),  // intermediate_slice_7_address
+                static_cast<uint32_t>(output_tensor.buffer()->address()),                     // output_address
+                static_cast<uint32_t>(virtual_core.x),                                        // op_semaphore_noc0_x
+                static_cast<uint32_t>(virtual_core.y),                                        // op_semaphore_noc0_y
+                static_cast<uint32_t>(op_semaphore.address()),                                // op_semaphore
+                static_cast<uint32_t>(opposition_direction_virtual_core.x),  // pre_op_barrier_semaphore_noc0_x
+                static_cast<uint32_t>(opposition_direction_virtual_core.y),  // pre_op_barrier_semaphore_noc0_y
+                static_cast<uint32_t>(pre_op_barrier_semaphore.address()),   // pre_op_barrier_semaphore
                 direction,                                             // direction
                 start_tiles_read,                                      // start_tiles_read
                 start_tiles_to_read,                                   // tiles_to_read
