@@ -74,6 +74,9 @@ _MESH_DEVICE_SHAPES = {
     "N150x4": (1, 4),
     "T3K": (1, 8),
     "TG": (8, 4),
+    # P100 is the harvested single-chip Blackhole (120 Tensix, 7x1 DRAM grid, no
+    # ethernet); like P150 it is a single device. See GEMMA4_DRAM_CORES in the README.
+    "P100": (1, 1),
     "P150": (1, 1),
     "P300": (1, 2),
     "P150x4": (1, 4),
