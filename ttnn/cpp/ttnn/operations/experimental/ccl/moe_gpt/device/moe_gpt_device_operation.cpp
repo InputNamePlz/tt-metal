@@ -120,7 +120,7 @@ MoEGPTDeviceOperation::spec_return_value_t MoEGPTDeviceOperation::compute_output
     auto per_expert_total_tokens_row_bytes = tt::align(experts_per_device * sizeof(uint32_t), l1_alignment);
     auto per_expert_total_tokens_row_elements = per_expert_total_tokens_row_bytes / sizeof(uint32_t);
     auto per_expert_spec = tt::tt_metal::TensorSpec(
-        Shape({1, per_expert_total_tokens_row_elements}),
+        Shape({1, static_cast<uint32_t>(per_expert_total_tokens_row_elements)}),
         tt::tt_metal::TensorLayout(
             tt::tt_metal::DataType::UINT32,
             tt::tt_metal::PageConfig(tt::tt_metal::Layout::ROW_MAJOR),
