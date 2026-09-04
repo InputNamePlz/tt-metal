@@ -56,7 +56,7 @@ ttnn::device_operation::ProgramArtifacts NdReshardCopyPagesFactory::create_progr
     // Dataflow buffer (real FIFO: reader produces a page, writer consumes it).
     DataflowBufferSpec copy_pages_dfb{
         .unique_id = COPY_PAGES_CB,
-        .entry_size = aligned_page_size,
+        .entry_size = static_cast<uint32_t>(aligned_page_size),
         .num_entries = num_tiles_in_cb,
         .data_format_metadata = data_format,
     };

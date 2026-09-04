@@ -223,7 +223,8 @@ Tensor create_scalar_config_tensor(
         config_vector.size(),
         entries_per_core);
 
-    ttnn::Shape config_shape = ttnn::Shape({tt::div_up(config_vector.size(), entries_per_core), entries_per_core});
+    ttnn::Shape config_shape = ttnn::Shape(
+        {static_cast<uint32_t>(tt::div_up(config_vector.size(), entries_per_core)), entries_per_core});
     tt::tt_metal::HostBuffer buffer(std::move(config_vector));
     return Tensor(std::move(buffer), config_shape, DataType::UINT16, Layout::ROW_MAJOR);
 }

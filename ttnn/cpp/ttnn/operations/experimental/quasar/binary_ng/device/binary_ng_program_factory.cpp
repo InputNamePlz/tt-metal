@@ -4,6 +4,7 @@
 
 #include "binary_ng_utils.hpp"
 #include <tt-metalium/work_split.hpp>
+#include <tt_stl/unreachable.hpp>
 #include "ttnn/operations/cb_utils.hpp"
 #include <tt-metalium/tensor_accessor_args.hpp>
 #include "ttnn/operations/experimental/quasar/binary/common/binary_op_utils.hpp"
@@ -59,7 +60,7 @@ std::tuple<uint32_t, uint32_t> calculate_compute_kernel_args(
         case SubtileBroadcastType::ROW_B_COL_A:
         case SubtileBroadcastType::COL_B:
         case SubtileBroadcastType::ROW_A_COL_B: return {Wt, start_tw};
-        default: __builtin_unreachable();  // GCC 12 doesn't compile even though we exhaustively match
+        default: ttsl::unreachable();  // GCC 12 doesn't compile even though we exhaustively match
     }
 }
 

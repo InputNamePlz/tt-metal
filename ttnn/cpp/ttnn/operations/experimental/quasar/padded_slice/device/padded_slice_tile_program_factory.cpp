@@ -495,8 +495,8 @@ PaddedSliceTileProgramFactory::cached_program_t PaddedSliceTileProgramFactory::c
         cb_output_index,
         cb_padding_index,
         (std::uint32_t)is_non_aligned,
-        input_padded_shape.rank() /* == 4*/,
-        output.element_size(),
+        static_cast<uint32_t>(input_padded_shape.rank()) /* == 4*/,
+        static_cast<uint32_t>(output.element_size()),
         output_row_size_bytes};
 
     std::vector<uint32_t> reader_compile_time_args_vec = {max_num_tiles_per_row};

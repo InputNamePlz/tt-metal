@@ -95,7 +95,7 @@ get_padded_slice_runtime_args_rm_sharded_output(
     uint32_t start_addr = input_tensor.buffer()->address();
     std::vector<uint32_t> common_reader_kernel_args = {
         start_addr + begins_bytes - misalignment,
-        input_page_size,
+        static_cast<uint32_t>(input_page_size),
         output_row_size_bytes,
         output_row_size_bytes_offset,
         num_dims,
