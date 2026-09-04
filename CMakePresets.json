@@ -108,7 +108,6 @@
           "BUILD_SHARED_LIBS": {"value": "OFF"},
           "BUILD_PROGRAMMING_EXAMPLES": {"value": "ON"},
           "TT_METAL_BUILD_TTNN": {"value": "ON"},
-          "TTNN_BUILD_FULL": {"value": "OFF"},
           "TT_SKIP_HW_TOOLCHAIN": {"value": "ON"},
           "TT_UMD_BUILD_SIMULATION": {"value": "OFF"},
           "TT_UMD_BUILD_STATIC": {"value": "ON"},
