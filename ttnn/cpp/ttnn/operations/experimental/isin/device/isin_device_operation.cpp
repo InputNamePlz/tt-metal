@@ -37,7 +37,7 @@ void IsInDeviceOperation::validate_on_program_cache_miss(
 IsInDeviceOperation::spec_return_value_t IsInDeviceOperation::compute_output_specs(
     const operation_attributes_t&, const tensor_args_t& tensor_args) {
     return {
-        Shape{tensor_args.elements_tensor.logical_volume()},
+        Shape{static_cast<uint32_t>(tensor_args.elements_tensor.logical_volume())},
         {OUTPUT_TENSOR_DATA_TYPE, {OUTPUT_TENSOR_LAYOUT}, tensor_args.elements_tensor.memory_config()},
     };
 }
