@@ -76,14 +76,17 @@ def _load_and_cache_context(context_url, max_length=None):
     cache_dir.mkdir(exist_ok=True)
     cache_file = cache_dir / hashlib.md5(context_url.encode()).hexdigest()
 
+    # Encoding is explicit: Path.read_text/write_text default to locale.getencoding(), which is
+    # UTF-8 on Linux but the host ANSI codepage on Windows -- the Gutenberg corpora contain em
+    # dashes and smart quotes, so the default raises UnicodeEncodeError on e.g. cp949/cp1252.
     if cache_file.exists():
-        context_text = cache_file.read_text()
+        context_text = cache_file.read_text(encoding="utf-8")
         logger.info(f"Loaded context from cache: {context_url}")
     else:
         response = requests.get(context_url)
         response.raise_for_status()
         context_text = response.text
-        cache_file.write_text(context_text)
+        cache_file.write_text(context_text, encoding="utf-8")
         logger.info(f"Downloaded and cached context: {context_url}")
 
     if max_length:
@@ -96,7 +99,7 @@ def _get_prompt(seqlen, tokenizer, max_prompt_len=None):
     cap = seqlen if max_prompt_len is None else min(seqlen, max_prompt_len)
     # QWEN35_REF_PROMPT=1: match the reference 27B 64k extractive task (pg84, default chat template, no thinking seed).
     if os.environ.get("QWEN35_REF_PROMPT") and seqlen >= 4096:
-        with open(f"{SHARED_PROMPTS_DIR}/input_data_long_64k.json") as f:
+        with open(f"{SHARED_PROMPTS_DIR}/input_data_long_64k.json", encoding="utf-8") as f:
             rd = json.load(f)[0]
         context = _load_and_cache_context(rd["context"], rd.get("max_length"))
         instruction = rd["prompt"]
@@ -119,7 +122,7 @@ def _get_prompt(seqlen, tokenizer, max_prompt_len=None):
 
     if seqlen <= 256:
         path = f"{SHARED_PROMPTS_DIR}/input_data_questions_prefill_128.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         ids = tokenizer(data[0]["prompt"], return_tensors="pt")["input_ids"]
         # The shared prompt is ~128 tokens; repeat it to guarantee >= cap tokens, then clip.
@@ -131,7 +134,7 @@ def _get_prompt(seqlen, tokenizer, max_prompt_len=None):
     if seqlen in _FRANKENSTEIN_CONFIGS:
         idx = _FRANKENSTEIN_CONFIGS[seqlen]
         path = f"{SAMPLE_PROMPTS_DIR}/eval_frankenstein_long.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         entry = data[idx]
         context = _load_and_cache_context(entry["context"], entry.get("max_length"))
@@ -158,7 +161,7 @@ def _get_prompt(seqlen, tokenizer, max_prompt_len=None):
     # Medium sequences (1k–8k): static prompt files
     size_label = f"{seqlen // 1024}k" if seqlen >= 1024 else str(seqlen)
     path = f"{SAMPLE_PROMPTS_DIR}/input_data_long_{size_label}.json"
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
     prompt_text = data[0]["prompt"]
     inputs = tokenizer(prompt_text, return_tensors="pt")
