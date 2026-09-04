@@ -89,8 +89,8 @@ IsInProgramFactory::cached_program_t IsInProgramFactory::create(
         static_cast<uint32_t>(IsInCB::ELEMENTS),
         static_cast<uint32_t>(IsInCB::TEST_ELEMENTS),
         static_cast<uint32_t>(IsInCB::OUTPUT),
-        elements_tensor.logical_volume(),
-        test_elements_tensor.logical_volume(),
+        static_cast<uint32_t>(elements_tensor.logical_volume()),
+        static_cast<uint32_t>(test_elements_tensor.logical_volume()),
         single_fetch_subchunk_size,
         static_cast<uint32_t>(invert),
         elements_tensor.element_size()};
