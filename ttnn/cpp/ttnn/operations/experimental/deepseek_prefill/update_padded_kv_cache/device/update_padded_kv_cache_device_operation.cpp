@@ -551,7 +551,7 @@ tt::tt_metal::ProgramDescriptor UpdatePaddedKvCacheDeviceOperation::ProgramFacto
                 .total_size = kMetadataBytes,
                 .core_ranges = all_cores,
                 .format_descriptors = {{CBFormatDescriptor{
-                    .buffer_index = meta_cb,
+                    .buffer_index = static_cast<uint8_t>(meta_cb),
                     .data_format = tt::DataFormat::UInt32,
                     .page_size = kMetadataBytes,
                 }}},

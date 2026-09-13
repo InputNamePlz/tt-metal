@@ -772,7 +772,7 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
     const auto reserved_packet_header_forward_CB_index = tt::CB::c_in1;
     const auto packet_header_size_bytes = tt::tt_fabric::get_tt_fabric_packet_header_size_bytes();
     desc.cbs.push_back(CBDescriptor{
-        .total_size = kPacketHeaderSlots * packet_header_size_bytes * kDoubleBufferingFactor,
+        .total_size = static_cast<uint32_t>(kPacketHeaderSlots * packet_header_size_bytes * kDoubleBufferingFactor),
         .core_ranges = sender_forward_core_ranges,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_forward_CB_index),
@@ -783,7 +783,7 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
 
     const auto reserved_packet_header_backward_CB_index = tt::CB::c_in1;
     desc.cbs.push_back(CBDescriptor{
-        .total_size = kPacketHeaderSlots * packet_header_size_bytes * kDoubleBufferingFactor,
+        .total_size = static_cast<uint32_t>(kPacketHeaderSlots * packet_header_size_bytes * kDoubleBufferingFactor),
         .core_ranges = sender_backward_core_ranges,
         .format_descriptors = {{CBFormatDescriptor{
             .buffer_index = static_cast<uint8_t>(reserved_packet_header_backward_CB_index),
@@ -842,8 +842,8 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
             cb_index,                                           // kCbOutputId
             num_pages_per_packet,                               // kPacketSizeInPages
             op_config.get_page_size(),                          // kInputTensorPageSize
-            num_targets_forward,                                // kNumTargetsForwardDirection
-            num_targets_backward,                               // kNumTargetsBackwardDirection
+            static_cast<uint32_t>(num_targets_forward),         // kNumTargetsForwardDirection
+            static_cast<uint32_t>(num_targets_backward),        // kNumTargetsBackwardDirection
             static_cast<uint32_t>(topology),                    // kTopology
             kContiguousPagesAdvanced,                           // kContigPagesAdvanced
             num_inputs,                                         // kNumInputs
@@ -898,8 +898,8 @@ void ring_attention_all_gather_async_multi_core_with_workers_helper(
             cb_index,                                           // kCbOutputId
             num_pages_per_packet,                               // kPacketSizeInPages
             op_config.get_page_size(),                          // kOutputPageSize
-            num_targets_forward,                                // kNumTargetsForwardDirection
-            num_targets_backward,                               // kNumTargetsBackwardDirection
+            static_cast<uint32_t>(num_targets_forward),         // kNumTargetsForwardDirection
+            static_cast<uint32_t>(num_targets_backward),        // kNumTargetsBackwardDirection
             static_cast<uint32_t>(fuse_op),                     // kFuseOp
             static_cast<uint32_t>(topology),                    // kTopology
             num_inputs,                                         // kNumInputs
