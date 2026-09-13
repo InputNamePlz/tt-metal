@@ -14,10 +14,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include <unistd.h>
-
 #include <google/protobuf/text_format.h>
 
+#include "fabric/fabric_host_utils.hpp"
 #include "protobuf/kv_chunk_address_table.pb.h"
 
 namespace tt::tt_metal::internal::disaggregation {
@@ -317,9 +316,9 @@ void emit_config_payload(
 ::tt::disaggregation::proto::KvChunkAddressTable to_proto_message(const KvChunkAddressTable& table) {
     ::tt::disaggregation::proto::KvChunkAddressTable pb;
     pb.set_format_version(kMaxKnownFormatVersion);
-    char hostname[256];
-    if (::gethostname(hostname, sizeof(hostname)) == 0) {
-        hostname[sizeof(hostname) - 1] = '\0';
+    // tt::tt_metal::get_host_name() wraps gethostname()/GetComputerNameA(); it returns an
+    // empty string when the host name cannot be determined.
+    if (const std::string hostname = get_host_name(); !hostname.empty()) {
         pb.set_origin_host(hostname);
     }
 
